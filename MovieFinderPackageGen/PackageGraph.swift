@@ -13,14 +13,23 @@ let graph: [ModuleNode] = [
     ModuleNode(
         module: .root,
         dependencies: [
+            // Utilities
             .modularDependencyContainer,
-            .logger,
-            .testClient,
+
+            // Clients
+            .tmdbClient,
+            .imageLoader,
+
+            // Domains
+            .movieDomain,
+            .watchlistDomain,
+
+            // Coordinators
             .appCoordinator
         ]
     ),
 
-    // MARK: Components + Coordinators + Screens
+    // MARK: Coordinators
 
     ModuleNode(
         module: .appCoordinator,
@@ -31,61 +40,108 @@ let graph: [ModuleNode] = [
     ModuleNode(
         module: .tabCoordinator,
         dependencies: [
-            .screenA,
-            .screenC,
-            .screenD,
+            .boxOfficeScreen,
+            .discoverScreen,
+            .watchlistScreen,
             .modularNavigation
         ]
     ),
+
+    // MARK: Screens
+
     ModuleNode(
-        module: .screenA,
+        module: .boxOfficeScreen,
         dependencies: [
             .main: [
-                .module(.screenB),
-                .module(.logger),
-                .target(.interface, module: .testClient)
+                .target(.interface, module: .movieDomain),
+                .target(.interface, module: .imageLoader),
+                .module(.detailScreen)
             ],
             .views: [
-                .target(.interface, module: .testClient)
+                .target(.interface, module: .movieDomain),
+                .target(.interface, module: .imageLoader),
+                .module(.sharedUI)
             ]
         ]
     ),
     ModuleNode(
-        module: .screenB,
+        module: .discoverScreen,
         dependencies: [
             .main: [
-                .module(.logger),
-                .target(.interface, module: .testClient)
+                .target(.interface, module: .movieDomain),
+                .target(.interface, module: .imageLoader),
+                .module(.detailScreen)
             ],
             .views: [
-                .target(.interface, module: .logger),
-                .target(.interface, module: .testClient)
+                .target(.interface, module: .movieDomain),
+                .target(.interface, module: .imageLoader),
+                .module(.sharedUI)
             ]
         ]
     ),
     ModuleNode(
-        module: .screenC
+        module: .detailScreen,
+        dependencies: [
+            .main: [
+                .target(.interface, module: .movieDomain),
+                .target(.interface, module: .watchlistDomain),
+                .target(.interface, module: .imageLoader)
+            ],
+            .views: [
+                .target(.interface, module: .movieDomain),
+                .target(.interface, module: .watchlistDomain),
+                .target(.interface, module: .imageLoader),
+                .module(.sharedUI)
+            ]
+        ]
     ),
     ModuleNode(
-        module: .screenD
+        module: .watchlistScreen,
+        dependencies: [
+            .main: [
+                .target(.interface, module: .watchlistDomain),
+                .target(.interface, module: .imageLoader),
+                .module(.detailScreen)
+            ],
+            .views: [
+                .target(.interface, module: .watchlistDomain),
+                .target(.interface, module: .imageLoader),
+                .module(.sharedUI)
+            ]
+        ]
+    ),
+
+    // MARK: Domains
+
+    ModuleNode(
+        module: .movieDomain,
+        dependencies: [
+            .main: [
+                .target(.interface, module: .tmdbClient)
+            ]
+        ]
+    ),
+    ModuleNode(
+        module: .watchlistDomain
+        // No external dependencies - uses SwiftData directly
     ),
 
     // MARK: Clients
 
     ModuleNode(
-        module: .logger,
+        module: .tmdbClient
     ),
     ModuleNode(
-        module: .testClient,
+        module: .imageLoader
     ),
 
     // MARK: Macros
 
     ModuleNode(
-        module: .copyableMacro,
+        module: .copyableMacro
     ),
     ModuleNode(
-        module: .dependencyRequirementsMacro,
+        module: .dependencyRequirementsMacro
     ),
 
     // MARK: Utilities
@@ -101,6 +157,12 @@ let graph: [ModuleNode] = [
     ),
     ModuleNode(
         module: .modularNavigation
+    ),
+    ModuleNode(
+        module: .sharedUI,
+        dependencies: [
+            .target(.interface, module: .imageLoader)
+        ]
     ),
     ModuleNode(
         module: .uiComponents,

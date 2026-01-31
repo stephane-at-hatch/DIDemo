@@ -20,6 +20,7 @@ digraph ModuleDependencies {
             color="#666666";
         
             ModularDependencyContainer_main [label="main", fillcolor="#ccccf0"];
+            ModularDependencyContainer_tests [label="Tests", fillcolor="#ccccf0"];
         }
         subgraph cluster_ModularNavigation {
             label="ModularNavigation";
@@ -27,6 +28,14 @@ digraph ModuleDependencies {
             color="#666666";
         
             ModularNavigation_main [label="main", fillcolor="#ccccf0"];
+            ModularNavigation_tests [label="Tests", fillcolor="#ccccf0"];
+        }
+        subgraph cluster_SharedUI {
+            label="SharedUI";
+            style=rounded;
+            color="#666666";
+        
+            SharedUI_main [label="main", fillcolor="#ccccf0"];
         }
         subgraph cluster_UIComponents {
             label="UIComponents";
@@ -42,21 +51,41 @@ digraph ModuleDependencies {
         style=filled;
         color="#e8f4f8";
 
-        subgraph cluster_Logger {
-            label="Logger";
+        subgraph cluster_ImageLoader {
+            label="ImageLoader";
             style=rounded;
             color="#666666";
         
-            Logger_main [label="main", fillcolor="#cce7f0"];
-            Logger_interface [label="Interface", fillcolor="#cce7f0"];
+            ImageLoader_main [label="main", fillcolor="#cce7f0"];
+            ImageLoader_interface [label="Interface", fillcolor="#cce7f0"];
+            ImageLoader_tests [label="Tests", fillcolor="#cce7f0"];
         }
-        subgraph cluster_TestClient {
-            label="TestClient";
+        subgraph cluster_MovieDomain {
+            label="MovieDomain";
             style=rounded;
             color="#666666";
         
-            TestClient_main [label="main", fillcolor="#cce7f0"];
-            TestClient_interface [label="Interface", fillcolor="#cce7f0"];
+            MovieDomain_main [label="main", fillcolor="#cce7f0"];
+            MovieDomain_interface [label="Interface", fillcolor="#cce7f0"];
+            MovieDomain_tests [label="Tests", fillcolor="#cce7f0"];
+        }
+        subgraph cluster_TMDBClient {
+            label="TMDBClient";
+            style=rounded;
+            color="#666666";
+        
+            TMDBClient_main [label="main", fillcolor="#cce7f0"];
+            TMDBClient_interface [label="Interface", fillcolor="#cce7f0"];
+            TMDBClient_tests [label="Tests", fillcolor="#cce7f0"];
+        }
+        subgraph cluster_WatchlistDomain {
+            label="WatchlistDomain";
+            style=rounded;
+            color="#666666";
+        
+            WatchlistDomain_main [label="main", fillcolor="#cce7f0"];
+            WatchlistDomain_interface [label="Interface", fillcolor="#cce7f0"];
+            WatchlistDomain_tests [label="Tests", fillcolor="#cce7f0"];
         }
     }
 
@@ -65,37 +94,41 @@ digraph ModuleDependencies {
         style=filled;
         color="#f8f4e8";
 
-        subgraph cluster_ScreenA {
-            label="ScreenA";
+        subgraph cluster_BoxOfficeScreen {
+            label="BoxOfficeScreen";
             style=rounded;
             color="#666666";
         
-            ScreenA_main [label="main", fillcolor="#f0e7cc"];
-            ScreenA_views [label="Views", fillcolor="#f0e7cc"];
+            BoxOfficeScreen_main [label="main", fillcolor="#f0e7cc"];
+            BoxOfficeScreen_views [label="Views", fillcolor="#f0e7cc"];
+            BoxOfficeScreen_tests [label="Tests", fillcolor="#f0e7cc"];
         }
-        subgraph cluster_ScreenB {
-            label="ScreenB";
+        subgraph cluster_DetailScreen {
+            label="DetailScreen";
             style=rounded;
             color="#666666";
         
-            ScreenB_main [label="main", fillcolor="#f0e7cc"];
-            ScreenB_views [label="Views", fillcolor="#f0e7cc"];
+            DetailScreen_main [label="main", fillcolor="#f0e7cc"];
+            DetailScreen_views [label="Views", fillcolor="#f0e7cc"];
+            DetailScreen_tests [label="Tests", fillcolor="#f0e7cc"];
         }
-        subgraph cluster_ScreenC {
-            label="ScreenC";
+        subgraph cluster_DiscoverScreen {
+            label="DiscoverScreen";
             style=rounded;
             color="#666666";
         
-            ScreenC_main [label="main", fillcolor="#f0e7cc"];
-            ScreenC_views [label="Views", fillcolor="#f0e7cc"];
+            DiscoverScreen_main [label="main", fillcolor="#f0e7cc"];
+            DiscoverScreen_views [label="Views", fillcolor="#f0e7cc"];
+            DiscoverScreen_tests [label="Tests", fillcolor="#f0e7cc"];
         }
-        subgraph cluster_ScreenD {
-            label="ScreenD";
+        subgraph cluster_WatchlistScreen {
+            label="WatchlistScreen";
             style=rounded;
             color="#666666";
         
-            ScreenD_main [label="main", fillcolor="#f0e7cc"];
-            ScreenD_views [label="Views", fillcolor="#f0e7cc"];
+            WatchlistScreen_main [label="main", fillcolor="#f0e7cc"];
+            WatchlistScreen_views [label="Views", fillcolor="#f0e7cc"];
+            WatchlistScreen_tests [label="Tests", fillcolor="#f0e7cc"];
         }
     }
 
@@ -110,6 +143,7 @@ digraph ModuleDependencies {
             color="#666666";
         
             AppCoordinator_main [label="main", fillcolor="#f0cce7"];
+            AppCoordinator_tests [label="Tests", fillcolor="#f0cce7"];
         }
         subgraph cluster_TabCoordinator {
             label="TabCoordinator";
@@ -117,6 +151,7 @@ digraph ModuleDependencies {
             color="#666666";
         
             TabCoordinator_main [label="main", fillcolor="#f0cce7"];
+            TabCoordinator_tests [label="Tests", fillcolor="#f0cce7"];
         }
     }
 
@@ -159,36 +194,57 @@ digraph ModuleDependencies {
 
     // Dependencies
     Modules_main -> ModularDependencyContainer_main;
-    Modules_main -> Logger_main;
-    Modules_main -> TestClient_main;
+    Modules_main -> TMDBClient_main;
+    Modules_main -> ImageLoader_main;
+    Modules_main -> MovieDomain_main;
+    Modules_main -> WatchlistDomain_main;
     Modules_main -> AppCoordinator_main;
     AppCoordinator_main -> ModularDependencyContainer_main;
     AppCoordinator_main -> TabCoordinator_main;
     TabCoordinator_main -> ModularDependencyContainer_main;
-    TabCoordinator_main -> ScreenA_main;
-    TabCoordinator_main -> ScreenC_main;
-    TabCoordinator_main -> ScreenD_main;
+    TabCoordinator_main -> BoxOfficeScreen_main;
+    TabCoordinator_main -> DiscoverScreen_main;
+    TabCoordinator_main -> WatchlistScreen_main;
     TabCoordinator_main -> ModularNavigation_main;
-    ScreenA_main -> ModularDependencyContainer_main;
-    ScreenA_main -> ModularNavigation_main;
-    ScreenA_main -> ScreenB_main;
-    ScreenA_main -> Logger_main;
-    ScreenA_main -> TestClient_interface;
-    ScreenA_views -> UIComponents_main;
-    ScreenA_views -> TestClient_interface;
-    ScreenB_main -> ModularDependencyContainer_main;
-    ScreenB_main -> ModularNavigation_main;
-    ScreenB_main -> Logger_main;
-    ScreenB_main -> TestClient_interface;
-    ScreenB_views -> UIComponents_main;
-    ScreenB_views -> Logger_interface;
-    ScreenB_views -> TestClient_interface;
-    ScreenC_main -> ModularDependencyContainer_main;
-    ScreenC_main -> ModularNavigation_main;
-    ScreenC_views -> UIComponents_main;
-    ScreenD_main -> ModularDependencyContainer_main;
-    ScreenD_main -> ModularNavigation_main;
-    ScreenD_views -> UIComponents_main;
+    BoxOfficeScreen_main -> ModularDependencyContainer_main;
+    BoxOfficeScreen_main -> ModularNavigation_main;
+    BoxOfficeScreen_main -> MovieDomain_interface;
+    BoxOfficeScreen_main -> ImageLoader_interface;
+    BoxOfficeScreen_main -> DetailScreen_main;
+    BoxOfficeScreen_views -> UIComponents_main;
+    BoxOfficeScreen_views -> MovieDomain_interface;
+    BoxOfficeScreen_views -> ImageLoader_interface;
+    BoxOfficeScreen_views -> SharedUI_main;
+    DiscoverScreen_main -> ModularDependencyContainer_main;
+    DiscoverScreen_main -> ModularNavigation_main;
+    DiscoverScreen_main -> MovieDomain_interface;
+    DiscoverScreen_main -> ImageLoader_interface;
+    DiscoverScreen_main -> DetailScreen_main;
+    DiscoverScreen_views -> UIComponents_main;
+    DiscoverScreen_views -> MovieDomain_interface;
+    DiscoverScreen_views -> ImageLoader_interface;
+    DiscoverScreen_views -> SharedUI_main;
+    DetailScreen_main -> ModularDependencyContainer_main;
+    DetailScreen_main -> ModularNavigation_main;
+    DetailScreen_main -> MovieDomain_interface;
+    DetailScreen_main -> WatchlistDomain_interface;
+    DetailScreen_main -> ImageLoader_interface;
+    DetailScreen_views -> UIComponents_main;
+    DetailScreen_views -> MovieDomain_interface;
+    DetailScreen_views -> WatchlistDomain_interface;
+    DetailScreen_views -> ImageLoader_interface;
+    DetailScreen_views -> SharedUI_main;
+    WatchlistScreen_main -> ModularDependencyContainer_main;
+    WatchlistScreen_main -> ModularNavigation_main;
+    WatchlistScreen_main -> WatchlistDomain_interface;
+    WatchlistScreen_main -> ImageLoader_interface;
+    WatchlistScreen_main -> DetailScreen_main;
+    WatchlistScreen_views -> UIComponents_main;
+    WatchlistScreen_views -> WatchlistDomain_interface;
+    WatchlistScreen_views -> ImageLoader_interface;
+    WatchlistScreen_views -> SharedUI_main;
+    MovieDomain_main -> TMDBClient_interface;
     ModularDependencyContainer_main -> DependencyRequirementsMacro_main;
+    SharedUI_main -> ImageLoader_interface;
     UIComponents_main -> CopyableMacro_main;
 }

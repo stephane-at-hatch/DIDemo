@@ -14,8 +14,9 @@
 #   ./generate-navigation-scaffolding.sh UserProfile
 #   ./generate-navigation-scaffolding.sh UserProfile /path/to/Modules/Screens/UserProfile
 #
-# Version: 1.3
+# Version: 2.0
 # Based on: ios_modular_navigation/SKILL.md v1.4
+# Updated: ModuleEntry pattern replaces DestinationBuilder wrapper
 #
 
 set -e
@@ -466,23 +467,12 @@ echo "    }" >> "$DESTINATION_FILE"
 echo "}" >> "$DESTINATION_FILE"
 echo "" >> "$DESTINATION_FILE"
 
-# Builder (extends NAMESPACE, not NAMESPACE.Destination)
-cat >> "$DESTINATION_FILE" << 'EOF'
-// MARK: - Destination Builder
-
-EOF
+# Entry Point typealias (replaces DestinationBuilder wrapper)
 cat >> "$DESTINATION_FILE" << EOF
+// MARK: - Entry Point
+
 public extension $NAMESPACE {
-    @MainActor
-    struct DestinationBuilder<DestinationView: View> {
-        public let buildDestination: ModularNavigation.DestinationBuilder<Destination, DestinationView>
-        
-        public init(
-            buildDestination: @escaping ModularNavigation.DestinationBuilder<Destination, DestinationView>
-        ) {
-            self.buildDestination = buildDestination
-        }
-    }
+    typealias Entry = ModuleEntry<Destination, DestinationView>
 }
 EOF
 
@@ -663,18 +653,21 @@ import SwiftUI
 
 public extension $NAMESPACE {
     @MainActor
-    static func liveBuilder(
-        // TODO: Add production dependencies here
-    ) -> DestinationBuilder<DestinationView> {
-        DestinationBuilder { destination, mode, navigationClient in
-            let viewState: DestinationViewState
-            
-            switch destination.type {
+    static func liveEntry(
+        at publicDestination: Destination.Public,
+        dependencies: Dependencies
+    ) -> Entry {
+        Entry(
+            entryDestination: .public(publicDestination),
+            builder: { destination, mode, navigationClient in
+                let viewState: DestinationViewState
+
+                switch destination.type {
 EOF
 
 if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .public(let publicDestination):" >> "$LIVE_FILE"
-    echo "                switch publicDestination {" >> "$LIVE_FILE"
+    echo "                case .public(let publicDestination):" >> "$LIVE_FILE"
+    echo "                    switch publicDestination {" >> "$LIVE_FILE"
     for dest in "${PUBLIC_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -682,24 +675,25 @@ if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$LIVE_FILE"
-        echo "                    viewState = .$name(${cap_name}DestinationViewState(" >> "$LIVE_FILE"
-        echo "                        viewModel: nil // TODO: Create production ViewModel" >> "$LIVE_FILE"
+        echo "                    case .$name$let_bindings:" >> "$LIVE_FILE"
+        echo "                        // TODO: Create production ViewModel with dependencies" >> "$LIVE_FILE"
+        echo "                        viewState = .$name(${cap_name}DestinationViewState(" >> "$LIVE_FILE"
+        echo "                            viewModel: nil" >> "$LIVE_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$LIVE_FILE"
+                echo "                            , $param_name: $param_name" >> "$LIVE_FILE"
             done
         fi
-        echo "                    ))" >> "$LIVE_FILE"
+        echo "                        ))" >> "$LIVE_FILE"
     done
-    echo "                }" >> "$LIVE_FILE"
+    echo "                    }" >> "$LIVE_FILE"
 fi
 
 if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .internal(let internalDestination):" >> "$LIVE_FILE"
-    echo "                switch internalDestination {" >> "$LIVE_FILE"
+    echo "                case .internal(let internalDestination):" >> "$LIVE_FILE"
+    echo "                    switch internalDestination {" >> "$LIVE_FILE"
     for dest in "${INTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -707,44 +701,45 @@ if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$LIVE_FILE"
-        echo "                    viewState = .$name(${cap_name}DestinationViewState(" >> "$LIVE_FILE"
-        echo "                        viewModel: nil // TODO: Create production ViewModel" >> "$LIVE_FILE"
+        echo "                    case .$name$let_bindings:" >> "$LIVE_FILE"
+        echo "                        viewState = .$name(${cap_name}DestinationViewState(" >> "$LIVE_FILE"
+        echo "                            viewModel: nil" >> "$LIVE_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$LIVE_FILE"
+                echo "                            , $param_name: $param_name" >> "$LIVE_FILE"
             done
         fi
-        echo "                    ))" >> "$LIVE_FILE"
+        echo "                        ))" >> "$LIVE_FILE"
     done
-    echo "                }" >> "$LIVE_FILE"
+    echo "                    }" >> "$LIVE_FILE"
 fi
 
 if [[ ${#EXTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .external(let externalDestination):" >> "$LIVE_FILE"
-    echo "                switch externalDestination {" >> "$LIVE_FILE"
+    echo "                case .external(let externalDestination):" >> "$LIVE_FILE"
+    echo "                    switch externalDestination {" >> "$LIVE_FILE"
     for dest in "${EXTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
         cap_name=$(capitalize "$name")
         
-        echo "                case .$name:" >> "$LIVE_FILE"
-        echo "                    viewState = .$name(${cap_name}DestinationViewState())" >> "$LIVE_FILE"
+        echo "                    case .$name:" >> "$LIVE_FILE"
+        echo "                        viewState = .$name(${cap_name}DestinationViewState())" >> "$LIVE_FILE"
     done
-    echo "                }" >> "$LIVE_FILE"
+    echo "                    }" >> "$LIVE_FILE"
 fi
 
 cat >> "$LIVE_FILE" << 'EOF'
+                }
+
+                return DestinationView(
+                    viewState: viewState,
+                    mode: mode,
+                    client: navigationClient
+                )
             }
-            
-            return DestinationView(
-                viewState: viewState,
-                mode: mode,
-                client: navigationClient
-            )
-        }
+        )
     }
 }
 EOF
@@ -755,22 +750,32 @@ print_success "Generated $LIVE_FILE"
 print_header "Phase 8: Generating ${MODULE_NAME}Destination+Mock.swift (Namespaced)"
 MOCK_FILE="$NAVIGATION_DIR/${MODULE_NAME}Destination+Mock.swift"
 
+# Get first public destination for default parameter
+first_public_dest=""
+if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
+    first_public_dest=$(parse_destination "${PUBLIC_DESTINATIONS[0]}" | cut -d'|' -f1)
+fi
+
 cat > "$MOCK_FILE" << EOF
 import ModularNavigation
 import SwiftUI
 
 public extension $NAMESPACE {
     @MainActor
-    static func mockBuilder() -> DestinationBuilder<DestinationView> {
-        DestinationBuilder { destination, mode, navigationClient in
-            let viewState: DestinationViewState
-            
-            switch destination.type {
+    static func mockEntry(
+        at publicDestination: Destination.Public = .$first_public_dest
+    ) -> Entry {
+        Entry(
+            entryDestination: .public(publicDestination),
+            builder: { destination, mode, navigationClient in
+                let viewState: DestinationViewState
+
+                switch destination.type {
 EOF
 
 if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .public(let publicDestination):" >> "$MOCK_FILE"
-    echo "                switch publicDestination {" >> "$MOCK_FILE"
+    echo "                case .public(let publicDestination):" >> "$MOCK_FILE"
+    echo "                    switch publicDestination {" >> "$MOCK_FILE"
     for dest in "${PUBLIC_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -778,24 +783,25 @@ if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$MOCK_FILE"
-        echo "                    viewState = .$name(${cap_name}DestinationViewState(" >> "$MOCK_FILE"
-        echo "                        viewModel: nil // TODO: Create mock ViewModel" >> "$MOCK_FILE"
+        echo "                    case .$name$let_bindings:" >> "$MOCK_FILE"
+        echo "                        // TODO: Create mock ViewModel" >> "$MOCK_FILE"
+        echo "                        viewState = .$name(${cap_name}DestinationViewState(" >> "$MOCK_FILE"
+        echo "                            viewModel: nil" >> "$MOCK_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$MOCK_FILE"
+                echo "                            , $param_name: $param_name" >> "$MOCK_FILE"
             done
         fi
-        echo "                    ))" >> "$MOCK_FILE"
+        echo "                        ))" >> "$MOCK_FILE"
     done
-    echo "                }" >> "$MOCK_FILE"
+    echo "                    }" >> "$MOCK_FILE"
 fi
 
 if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .internal(let internalDestination):" >> "$MOCK_FILE"
-    echo "                switch internalDestination {" >> "$MOCK_FILE"
+    echo "                case .internal(let internalDestination):" >> "$MOCK_FILE"
+    echo "                    switch internalDestination {" >> "$MOCK_FILE"
     for dest in "${INTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -803,44 +809,45 @@ if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$MOCK_FILE"
-        echo "                    viewState = .$name(${cap_name}DestinationViewState(" >> "$MOCK_FILE"
-        echo "                        viewModel: nil // TODO: Create mock ViewModel" >> "$MOCK_FILE"
+        echo "                    case .$name$let_bindings:" >> "$MOCK_FILE"
+        echo "                        viewState = .$name(${cap_name}DestinationViewState(" >> "$MOCK_FILE"
+        echo "                            viewModel: nil" >> "$MOCK_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$MOCK_FILE"
+                echo "                            , $param_name: $param_name" >> "$MOCK_FILE"
             done
         fi
-        echo "                    ))" >> "$MOCK_FILE"
+        echo "                        ))" >> "$MOCK_FILE"
     done
-    echo "                }" >> "$MOCK_FILE"
+    echo "                    }" >> "$MOCK_FILE"
 fi
 
 if [[ ${#EXTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .external(let externalDestination):" >> "$MOCK_FILE"
-    echo "                switch externalDestination {" >> "$MOCK_FILE"
+    echo "                case .external(let externalDestination):" >> "$MOCK_FILE"
+    echo "                    switch externalDestination {" >> "$MOCK_FILE"
     for dest in "${EXTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
         cap_name=$(capitalize "$name")
         
-        echo "                case .$name:" >> "$MOCK_FILE"
-        echo "                    viewState = .$name(${cap_name}DestinationViewState())" >> "$MOCK_FILE"
+        echo "                    case .$name:" >> "$MOCK_FILE"
+        echo "                        viewState = .$name(${cap_name}DestinationViewState())" >> "$MOCK_FILE"
     done
-    echo "                }" >> "$MOCK_FILE"
+    echo "                    }" >> "$MOCK_FILE"
 fi
 
 cat >> "$MOCK_FILE" << 'EOF'
+                }
+
+                return DestinationView(
+                    viewState: viewState,
+                    mode: mode,
+                    client: navigationClient
+                )
             }
-            
-            return DestinationView(
-                viewState: viewState,
-                mode: mode,
-                client: navigationClient
-            )
-        }
+        )
     }
 }
 
@@ -848,27 +855,15 @@ cat >> "$MOCK_FILE" << 'EOF'
 
 EOF
 
-# Updated preview format
-first_dest=""
-first_dest_type=""
-if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
-    first_dest=$(parse_destination "${PUBLIC_DESTINATIONS[0]}" | cut -d'|' -f1)
-    first_dest_type=".public(.$first_dest)"
-elif [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    first_dest=$(parse_destination "${INTERNAL_DESTINATIONS[0]}" | cut -d'|' -f1)
-    first_dest_type=".internal(.$first_dest)"
-fi
-
 cat >> "$MOCK_FILE" << EOF
 #Preview {
-    let builder = $NAMESPACE.mockBuilder()
+    let entry = $NAMESPACE.mockEntry()
     let rootClient = NavigationClient<RootDestination>.root()
     
     NavigationDestinationView(
         previousClient: rootClient,
-        destination: $first_dest_type,
         mode: .root,
-        builderFunction: builder.buildDestination
+        entry: entry
     )
 }
 EOF
@@ -961,10 +956,15 @@ EOF
 
 extension $NAMESPACE {
     @MainActor
-    static func testBuilder() -> DestinationBuilder<MockDestinationView> {
-        DestinationBuilder { destination, mode, navigationClient in
-            MockDestinationView(destination: destination)
-        }
+    static func testEntry(
+        at publicDestination: Destination.Public = .$first_public_dest
+    ) -> ModuleEntry<Destination, MockDestinationView> {
+        ModuleEntry(
+            entryDestination: .public(publicDestination),
+            builder: { destination, mode, navigationClient in
+                MockDestinationView(destination: destination)
+            }
+        )
     }
 }
 EOF
@@ -1068,17 +1068,10 @@ echo "}" >> "$DESTINATION_FILE"
 echo "" >> "$DESTINATION_FILE"
 
 cat >> "$DESTINATION_FILE" << EOF
-// MARK: - Destination Builder
+// MARK: - Entry Point
 
-@MainActor
-public struct ${MODULE_NAME}DestinationBuilder<DestinationView: View> {
-    public let buildDestination: DestinationBuilder<${MODULE_NAME}Destination, DestinationView>
-    
-    public init(
-        buildDestination: @escaping DestinationBuilder<${MODULE_NAME}Destination, DestinationView>
-    ) {
-        self.buildDestination = buildDestination
-    }
+public extension ${MODULE_NAME}Destination {
+    typealias Entry = ModuleEntry<${MODULE_NAME}Destination, ${MODULE_NAME}DestinationView>
 }
 EOF
 
@@ -1230,20 +1223,23 @@ cat > "$LIVE_FILE" << EOF
 import ModularNavigation
 import SwiftUI
 
-extension ${MODULE_NAME}Destination {
+public extension ${MODULE_NAME}Destination {
     @MainActor
-    public static func liveBuilder(
-        // TODO: Add production dependencies here
-    ) -> ${MODULE_NAME}DestinationBuilder<${MODULE_NAME}DestinationView> {
-        ${MODULE_NAME}DestinationBuilder { destination, mode, navigationClient in
-            let viewState: ${MODULE_NAME}DestinationViewState
-            
-            switch destination.type {
+    static func liveEntry(
+        at publicDestination: Public,
+        dependencies: Dependencies
+    ) -> Entry {
+        Entry(
+            entryDestination: .public(publicDestination),
+            builder: { destination, mode, navigationClient in
+                let viewState: ${MODULE_NAME}DestinationViewState
+
+                switch destination.type {
 EOF
 
 if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .public(let publicDestination):" >> "$LIVE_FILE"
-    echo "                switch publicDestination {" >> "$LIVE_FILE"
+    echo "                case .public(let publicDestination):" >> "$LIVE_FILE"
+    echo "                    switch publicDestination {" >> "$LIVE_FILE"
     for dest in "${PUBLIC_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -1251,24 +1247,25 @@ if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$LIVE_FILE"
-        echo "                    viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$LIVE_FILE"
-        echo "                        viewModel: nil // TODO: Create production ViewModel" >> "$LIVE_FILE"
+        echo "                    case .$name$let_bindings:" >> "$LIVE_FILE"
+        echo "                        // TODO: Create production ViewModel with dependencies" >> "$LIVE_FILE"
+        echo "                        viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$LIVE_FILE"
+        echo "                            viewModel: nil" >> "$LIVE_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$LIVE_FILE"
+                echo "                            , $param_name: $param_name" >> "$LIVE_FILE"
             done
         fi
-        echo "                    ))" >> "$LIVE_FILE"
+        echo "                        ))" >> "$LIVE_FILE"
     done
-    echo "                }" >> "$LIVE_FILE"
+    echo "                    }" >> "$LIVE_FILE"
 fi
 
 if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .internal(let internalDestination):" >> "$LIVE_FILE"
-    echo "                switch internalDestination {" >> "$LIVE_FILE"
+    echo "                case .internal(let internalDestination):" >> "$LIVE_FILE"
+    echo "                    switch internalDestination {" >> "$LIVE_FILE"
     for dest in "${INTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -1276,44 +1273,45 @@ if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$LIVE_FILE"
-        echo "                    viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$LIVE_FILE"
-        echo "                        viewModel: nil // TODO: Create production ViewModel" >> "$LIVE_FILE"
+        echo "                    case .$name$let_bindings:" >> "$LIVE_FILE"
+        echo "                        viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$LIVE_FILE"
+        echo "                            viewModel: nil" >> "$LIVE_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$LIVE_FILE"
+                echo "                            , $param_name: $param_name" >> "$LIVE_FILE"
             done
         fi
-        echo "                    ))" >> "$LIVE_FILE"
+        echo "                        ))" >> "$LIVE_FILE"
     done
-    echo "                }" >> "$LIVE_FILE"
+    echo "                    }" >> "$LIVE_FILE"
 fi
 
 if [[ ${#EXTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .external(let externalDestination):" >> "$LIVE_FILE"
-    echo "                switch externalDestination {" >> "$LIVE_FILE"
+    echo "                case .external(let externalDestination):" >> "$LIVE_FILE"
+    echo "                    switch externalDestination {" >> "$LIVE_FILE"
     for dest in "${EXTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
         cap_name=$(capitalize "$name")
         
-        echo "                case .$name:" >> "$LIVE_FILE"
-        echo "                    viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState())" >> "$LIVE_FILE"
+        echo "                    case .$name:" >> "$LIVE_FILE"
+        echo "                        viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState())" >> "$LIVE_FILE"
     done
-    echo "                }" >> "$LIVE_FILE"
+    echo "                    }" >> "$LIVE_FILE"
 fi
 
 cat >> "$LIVE_FILE" << EOF
+                }
+
+                return ${MODULE_NAME}DestinationView(
+                    viewState: viewState,
+                    mode: mode,
+                    client: navigationClient
+                )
             }
-            
-            return ${MODULE_NAME}DestinationView(
-                viewState: viewState,
-                mode: mode,
-                client: navigationClient
-            )
-        }
+        )
     }
 }
 EOF
@@ -1324,22 +1322,32 @@ print_success "Generated $LIVE_FILE"
 print_header "Phase 8: Generating ${MODULE_NAME}Destination+Mock.swift"
 MOCK_FILE="$NAVIGATION_DIR/${MODULE_NAME}Destination+Mock.swift"
 
+# Get first public destination for default parameter
+first_public_dest=""
+if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
+    first_public_dest=$(parse_destination "${PUBLIC_DESTINATIONS[0]}" | cut -d'|' -f1)
+fi
+
 cat > "$MOCK_FILE" << EOF
 import ModularNavigation
 import SwiftUI
 
-extension ${MODULE_NAME}Destination {
+public extension ${MODULE_NAME}Destination {
     @MainActor
-    public static func mockBuilder() -> ${MODULE_NAME}DestinationBuilder<${MODULE_NAME}DestinationView> {
-        ${MODULE_NAME}DestinationBuilder { destination, mode, navigationClient in
-            let viewState: ${MODULE_NAME}DestinationViewState
-            
-            switch destination.type {
+    static func mockEntry(
+        at publicDestination: Public = .$first_public_dest
+    ) -> Entry {
+        Entry(
+            entryDestination: .public(publicDestination),
+            builder: { destination, mode, navigationClient in
+                let viewState: ${MODULE_NAME}DestinationViewState
+
+                switch destination.type {
 EOF
 
 if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .public(let publicDestination):" >> "$MOCK_FILE"
-    echo "                switch publicDestination {" >> "$MOCK_FILE"
+    echo "                case .public(let publicDestination):" >> "$MOCK_FILE"
+    echo "                    switch publicDestination {" >> "$MOCK_FILE"
     for dest in "${PUBLIC_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -1347,24 +1355,25 @@ if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$MOCK_FILE"
-        echo "                    viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$MOCK_FILE"
-        echo "                        viewModel: nil // TODO: Create mock ViewModel" >> "$MOCK_FILE"
+        echo "                    case .$name$let_bindings:" >> "$MOCK_FILE"
+        echo "                        // TODO: Create mock ViewModel" >> "$MOCK_FILE"
+        echo "                        viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$MOCK_FILE"
+        echo "                            viewModel: nil" >> "$MOCK_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$MOCK_FILE"
+                echo "                            , $param_name: $param_name" >> "$MOCK_FILE"
             done
         fi
-        echo "                    ))" >> "$MOCK_FILE"
+        echo "                        ))" >> "$MOCK_FILE"
     done
-    echo "                }" >> "$MOCK_FILE"
+    echo "                    }" >> "$MOCK_FILE"
 fi
 
 if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .internal(let internalDestination):" >> "$MOCK_FILE"
-    echo "                switch internalDestination {" >> "$MOCK_FILE"
+    echo "                case .internal(let internalDestination):" >> "$MOCK_FILE"
+    echo "                    switch internalDestination {" >> "$MOCK_FILE"
     for dest in "${INTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
@@ -1372,72 +1381,58 @@ if [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
         cap_name=$(capitalize "$name")
         let_bindings=$(generate_let_bindings "$params")
         
-        echo "                case .$name$let_bindings:" >> "$MOCK_FILE"
-        echo "                    viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$MOCK_FILE"
-        echo "                        viewModel: nil // TODO: Create mock ViewModel" >> "$MOCK_FILE"
+        echo "                    case .$name$let_bindings:" >> "$MOCK_FILE"
+        echo "                        viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState(" >> "$MOCK_FILE"
+        echo "                            viewModel: nil" >> "$MOCK_FILE"
         if [[ -n "$params" ]]; then
             IFS=',' read -ra param_array <<< "$params"
             for param in "${param_array[@]}"; do
                 param_name=$(echo "$param" | cut -d':' -f1 | xargs)
-                echo "                        , $param_name: $param_name" >> "$MOCK_FILE"
+                echo "                            , $param_name: $param_name" >> "$MOCK_FILE"
             done
         fi
-        echo "                    ))" >> "$MOCK_FILE"
+        echo "                        ))" >> "$MOCK_FILE"
     done
-    echo "                }" >> "$MOCK_FILE"
+    echo "                    }" >> "$MOCK_FILE"
 fi
 
 if [[ ${#EXTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    echo "            case .external(let externalDestination):" >> "$MOCK_FILE"
-    echo "                switch externalDestination {" >> "$MOCK_FILE"
+    echo "                case .external(let externalDestination):" >> "$MOCK_FILE"
+    echo "                    switch externalDestination {" >> "$MOCK_FILE"
     for dest in "${EXTERNAL_DESTINATIONS[@]}"; do
         parsed=$(parse_destination "$dest")
         name=$(echo "$parsed" | cut -d'|' -f1)
         cap_name=$(capitalize "$name")
         
-        echo "                case .$name:" >> "$MOCK_FILE"
-        echo "                    viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState())" >> "$MOCK_FILE"
+        echo "                    case .$name:" >> "$MOCK_FILE"
+        echo "                        viewState = .$name(${MODULE_NAME}${cap_name}DestinationViewState())" >> "$MOCK_FILE"
     done
-    echo "                }" >> "$MOCK_FILE"
+    echo "                    }" >> "$MOCK_FILE"
 fi
 
 cat >> "$MOCK_FILE" << EOF
+                }
+
+                return ${MODULE_NAME}DestinationView(
+                    viewState: viewState,
+                    mode: mode,
+                    client: navigationClient
+                )
             }
-            
-            return ${MODULE_NAME}DestinationView(
-                viewState: viewState,
-                mode: mode,
-                client: navigationClient
-            )
-        }
+        )
     }
 }
 
 // MARK: - SwiftUI Preview
 
-EOF
-
-# Updated preview format for non-namespaced
-first_dest=""
-first_dest_type=""
-if [[ ${#PUBLIC_DESTINATIONS[@]} -gt 0 ]]; then
-    first_dest=$(parse_destination "${PUBLIC_DESTINATIONS[0]}" | cut -d'|' -f1)
-    first_dest_type=".public(.$first_dest)"
-elif [[ ${#INTERNAL_DESTINATIONS[@]} -gt 0 ]]; then
-    first_dest=$(parse_destination "${INTERNAL_DESTINATIONS[0]}" | cut -d'|' -f1)
-    first_dest_type=".internal(.$first_dest)"
-fi
-
-cat >> "$MOCK_FILE" << EOF
 #Preview {
-    let builder = ${MODULE_NAME}Destination.mockBuilder()
+    let entry = ${MODULE_NAME}Destination.mockEntry()
     let rootClient = NavigationClient<RootDestination>.root()
     
     NavigationDestinationView(
         previousClient: rootClient,
-        destination: $first_dest_type,
         mode: .root,
-        builderFunction: builder.buildDestination
+        entry: entry
     )
 }
 EOF
@@ -1528,10 +1523,15 @@ EOF
 
 extension ${MODULE_NAME}Destination {
     @MainActor
-    public static func testBuilder() -> ${MODULE_NAME}DestinationBuilder<Mock${MODULE_NAME}DestinationView> {
-        ${MODULE_NAME}DestinationBuilder { destination, mode, navigationClient in
-            Mock${MODULE_NAME}DestinationView(destination: destination)
-        }
+    static func testEntry(
+        at publicDestination: Public = .$first_public_dest
+    ) -> ModuleEntry<${MODULE_NAME}Destination, Mock${MODULE_NAME}DestinationView> {
+        ModuleEntry(
+            entryDestination: .public(publicDestination),
+            builder: { destination, mode, navigationClient in
+                Mock${MODULE_NAME}DestinationView(destination: destination)
+            }
+        )
     }
 }
 EOF
@@ -1560,10 +1560,11 @@ print_header "Next Steps"
 echo ""
 print_info "1. Replace 'Any?' placeholders with actual ViewModel types"
 print_info "2. Implement view content in each destination view function"
-print_info "3. Add production dependencies to liveBuilder"
-print_info "4. Add mock dependencies to mockBuilder"
-print_info "5. Wire module into parent navigation"
-print_info "6. Test navigation flow in simulator"
+print_info "3. Add Dependencies struct with required clients"
+print_info "4. Wire ViewModels with dependencies in liveEntry"
+print_info "5. Add mock implementations in mockEntry"
+print_info "6. Wire module into parent navigation"
+print_info "7. Test navigation flow in simulator"
 echo ""
 print_info "For more details, see: .claude/skills/ios_modular_navigation/SKILL.md"
 echo ""

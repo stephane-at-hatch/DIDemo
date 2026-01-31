@@ -7,7 +7,6 @@
 
 import AppCoordinator
 import ModularDependencyContainer
-import TestClient
 import SwiftUI
 
 struct ContentView: View {
@@ -18,7 +17,7 @@ struct ContentView: View {
         appDependencies: AppDependencies
     ) {
         let appCoordinatorDependencies = appDependencies.buildChild(AppCoordinator.Dependencies.self)
-        self.appCoordinatorViewModel = .live(dependencies: appCoordinatorDependencies)
+        self.appCoordinatorViewModel = AppCoordinatorViewModel(dependencies: appCoordinatorDependencies)
     }
 
     var body: some View {

@@ -11,6 +11,7 @@ import PackageGeneratorCore
 // MARK: - Configuration
 
 let configuration = PackageConfiguration(
+    appName: "MovieFinder",
     swiftToolsVersion: "5.10",
     supportedPlatforms: [
         .iOS(majorVersion: 17)

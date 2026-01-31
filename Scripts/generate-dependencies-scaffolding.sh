@@ -337,7 +337,7 @@ if [[ "$USE_NAMESPACE" == "true" ]]; then
     DEPS_FILE="$DEPENDENCIES_DIR/${MODULE_NAME}Dependencies.swift"
     
     cat > "$DEPS_FILE" << EOF
-@preconcurrency import ModularDependencyContainer
+import ModularDependencyContainer
 
 extension $NAMESPACE {
     @DependencyRequirements([
@@ -382,7 +382,7 @@ else
     DEPS_FILE="$DEPENDENCIES_DIR/${MODULE_NAME}Dependencies.swift"
     
     cat > "$DEPS_FILE" << EOF
-@preconcurrency import ModularDependencyContainer
+import ModularDependencyContainer
 
 @DependencyRequirements([
 EOF

@@ -1,3 +1,8 @@
-/// Namespace for TabCoordinator module
-/// Use for grouping related types when needed
-public enum TabCoordinator { }
+//
+//  TabCoordinator.swift
+//  TabCoordinator
+//
+//  Created by Stephane Magne
+//
+
+public enum TabCoordinator {}

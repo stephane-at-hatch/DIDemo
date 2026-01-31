@@ -1,15 +1,20 @@
 import ModularNavigation
 import SwiftUI
-import ScreenA
-import ScreenC
-import ScreenD
+
+// MARK: - Destination-Specific ViewStates
+
+extension TabCoordinator {
+    struct MainDestinationViewState {
+        // TODO: Replace with actual ViewModel type
+        let viewModel: Any?
+    }
+
+}
 
 // MARK: - ViewState Enum
 
 extension TabCoordinator {
     enum DestinationViewState {
-        case firstTab(ScreenA.Entry)
-        case secondTab(ScreenC.Entry)
-        case thirdTab(ScreenD.Entry)
+        case main(MainDestinationViewState)
     }
 }

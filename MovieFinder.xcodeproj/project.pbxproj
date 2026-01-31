@@ -8,10 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		261A23E52EFA353A001380F5 /* ModularDependencyContainer in Frameworks */ = {isa = PBXBuildFile; productRef = 261A23E42EFA353A001380F5 /* ModularDependencyContainer */; };
-		261A23E82EFA3547001380F5 /* ModularNavigation in Frameworks */ = {isa = PBXBuildFile; productRef = 261A23E72EFA3547001380F5 /* ModularNavigation */; };
 		267E20F42EFDDE9E00CB88EA /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 267E20F32EFDDE9E00CB88EA /* AppCoordinator */; };
-		26F5F7C52EF9AAE300466046 /* TestClient in Frameworks */ = {isa = PBXBuildFile; productRef = 26F5F7C42EF9AAE300466046 /* TestClient */; };
-		26F5F7E32EF9BA6300466046 /* Logger in Frameworks */ = {isa = PBXBuildFile; productRef = 26F5F7E22EF9BA6300466046 /* Logger */; };
+		26AC6F1A2F2E87660038BD10 /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 26AC6F192F2E87660038BD10 /* AppCoordinator */; };
+		26AC6F1D2F2E87860038BD10 /* ModularDependencyContainer in Frameworks */ = {isa = PBXBuildFile; productRef = 26AC6F1C2F2E87860038BD10 /* ModularDependencyContainer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,11 +46,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				261A23E82EFA3547001380F5 /* ModularNavigation in Frameworks */,
+				26AC6F1D2F2E87860038BD10 /* ModularDependencyContainer in Frameworks */,
+				26AC6F1A2F2E87660038BD10 /* AppCoordinator in Frameworks */,
 				261A23E52EFA353A001380F5 /* ModularDependencyContainer in Frameworks */,
-				26F5F7E32EF9BA6300466046 /* Logger in Frameworks */,
 				267E20F42EFDDE9E00CB88EA /* AppCoordinator in Frameworks */,
-				26F5F7C52EF9AAE300466046 /* TestClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -104,11 +102,10 @@
 			);
 			name = MovieFinder;
 			packageProductDependencies = (
-				26F5F7C42EF9AAE300466046 /* TestClient */,
-				26F5F7E22EF9BA6300466046 /* Logger */,
 				261A23E42EFA353A001380F5 /* ModularDependencyContainer */,
-				261A23E72EFA3547001380F5 /* ModularNavigation */,
 				267E20F32EFDDE9E00CB88EA /* AppCoordinator */,
+				26AC6F192F2E87660038BD10 /* AppCoordinator */,
+				26AC6F1C2F2E87860038BD10 /* ModularDependencyContainer */,
 			);
 			productName = MovieFinder;
 			productReference = 261324572EF647CD005114C0 /* MovieFinder.app */;
@@ -166,10 +163,8 @@
 			mainGroup = 2613244E2EF647CD005114C0;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				26F5F7C32EF9AAE300466046 /* XCLocalSwiftPackageReference "Modules/Clients/TestClient" */,
-				26F5F7E12EF9BA6300466046 /* XCLocalSwiftPackageReference "Modules/Clients/Logger" */,
-				261A23E32EFA353A001380F5 /* XCLocalSwiftPackageReference "Modules/Utilities/ModularDependencyContainer" */,
-				267E20F22EFDDE9E00CB88EA /* XCLocalSwiftPackageReference "Modules/Coordinators/AppCoordinator" */,
+				26AC6F182F2E87660038BD10 /* XCLocalSwiftPackageReference "Modules/Coordinators/AppCoordinator" */,
+				26AC6F1B2F2E87860038BD10 /* XCLocalSwiftPackageReference "Modules/Utilities/ModularDependencyContainer" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 261324582EF647CD005114C0 /* Products */;
@@ -497,21 +492,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		261A23E32EFA353A001380F5 /* XCLocalSwiftPackageReference "Modules/Utilities/ModularDependencyContainer" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Modules/Utilities/ModularDependencyContainer;
-		};
-		267E20F22EFDDE9E00CB88EA /* XCLocalSwiftPackageReference "Modules/Coordinators/AppCoordinator" */ = {
+		26AC6F182F2E87660038BD10 /* XCLocalSwiftPackageReference "Modules/Coordinators/AppCoordinator" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Modules/Coordinators/AppCoordinator;
 		};
-		26F5F7C32EF9AAE300466046 /* XCLocalSwiftPackageReference "Modules/Clients/TestClient" */ = {
+		26AC6F1B2F2E87860038BD10 /* XCLocalSwiftPackageReference "Modules/Utilities/ModularDependencyContainer" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = Modules/Clients/TestClient;
-		};
-		26F5F7E12EF9BA6300466046 /* XCLocalSwiftPackageReference "Modules/Clients/Logger" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Modules/Clients/Logger;
+			relativePath = Modules/Utilities/ModularDependencyContainer;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -520,21 +507,17 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = ModularDependencyContainer;
 		};
-		261A23E72EFA3547001380F5 /* ModularNavigation */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = ModularNavigation;
-		};
 		267E20F32EFDDE9E00CB88EA /* AppCoordinator */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AppCoordinator;
 		};
-		26F5F7C42EF9AAE300466046 /* TestClient */ = {
+		26AC6F192F2E87660038BD10 /* AppCoordinator */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = TestClient;
+			productName = AppCoordinator;
 		};
-		26F5F7E22EF9BA6300466046 /* Logger */ = {
+		26AC6F1C2F2E87860038BD10 /* ModularDependencyContainer */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = Logger;
+			productName = ModularDependencyContainer;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

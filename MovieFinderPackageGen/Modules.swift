@@ -16,16 +16,16 @@ extension Module {
 
     // MARK: Clients
 
-    static var logger: Module {
+    static var imageLoader: Module {
         Module(
-            name: "Logger",
+            name: "ImageLoader",
             type: .client
         )
     }
 
-    static var testClient: Module {
+    static var tmdbClient: Module {
         Module(
-            name: "TestClient",
+            name: "TMDBClient",
             type: .client
         )
     }
@@ -45,6 +45,22 @@ extension Module {
             name: "TabCoordinator",
             type: .coordinator,
             targets: [.main]
+        )
+    }
+
+    // MARK: Domains
+
+    static var movieDomain: Module {
+        Module(
+            name: "MovieDomain",
+            type: .client
+        )
+    }
+
+    static var watchlistDomain: Module {
+        Module(
+            name: "WatchlistDomain",
+            type: .client
         )
     }
 
@@ -68,30 +84,30 @@ extension Module {
 
     // MARK: Screens
 
-    static var screenA: Module {
+    static var boxOfficeScreen: Module {
         Module(
-            name: "ScreenA",
+            name: "BoxOfficeScreen",
             type: .screen
         )
     }
 
-    static var screenB: Module {
+    static var detailScreen: Module {
         Module(
-            name: "ScreenB",
+            name: "DetailScreen",
             type: .screen
         )
     }
 
-    static var screenC: Module {
+    static var discoverScreen: Module {
         Module(
-            name: "ScreenC",
+            name: "DiscoverScreen",
             type: .screen
         )
     }
 
-    static var screenD: Module {
+    static var watchlistScreen: Module {
         Module(
-            name: "ScreenD",
+            name: "WatchlistScreen",
             type: .screen
         )
     }
@@ -109,6 +125,14 @@ extension Module {
         Module(
             name: "ModularNavigation",
             type: .utility
+        )
+    }
+
+    static var sharedUI: Module {
+        Module(
+            name: "SharedUI",
+            type: .utility,
+            hasTests: false
         )
     }
 

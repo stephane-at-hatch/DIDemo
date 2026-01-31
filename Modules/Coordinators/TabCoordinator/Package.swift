@@ -13,9 +13,9 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../Utilities/ModularDependencyContainer"),
-        .package(path: "../../Screens/ScreenA"),
-        .package(path: "../../Screens/ScreenC"),
-        .package(path: "../../Screens/ScreenD"),
+        .package(path: "../../Screens/BoxOfficeScreen"),
+        .package(path: "../../Screens/DiscoverScreen"),
+        .package(path: "../../Screens/WatchlistScreen"),
         .package(path: "../../Utilities/ModularNavigation")
     ],
     targets: [
@@ -23,9 +23,9 @@ let package = Package(
             name: "TabCoordinator",
             dependencies: [
                 .product(name: "ModularDependencyContainer", package: "ModularDependencyContainer"),
-                .product(name: "ScreenA", package: "ScreenA"),
-                .product(name: "ScreenC", package: "ScreenC"),
-                .product(name: "ScreenD", package: "ScreenD"),
+                .product(name: "BoxOfficeScreen", package: "BoxOfficeScreen"),
+                .product(name: "DiscoverScreen", package: "DiscoverScreen"),
+                .product(name: "WatchlistScreen", package: "WatchlistScreen"),
                 .product(name: "ModularNavigation", package: "ModularNavigation")
             ],
             swiftSettings: swiftSettings

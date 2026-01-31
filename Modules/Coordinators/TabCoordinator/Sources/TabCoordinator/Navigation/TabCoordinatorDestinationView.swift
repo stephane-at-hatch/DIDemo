@@ -19,25 +19,17 @@ public extension TabCoordinator {
         
         public var body: some View {
             switch viewState {
-            case .firstTab(let entry):
-                NavigationDestinationView(
-                    previousClient: client,
-                    mode: mode,
-                    entry: entry
-                )
-            case .secondTab(let entry):
-                NavigationDestinationView(
-                    previousClient: client,
-                    mode: mode,
-                    entry: entry
-                )
-            case .thirdTab(let entry):
-                NavigationDestinationView(
-                    previousClient: client,
-                    mode: mode,
-                    entry: entry
-                )
+            case .main(let model):
+                mainView(model)
             }
         }
+        
+        // MARK: - Destination Views
+        
+        func mainView(_ model: MainDestinationViewState) -> some View {
+            // TODO: Implement main view
+            Text("main View")
+        }
+
     }
 }

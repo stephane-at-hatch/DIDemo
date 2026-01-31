@@ -15,6 +15,7 @@ digraph ModuleDependencies {
 
         ModularDependencyContainer [label="ModularDependencyContainer", fillcolor="#ccccf0"];
         ModularNavigation [label="ModularNavigation", fillcolor="#ccccf0"];
+        SharedUI [label="SharedUI", fillcolor="#ccccf0"];
         UIComponents [label="UIComponents", fillcolor="#ccccf0"];
     }
 
@@ -23,8 +24,10 @@ digraph ModuleDependencies {
         style=filled;
         color="#e8f4f8";
 
-        Logger [label="Logger", fillcolor="#cce7f0"];
-        TestClient [label="TestClient", fillcolor="#cce7f0"];
+        ImageLoader [label="ImageLoader", fillcolor="#cce7f0"];
+        MovieDomain [label="MovieDomain", fillcolor="#cce7f0"];
+        TMDBClient [label="TMDBClient", fillcolor="#cce7f0"];
+        WatchlistDomain [label="WatchlistDomain", fillcolor="#cce7f0"];
     }
 
     subgraph cluster_screens {
@@ -32,10 +35,10 @@ digraph ModuleDependencies {
         style=filled;
         color="#f8f4e8";
 
-        ScreenA [label="ScreenA", fillcolor="#f0e7cc"];
-        ScreenB [label="ScreenB", fillcolor="#f0e7cc"];
-        ScreenC [label="ScreenC", fillcolor="#f0e7cc"];
-        ScreenD [label="ScreenD", fillcolor="#f0e7cc"];
+        BoxOfficeScreen [label="BoxOfficeScreen", fillcolor="#f0e7cc"];
+        DetailScreen [label="DetailScreen", fillcolor="#f0e7cc"];
+        DiscoverScreen [label="DiscoverScreen", fillcolor="#f0e7cc"];
+        WatchlistScreen [label="WatchlistScreen", fillcolor="#f0e7cc"];
     }
 
     subgraph cluster_coordinators {
@@ -66,33 +69,48 @@ digraph ModuleDependencies {
 
     // Dependencies
     Modules -> ModularDependencyContainer;
-    Modules -> Logger;
-    Modules -> TestClient;
+    Modules -> TMDBClient;
+    Modules -> ImageLoader;
+    Modules -> MovieDomain;
+    Modules -> WatchlistDomain;
     Modules -> AppCoordinator;
     AppCoordinator -> ModularDependencyContainer;
     AppCoordinator -> TabCoordinator;
     TabCoordinator -> ModularDependencyContainer;
-    TabCoordinator -> ScreenA;
-    TabCoordinator -> ScreenC;
-    TabCoordinator -> ScreenD;
+    TabCoordinator -> BoxOfficeScreen;
+    TabCoordinator -> DiscoverScreen;
+    TabCoordinator -> WatchlistScreen;
     TabCoordinator -> ModularNavigation;
-    ScreenA -> ModularDependencyContainer;
-    ScreenA -> ModularNavigation;
-    ScreenA -> ScreenB;
-    ScreenA -> Logger;
-    ScreenA -> TestClient;
-    ScreenA -> UIComponents;
-    ScreenB -> ModularDependencyContainer;
-    ScreenB -> ModularNavigation;
-    ScreenB -> Logger;
-    ScreenB -> TestClient;
-    ScreenB -> UIComponents;
-    ScreenC -> ModularDependencyContainer;
-    ScreenC -> ModularNavigation;
-    ScreenC -> UIComponents;
-    ScreenD -> ModularDependencyContainer;
-    ScreenD -> ModularNavigation;
-    ScreenD -> UIComponents;
+    BoxOfficeScreen -> ModularDependencyContainer;
+    BoxOfficeScreen -> ModularNavigation;
+    BoxOfficeScreen -> MovieDomain;
+    BoxOfficeScreen -> ImageLoader;
+    BoxOfficeScreen -> DetailScreen;
+    BoxOfficeScreen -> UIComponents;
+    BoxOfficeScreen -> SharedUI;
+    DiscoverScreen -> ModularDependencyContainer;
+    DiscoverScreen -> ModularNavigation;
+    DiscoverScreen -> MovieDomain;
+    DiscoverScreen -> ImageLoader;
+    DiscoverScreen -> DetailScreen;
+    DiscoverScreen -> UIComponents;
+    DiscoverScreen -> SharedUI;
+    DetailScreen -> ModularDependencyContainer;
+    DetailScreen -> ModularNavigation;
+    DetailScreen -> MovieDomain;
+    DetailScreen -> WatchlistDomain;
+    DetailScreen -> ImageLoader;
+    DetailScreen -> UIComponents;
+    DetailScreen -> SharedUI;
+    WatchlistScreen -> ModularDependencyContainer;
+    WatchlistScreen -> ModularNavigation;
+    WatchlistScreen -> WatchlistDomain;
+    WatchlistScreen -> ImageLoader;
+    WatchlistScreen -> DetailScreen;
+    WatchlistScreen -> UIComponents;
+    WatchlistScreen -> SharedUI;
+    MovieDomain -> TMDBClient;
     ModularDependencyContainer -> DependencyRequirementsMacro;
+    SharedUI -> ImageLoader;
     UIComponents -> CopyableMacro;
 }

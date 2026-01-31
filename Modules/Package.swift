@@ -10,8 +10,10 @@ let package = Package(
         .package(path: "Utilities/ModularDependencyContainer"),
 
         // Clients
-        .package(path: "Clients/Logger"),
-        .package(path: "Clients/TestClient"),
+        .package(path: "Clients/ImageLoader"),
+        .package(path: "Clients/MovieDomain"),
+        .package(path: "Clients/TMDBClient"),
+        .package(path: "Clients/WatchlistDomain"),
 
         // Coordinators
         .package(path: "Coordinators/AppCoordinator")
@@ -31,8 +33,10 @@ let package = Package(
                 .product(name: "ModularDependencyContainer", package: "ModularDependencyContainer"),
 
                 // Clients
-                .product(name: "Logger", package: "Logger"),
-                .product(name: "TestClient", package: "TestClient"),
+                .product(name: "ImageLoader", package: "ImageLoader"),
+                .product(name: "MovieDomain", package: "MovieDomain"),
+                .product(name: "TMDBClient", package: "TMDBClient"),
+                .product(name: "WatchlistDomain", package: "WatchlistDomain"),
 
                 // Coordinators
                 .product(name: "AppCoordinator", package: "AppCoordinator")

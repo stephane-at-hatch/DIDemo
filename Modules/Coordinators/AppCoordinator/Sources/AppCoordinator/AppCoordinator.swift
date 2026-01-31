@@ -1,3 +1,8 @@
-/// Namespace for AppCoordinator module
-/// Use for grouping related types when needed
-public enum AppCoordinator { }
+//
+//  AppCoordinator.swift
+//  AppCoordinator
+//
+//  Created by Stephane Magne
+//
+
+public enum AppCoordinator {}
