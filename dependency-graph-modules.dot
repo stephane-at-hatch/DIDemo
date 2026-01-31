@@ -1,0 +1,98 @@
+digraph ModuleDependencies {
+    rankdir=TB;
+    ranksep=1.6;
+    nodesep=0.8;
+    pad=0.5;
+    compound=true;
+    concentrate=true;
+    splines=spline;
+    node [shape=box, style=filled, fontname="Helvetica"];
+
+    subgraph cluster_utilities {
+        label="Utilities";
+        style=filled;
+        color="#e8e8f8";
+
+        ModularDependencyContainer [label="ModularDependencyContainer", fillcolor="#ccccf0"];
+        ModularNavigation [label="ModularNavigation", fillcolor="#ccccf0"];
+        UIComponents [label="UIComponents", fillcolor="#ccccf0"];
+    }
+
+    subgraph cluster_clients {
+        label="Clients";
+        style=filled;
+        color="#e8f4f8";
+
+        Logger [label="Logger", fillcolor="#cce7f0"];
+        TestClient [label="TestClient", fillcolor="#cce7f0"];
+    }
+
+    subgraph cluster_screens {
+        label="Screens";
+        style=filled;
+        color="#f8f4e8";
+
+        ScreenA [label="ScreenA", fillcolor="#f0e7cc"];
+        ScreenB [label="ScreenB", fillcolor="#f0e7cc"];
+        ScreenC [label="ScreenC", fillcolor="#f0e7cc"];
+        ScreenD [label="ScreenD", fillcolor="#f0e7cc"];
+    }
+
+    subgraph cluster_coordinators {
+        label="Coordinators";
+        style=filled;
+        color="#f8e8f4";
+
+        AppCoordinator [label="AppCoordinator", fillcolor="#f0cce7"];
+        TabCoordinator [label="TabCoordinator", fillcolor="#f0cce7"];
+    }
+
+    subgraph cluster_macros {
+        label="Macros";
+        style=filled;
+        color="#f4f8e8";
+
+        CopyableMacro [label="CopyableMacro", fillcolor="#e7f0cc"];
+        DependencyRequirementsMacro [label="DependencyRequirementsMacro", fillcolor="#e7f0cc"];
+    }
+
+    subgraph cluster_root {
+        label="Root";
+        style=filled;
+        color="#f0f0f0";
+
+        Modules [label="Modules", fillcolor="#e0e0e0"];
+    }
+
+    // Dependencies
+    Modules -> ModularDependencyContainer;
+    Modules -> Logger;
+    Modules -> TestClient;
+    Modules -> AppCoordinator;
+    AppCoordinator -> ModularDependencyContainer;
+    AppCoordinator -> TabCoordinator;
+    TabCoordinator -> ModularDependencyContainer;
+    TabCoordinator -> ScreenA;
+    TabCoordinator -> ScreenC;
+    TabCoordinator -> ScreenD;
+    TabCoordinator -> ModularNavigation;
+    ScreenA -> ModularDependencyContainer;
+    ScreenA -> ModularNavigation;
+    ScreenA -> ScreenB;
+    ScreenA -> Logger;
+    ScreenA -> TestClient;
+    ScreenA -> UIComponents;
+    ScreenB -> ModularDependencyContainer;
+    ScreenB -> ModularNavigation;
+    ScreenB -> Logger;
+    ScreenB -> TestClient;
+    ScreenB -> UIComponents;
+    ScreenC -> ModularDependencyContainer;
+    ScreenC -> ModularNavigation;
+    ScreenC -> UIComponents;
+    ScreenD -> ModularDependencyContainer;
+    ScreenD -> ModularNavigation;
+    ScreenD -> UIComponents;
+    ModularDependencyContainer -> DependencyRequirementsMacro;
+    UIComponents -> CopyableMacro;
+}

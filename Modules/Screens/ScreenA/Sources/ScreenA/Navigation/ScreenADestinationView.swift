@@ -1,0 +1,34 @@
+import ScreenB
+import ModularNavigation
+import SwiftUI
+
+extension ScreenA {
+    public struct DestinationView: View {
+        let viewState: DestinationViewState
+        let mode: NavigationMode
+        let client: NavigationClient<Destination>
+
+        init(
+            viewState: DestinationViewState,
+            mode: NavigationMode,
+            client: NavigationClient<Destination>
+        ) {
+            self.viewState = viewState
+            self.mode = mode
+            self.client = client
+        }
+
+        public var body: some View {
+            switch viewState {
+            case .main(let viewModel):
+                ScreenARootView(viewModel: viewModel)
+            case .screenB(let entry):
+                NavigationDestinationView(
+                    previousClient: client,
+                    mode: mode,
+                    entry: entry
+                )
+            }
+        }
+    }
+}

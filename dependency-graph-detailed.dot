@@ -1,0 +1,194 @@
+digraph ModuleDependencies {
+    rankdir=TB;
+    ranksep=1.6;
+    nodesep=0.8;
+    pad=0.5;
+    compound=true;
+    concentrate=true;
+    splines=spline;
+    node [shape=box, style=filled, fontname="Helvetica"];
+    edge [fontname="Helvetica", fontsize=10];
+
+    subgraph cluster_utilities {
+        label="Utilities";
+        style=filled;
+        color="#e8e8f8";
+
+        subgraph cluster_ModularDependencyContainer {
+            label="ModularDependencyContainer";
+            style=rounded;
+            color="#666666";
+        
+            ModularDependencyContainer_main [label="main", fillcolor="#ccccf0"];
+        }
+        subgraph cluster_ModularNavigation {
+            label="ModularNavigation";
+            style=rounded;
+            color="#666666";
+        
+            ModularNavigation_main [label="main", fillcolor="#ccccf0"];
+        }
+        subgraph cluster_UIComponents {
+            label="UIComponents";
+            style=rounded;
+            color="#666666";
+        
+            UIComponents_main [label="main", fillcolor="#ccccf0"];
+        }
+    }
+
+    subgraph cluster_clients {
+        label="Clients";
+        style=filled;
+        color="#e8f4f8";
+
+        subgraph cluster_Logger {
+            label="Logger";
+            style=rounded;
+            color="#666666";
+        
+            Logger_main [label="main", fillcolor="#cce7f0"];
+            Logger_interface [label="Interface", fillcolor="#cce7f0"];
+        }
+        subgraph cluster_TestClient {
+            label="TestClient";
+            style=rounded;
+            color="#666666";
+        
+            TestClient_main [label="main", fillcolor="#cce7f0"];
+            TestClient_interface [label="Interface", fillcolor="#cce7f0"];
+        }
+    }
+
+    subgraph cluster_screens {
+        label="Screens";
+        style=filled;
+        color="#f8f4e8";
+
+        subgraph cluster_ScreenA {
+            label="ScreenA";
+            style=rounded;
+            color="#666666";
+        
+            ScreenA_main [label="main", fillcolor="#f0e7cc"];
+            ScreenA_views [label="Views", fillcolor="#f0e7cc"];
+        }
+        subgraph cluster_ScreenB {
+            label="ScreenB";
+            style=rounded;
+            color="#666666";
+        
+            ScreenB_main [label="main", fillcolor="#f0e7cc"];
+            ScreenB_views [label="Views", fillcolor="#f0e7cc"];
+        }
+        subgraph cluster_ScreenC {
+            label="ScreenC";
+            style=rounded;
+            color="#666666";
+        
+            ScreenC_main [label="main", fillcolor="#f0e7cc"];
+            ScreenC_views [label="Views", fillcolor="#f0e7cc"];
+        }
+        subgraph cluster_ScreenD {
+            label="ScreenD";
+            style=rounded;
+            color="#666666";
+        
+            ScreenD_main [label="main", fillcolor="#f0e7cc"];
+            ScreenD_views [label="Views", fillcolor="#f0e7cc"];
+        }
+    }
+
+    subgraph cluster_coordinators {
+        label="Coordinators";
+        style=filled;
+        color="#f8e8f4";
+
+        subgraph cluster_AppCoordinator {
+            label="AppCoordinator";
+            style=rounded;
+            color="#666666";
+        
+            AppCoordinator_main [label="main", fillcolor="#f0cce7"];
+        }
+        subgraph cluster_TabCoordinator {
+            label="TabCoordinator";
+            style=rounded;
+            color="#666666";
+        
+            TabCoordinator_main [label="main", fillcolor="#f0cce7"];
+        }
+    }
+
+    subgraph cluster_macros {
+        label="Macros";
+        style=filled;
+        color="#f4f8e8";
+
+        subgraph cluster_CopyableMacro {
+            label="CopyableMacro";
+            style=rounded;
+            color="#666666";
+        
+            CopyableMacro_main [label="main", fillcolor="#e7f0cc"];
+            CopyableMacro_impl [label="Implementation", fillcolor="#e7f0cc"];
+        }
+        subgraph cluster_DependencyRequirementsMacro {
+            label="DependencyRequirementsMacro";
+            style=rounded;
+            color="#666666";
+        
+            DependencyRequirementsMacro_main [label="main", fillcolor="#e7f0cc"];
+            DependencyRequirementsMacro_impl [label="Implementation", fillcolor="#e7f0cc"];
+        }
+    }
+
+    subgraph cluster_root {
+        label="Root";
+        style=filled;
+        color="#f0f0f0";
+
+        subgraph cluster_Modules {
+            label="Modules";
+            style=rounded;
+            color="#666666";
+        
+            Modules_main [label="main", fillcolor="#e0e0e0"];
+        }
+    }
+
+    // Dependencies
+    Modules_main -> ModularDependencyContainer_main;
+    Modules_main -> Logger_main;
+    Modules_main -> TestClient_main;
+    Modules_main -> AppCoordinator_main;
+    AppCoordinator_main -> ModularDependencyContainer_main;
+    AppCoordinator_main -> TabCoordinator_main;
+    TabCoordinator_main -> ModularDependencyContainer_main;
+    TabCoordinator_main -> ScreenA_main;
+    TabCoordinator_main -> ScreenC_main;
+    TabCoordinator_main -> ScreenD_main;
+    TabCoordinator_main -> ModularNavigation_main;
+    ScreenA_main -> ModularDependencyContainer_main;
+    ScreenA_main -> ModularNavigation_main;
+    ScreenA_main -> ScreenB_main;
+    ScreenA_main -> Logger_main;
+    ScreenA_main -> TestClient_interface;
+    ScreenA_views -> UIComponents_main;
+    ScreenA_views -> TestClient_interface;
+    ScreenB_main -> ModularDependencyContainer_main;
+    ScreenB_main -> ModularNavigation_main;
+    ScreenB_main -> Logger_main;
+    ScreenB_main -> TestClient_interface;
+    ScreenB_views -> UIComponents_main;
+    ScreenB_views -> Logger_interface;
+    ScreenB_views -> TestClient_interface;
+    ScreenC_main -> ModularDependencyContainer_main;
+    ScreenC_main -> ModularNavigation_main;
+    ScreenC_views -> UIComponents_main;
+    ScreenD_main -> ModularDependencyContainer_main;
+    ScreenD_main -> ModularNavigation_main;
+    ScreenD_views -> UIComponents_main;
+    ModularDependencyContainer_main -> DependencyRequirementsMacro_main;
+    UIComponents_main -> CopyableMacro_main;
+}
