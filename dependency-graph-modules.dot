@@ -76,6 +76,7 @@ digraph ModuleDependencies {
     Modules -> AppCoordinator;
     AppCoordinator -> ModularDependencyContainer;
     AppCoordinator -> TabCoordinator;
+    AppCoordinator -> TMDBClient;
     TabCoordinator -> ModularDependencyContainer;
     TabCoordinator -> BoxOfficeScreen;
     TabCoordinator -> DiscoverScreen;

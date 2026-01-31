@@ -8,6 +8,7 @@
 import AppCoordinator
 import ModularDependencyContainer
 import SwiftUI
+import TMDBClientInterface
 
 struct ContentView: View {
 
@@ -16,7 +17,13 @@ struct ContentView: View {
     init(
         appDependencies: AppDependencies
     ) {
-        let appCoordinatorDependencies = appDependencies.buildChild(AppCoordinator.Dependencies.self)
+        let appCoordinatorDependencies = appDependencies.buildChild(
+            AppCoordinator.Dependencies.self,
+            configure: { builder in
+                let tmdbConfiguration = TMDBConfiguration(apiReadAccessToken: "YOUR_API_KEY_HERE")
+                builder.provideInput(TMDBConfiguration.self, tmdbConfiguration)
+            }
+        )
         self.appCoordinatorViewModel = AppCoordinatorViewModel(dependencies: appCoordinatorDependencies)
     }
 

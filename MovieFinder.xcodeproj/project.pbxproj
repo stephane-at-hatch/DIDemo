@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		261A23E52EFA353A001380F5 /* ModularDependencyContainer in Frameworks */ = {isa = PBXBuildFile; productRef = 261A23E42EFA353A001380F5 /* ModularDependencyContainer */; };
+		2677CE952F2EBE7B008B2C04 /* TMDBClientInterface in Frameworks */ = {isa = PBXBuildFile; productRef = 2677CE942F2EBE7B008B2C04 /* TMDBClientInterface */; };
 		267E20F42EFDDE9E00CB88EA /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 267E20F32EFDDE9E00CB88EA /* AppCoordinator */; };
 		26AC6F1A2F2E87660038BD10 /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 26AC6F192F2E87660038BD10 /* AppCoordinator */; };
 		26AC6F1D2F2E87860038BD10 /* ModularDependencyContainer in Frameworks */ = {isa = PBXBuildFile; productRef = 26AC6F1C2F2E87860038BD10 /* ModularDependencyContainer */; };
@@ -48,6 +49,7 @@
 			files = (
 				26AC6F1D2F2E87860038BD10 /* ModularDependencyContainer in Frameworks */,
 				26AC6F1A2F2E87660038BD10 /* AppCoordinator in Frameworks */,
+				2677CE952F2EBE7B008B2C04 /* TMDBClientInterface in Frameworks */,
 				261A23E52EFA353A001380F5 /* ModularDependencyContainer in Frameworks */,
 				267E20F42EFDDE9E00CB88EA /* AppCoordinator in Frameworks */,
 			);
@@ -68,6 +70,7 @@
 			children = (
 				261324592EF647CD005114C0 /* MovieFinder */,
 				261324672EF647CE005114C0 /* MovieFinderTests */,
+				2677CE912F2EBE61008B2C04 /* Frameworks */,
 				261324582EF647CD005114C0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -79,6 +82,13 @@
 				261324642EF647CE005114C0 /* MovieFinderTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2677CE912F2EBE61008B2C04 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -106,6 +116,7 @@
 				267E20F32EFDDE9E00CB88EA /* AppCoordinator */,
 				26AC6F192F2E87660038BD10 /* AppCoordinator */,
 				26AC6F1C2F2E87860038BD10 /* ModularDependencyContainer */,
+				2677CE942F2EBE7B008B2C04 /* TMDBClientInterface */,
 			);
 			productName = MovieFinder;
 			productReference = 261324572EF647CD005114C0 /* MovieFinder.app */;
@@ -165,6 +176,7 @@
 			packageReferences = (
 				26AC6F182F2E87660038BD10 /* XCLocalSwiftPackageReference "Modules/Coordinators/AppCoordinator" */,
 				26AC6F1B2F2E87860038BD10 /* XCLocalSwiftPackageReference "Modules/Utilities/ModularDependencyContainer" */,
+				2677CE8E2F2EBE47008B2C04 /* XCLocalSwiftPackageReference "Modules/Clients/TMDBClient" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 261324582EF647CD005114C0 /* Products */;
@@ -492,6 +504,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		2677CE8E2F2EBE47008B2C04 /* XCLocalSwiftPackageReference "Modules/Clients/TMDBClient" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Modules/Clients/TMDBClient;
+		};
 		26AC6F182F2E87660038BD10 /* XCLocalSwiftPackageReference "Modules/Coordinators/AppCoordinator" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Modules/Coordinators/AppCoordinator;
@@ -506,6 +522,11 @@
 		261A23E42EFA353A001380F5 /* ModularDependencyContainer */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ModularDependencyContainer;
+		};
+		2677CE942F2EBE7B008B2C04 /* TMDBClientInterface */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2677CE8E2F2EBE47008B2C04 /* XCLocalSwiftPackageReference "Modules/Clients/TMDBClient" */;
+			productName = TMDBClientInterface;
 		};
 		267E20F32EFDDE9E00CB88EA /* AppCoordinator */ = {
 			isa = XCSwiftPackageProductDependency;

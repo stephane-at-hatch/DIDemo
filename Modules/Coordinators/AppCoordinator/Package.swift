@@ -13,14 +13,16 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../Utilities/ModularDependencyContainer"),
-        .package(path: "../TabCoordinator")
+        .package(path: "../TabCoordinator"),
+        .package(path: "../../Clients/TMDBClient")
     ],
     targets: [
         .target(
             name: "AppCoordinator",
             dependencies: [
                 .product(name: "ModularDependencyContainer", package: "ModularDependencyContainer"),
-                .product(name: "TabCoordinator", package: "TabCoordinator")
+                .product(name: "TabCoordinator", package: "TabCoordinator"),
+                .product(name: "TMDBClient", package: "TMDBClient")
             ],
             swiftSettings: swiftSettings
         ),
