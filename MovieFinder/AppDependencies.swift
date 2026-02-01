@@ -9,9 +9,4 @@ import TMDBClientInterface
 import ModularDependencyContainer
 
 @DependencyRequirements()
-public struct AppDependencies: DependencyRequirements {
-//    public static func registerDependencies(in builder: DependencyBuilder<AppDependencies>) {
-//        let tmdbConfiguration = TMDBConfiguration(apiReadAccessToken: "YOUR_API_KEY_HERE")
-//        builder.provideInput(TMDBConfiguration.self, tmdbConfiguration)
-//    }
-}
+public struct AppDependencies: DependencyRequirements {}

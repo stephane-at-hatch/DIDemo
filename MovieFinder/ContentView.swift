@@ -20,7 +20,7 @@ struct ContentView: View {
         let appCoordinatorDependencies = appDependencies.buildChild(
             AppCoordinator.Dependencies.self,
             configure: { builder in
-                let tmdbConfiguration = TMDBConfiguration(apiReadAccessToken: "YOUR_API_KEY_HERE")
+                let tmdbConfiguration = TMDBConfiguration(apiReadAccessToken: AppSecrets.tmdbAPIReadAccessToken)
                 builder.provideInput(TMDBConfiguration.self, tmdbConfiguration)
             }
         )

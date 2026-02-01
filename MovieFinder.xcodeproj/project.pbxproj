@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		261A23E52EFA353A001380F5 /* ModularDependencyContainer in Frameworks */ = {isa = PBXBuildFile; productRef = 261A23E42EFA353A001380F5 /* ModularDependencyContainer */; };
+		26681DFC2F300FDC00DF250F /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 26681DFB2F300FDC00DF250F /* Secrets.xcconfig */; };
 		2677CE952F2EBE7B008B2C04 /* TMDBClientInterface in Frameworks */ = {isa = PBXBuildFile; productRef = 2677CE942F2EBE7B008B2C04 /* TMDBClientInterface */; };
 		2677CEA22F2ECB87008B2C04 /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 2677CEA12F2ECB87008B2C04 /* AppCoordinator */; };
 		267E20F42EFDDE9E00CB88EA /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 267E20F32EFDDE9E00CB88EA /* AppCoordinator */; };
@@ -27,6 +28,7 @@
 /* Begin PBXFileReference section */
 		261324572EF647CD005114C0 /* MovieFinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovieFinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		261324642EF647CE005114C0 /* MovieFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MovieFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		26681DFB2F300FDC00DF250F /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -72,6 +74,7 @@
 				261324672EF647CE005114C0 /* MovieFinderTests */,
 				2677CE912F2EBE61008B2C04 /* Frameworks */,
 				261324582EF647CD005114C0 /* Products */,
+				26681DFB2F300FDC00DF250F /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -194,6 +197,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26681DFC2F300FDC00DF250F /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +260,7 @@
 /* Begin XCBuildConfiguration section */
 		261324762EF647CE005114C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 26681DFB2F300FDC00DF250F /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -320,6 +325,7 @@
 		};
 		261324772EF647CE005114C0 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 26681DFB2F300FDC00DF250F /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

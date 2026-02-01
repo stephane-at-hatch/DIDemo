@@ -61,6 +61,8 @@ playground.xcworkspace
 .env.*
 *.xcconfig
 !*.xcconfig.template
+AppSecrets.swift
+!AppSecrets.swift.template
 .netrc
 
 # IDE
