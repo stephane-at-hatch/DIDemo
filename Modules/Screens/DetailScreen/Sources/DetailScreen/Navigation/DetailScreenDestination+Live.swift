@@ -1,8 +1,7 @@
 import ModularNavigation
-import DetailScreen
 import SwiftUI
 
-public extension BoxOfficeScreen {
+public extension DetailScreen {
     @MainActor
     static func liveEntry(
         at publicDestination: Destination.Public,
@@ -16,23 +15,13 @@ public extension BoxOfficeScreen {
                 switch destination.type {
                 case .public(let publicDestination):
                     switch publicDestination {
-                    case .main:
-                        let viewModel = BoxOfficeViewModel(
+                    case .detail(let movieId):
+                        let viewModel = DetailViewModel(
+                            movieId: movieId,
                             movieRepository: dependencies.movieRepository,
                             imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL
                         )
-                        viewState = .main(viewModel)
-                    }
-
-                case .external(let externalDestination):
-                    switch externalDestination {
-                    case .detail(let movieId):
-                        let detailDependencies = dependencies.buildChild(DetailScreen.Dependencies.self)
-                        let entry = DetailScreen.liveEntry(
-                            at: .detail(movieId: movieId),
-                            dependencies: detailDependencies
-                        )
-                        viewState = .detail(DetailDestinationViewState(entry: entry))
+                        viewState = .detail(viewModel)
                     }
                 }
 

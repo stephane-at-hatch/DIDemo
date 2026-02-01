@@ -1,8 +1,7 @@
 import ModularNavigation
-import DetailScreen
 import SwiftUI
 
-public extension BoxOfficeScreen {
+public extension DetailScreen {
     struct DestinationView: View {
         let viewState: DestinationViewState
         let mode: NavigationMode
@@ -20,29 +19,19 @@ public extension BoxOfficeScreen {
 
         public var body: some View {
             switch viewState {
-            case .main(let viewModel):
-                mainView(viewModel)
-            case .detail(let model):
-                detailView(model)
+            case .detail(let viewModel):
+                detailView(viewModel)
             }
         }
 
         // MARK: - Destination Views
 
-        func mainView(_ viewModel: BoxOfficeViewModel) -> some View {
-            BoxOfficeRootView(
+        func detailView(_ viewModel: DetailViewModel) -> some View {
+            DetailRootView(
                 viewModel: viewModel,
-                onMovieSelected: { movieId in
-                    client.push(.external(.detail(movieId: movieId)))
+                onBack: {
+                    client.dismiss()
                 }
-            )
-        }
-
-        func detailView(_ model: DetailDestinationViewState) -> some View {
-            NavigationDestinationView(
-                previousClient: client,
-                mode: mode,
-                entry: model.entry
             )
         }
     }

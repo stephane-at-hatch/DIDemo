@@ -1,12 +1,11 @@
 import ModularNavigation
 import MovieDomainInterface
-import DetailScreen
 import SwiftUI
 
-public extension BoxOfficeScreen {
+public extension DetailScreen {
     @MainActor
     static func mockEntry(
-        at publicDestination: Destination.Public = .main
+        at publicDestination: Destination.Public = .detail(movieId: 550)
     ) -> Entry {
         Entry(
             entryDestination: .public(publicDestination),
@@ -16,19 +15,13 @@ public extension BoxOfficeScreen {
                 switch destination.type {
                 case .public(let publicDestination):
                     switch publicDestination {
-                    case .main:
-                        let viewModel = BoxOfficeViewModel(
+                    case .detail(let movieId):
+                        let viewModel = DetailViewModel(
+                            movieId: movieId,
                             movieRepository: .fixtureData,
                             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
                         )
-                        viewState = .main(viewModel)
-                    }
-
-                case .external(let externalDestination):
-                    switch externalDestination {
-                    case .detail(let movieId):
-                        let entry = DetailScreen.mockEntry(at: .detail(movieId: movieId))
-                        viewState = .detail(DetailDestinationViewState(entry: entry))
+                        viewState = .detail(viewModel)
                     }
                 }
 
@@ -45,7 +38,7 @@ public extension BoxOfficeScreen {
 // MARK: - SwiftUI Preview
 
 #Preview {
-    let entry = BoxOfficeScreen.mockEntry()
+    let entry = DetailScreen.mockEntry()
     let rootClient = NavigationClient<RootDestination>.root()
 
     NavigationDestinationView(

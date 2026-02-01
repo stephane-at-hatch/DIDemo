@@ -16,6 +16,7 @@ let package = Package(
         .package(path: "../../Utilities/ModularDependencyContainer"),
         .package(path: "../../Utilities/ModularNavigation"),
         .package(path: "../../Clients/MovieDomain"),
+        .package(path: "../../Clients/TMDBClient"),
         .package(path: "../../Clients/WatchlistDomain"),
         .package(path: "../../Clients/ImageLoader"),
         .package(path: "../../Utilities/UIComponents"),
@@ -29,6 +30,7 @@ let package = Package(
                 .product(name: "ModularNavigation", package: "ModularNavigation"),
                 "DetailScreenViews",
                 .product(name: "MovieDomainInterface", package: "MovieDomain"),
+                .product(name: "TMDBClientInterface", package: "TMDBClient"),
                 .product(name: "WatchlistDomainInterface", package: "WatchlistDomain"),
                 .product(name: "ImageLoaderInterface", package: "ImageLoader")
             ],

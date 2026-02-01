@@ -417,8 +417,40 @@ private func stripRedundantPrefix(from typeName: String) -> String {
 }
 
 private func lowerFirst(_ s: String) -> String {
-    guard let first = s.first else { return s }
-    return String(first).lowercased() + s.dropFirst()
+    guard !s.isEmpty else { return s }
+
+    // Find the length of the leading uppercase sequence
+    var uppercaseCount = 0
+    for char in s {
+        if char.isUppercase {
+            uppercaseCount += 1
+        } else {
+            break
+        }
+    }
+
+    // If no uppercase letters, return as-is
+    guard uppercaseCount > 0 else { return s }
+
+    // If only one uppercase letter, just lowercase it
+    // e.g., "Client" -> "client"
+    if uppercaseCount == 1 {
+        return s.prefix(1).lowercased() + s.dropFirst()
+    }
+
+    // If the entire string is uppercase, lowercase all of it
+    // e.g., "TMDB" -> "tmdb"
+    if uppercaseCount == s.count {
+        return s.lowercased()
+    }
+
+    // Multiple uppercase letters followed by more characters:
+    // Lowercase all but the last uppercase letter (which starts the next word)
+    // e.g., "TMDBClient" -> "tmdbClient"
+    // e.g., "URLSession" -> "urlSession"
+    let lowercasedPrefix = s.prefix(uppercaseCount - 1).lowercased()
+    let remainder = s.dropFirst(uppercaseCount - 1)
+    return lowercasedPrefix + remainder
 }
 
 private func valueTypeString(from base: some SyntaxProtocol) -> String {
