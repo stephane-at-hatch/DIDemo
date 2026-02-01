@@ -3,25 +3,23 @@ import SwiftUI
 
 // MARK: - Destination Enum
 
-public extension TabCoordinator {
+public extension BoxOfficeScreen {
     struct Destination: Hashable {
-        enum Tab: Hashable {
-            case boxOffice
-            case discover
-            case watchlist
+        public enum Public: Hashable {
+            case main
         }
 
         enum DestinationType: Hashable {
-            case tab(Tab)
+            case `public`(Public)
         }
 
         var type: DestinationType
 
-        init(_ destination: Tab) {
-            self.type = .tab(destination)
+        init(_ destination: Public) {
+            self.type = .public(destination)
         }
         
-        static func tab(_ destination: Tab) -> Self {
+        public static func `public`(_ destination: Public) -> Self {
             self.init(destination)
         }
         
@@ -30,6 +28,6 @@ public extension TabCoordinator {
 
 // MARK: - Entry Point
 
-public extension TabCoordinator {
+public extension BoxOfficeScreen {
     typealias Entry = ModuleEntry<Destination, DestinationView>
 }

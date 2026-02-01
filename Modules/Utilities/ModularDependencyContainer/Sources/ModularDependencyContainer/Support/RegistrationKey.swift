@@ -96,6 +96,13 @@ struct RegistrationMetadata: Sendable {
     let isLocal: Bool
 }
 
+/// Stores additional information about an input for debugging
+struct InputMetadata: Sendable {
+    let typeDescription: String
+    let file: String
+    let line: Int
+}
+
 // MARK: - Singleton Cache (minimal @unchecked Sendable)
 
 final class SingletonCache: @unchecked Sendable {

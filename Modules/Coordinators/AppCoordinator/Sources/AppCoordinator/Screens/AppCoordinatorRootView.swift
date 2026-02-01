@@ -5,6 +5,7 @@
 //  Created by Stephane Magne on 2026-01-31.
 //
 
+import TabCoordinator
 import SwiftUI
 
 public struct AppCoordinatorRootView: View {
@@ -16,6 +17,6 @@ public struct AppCoordinatorRootView: View {
     }
 
     public var body: some View {
-        Text("AppCoordinator")
+        TabCoordinatorRootView(viewModel: viewModel.tabCoordinatorViewModel)
     }
 }

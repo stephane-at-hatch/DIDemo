@@ -200,6 +200,7 @@ digraph ModuleDependencies {
     Modules_main -> WatchlistDomain_main;
     Modules_main -> AppCoordinator_main;
     AppCoordinator_main -> ModularDependencyContainer_main;
+    AppCoordinator_main -> MovieDomain_main;
     AppCoordinator_main -> TabCoordinator_main;
     AppCoordinator_main -> TMDBClient_main;
     TabCoordinator_main -> ModularDependencyContainer_main;

@@ -5,6 +5,7 @@
 //  Created by Stephane Magne on 2026-01-31.
 //
 
+import TMDBClientInterface
 import TabCoordinator
 import SwiftUI
 
@@ -22,7 +23,10 @@ public final class AppCoordinatorViewModel {
     public init(
         dependencies: AppCoordinator.Dependencies
     ) {
-        let tabCoordinatorDependencies = dependencies.buildChild(TabCoordinator.Dependencies.self)
-        self.tabCoordinatorViewModel = TabCoordinatorViewModel(dependencies: tabCoordinatorDependencies)
+        let tabCoordinatorDependencies = dependencies.buildChild(TabCoordinator.Dependencies.self, configure: { builder in
+            let tmdbConfiguration = TMDBConfiguration(apiReadAccessToken: "YOUR_API_KEY_HERE")
+            builder.provideInput(TMDBConfiguration.self, tmdbConfiguration)
+        })
+        self.tabCoordinatorViewModel = TabCoordinatorViewModel.live(dependencies: tabCoordinatorDependencies)
     }
 }

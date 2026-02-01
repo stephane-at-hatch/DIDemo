@@ -34,6 +34,7 @@ let graph: [ModuleNode] = [
     ModuleNode(
         module: .appCoordinator,
         dependencies: [
+            .movieDomain,
             .tabCoordinator,
             .tmdbClient
         ]

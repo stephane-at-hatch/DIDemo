@@ -75,6 +75,7 @@ digraph ModuleDependencies {
     Modules -> WatchlistDomain;
     Modules -> AppCoordinator;
     AppCoordinator -> ModularDependencyContainer;
+    AppCoordinator -> MovieDomain;
     AppCoordinator -> TabCoordinator;
     AppCoordinator -> TMDBClient;
     TabCoordinator -> ModularDependencyContainer;

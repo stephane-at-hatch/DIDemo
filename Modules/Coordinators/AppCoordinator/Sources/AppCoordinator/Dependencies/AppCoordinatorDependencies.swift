@@ -1,8 +1,11 @@
 import ModularDependencyContainer
+import MovieDomain
 import TMDBClient
 
 extension AppCoordinator {
-    @DependencyRequirements([],
+    @DependencyRequirements([
+            Requirement(TMDBClient.self)
+        ],
         inputs: [
             InputRequirement(TMDBConfiguration.self)
         ]
@@ -14,6 +17,10 @@ extension AppCoordinator {
                 try builder.registerSingleton(TMDBClient.self) { container in
                     let dependencies = Self(container)
                     return TMDBClient.live(configuration: dependencies.tMDBConfiguration)
+                }
+                try builder.registerSingleton(MovieRepository.self) { container in
+                    let dependencies = Self(container)
+                    return MovieRepository.live(client: dependencies.tMDBClient)
                 }
             } catch {
                 preconditionFailure("Failed to build dependencies with error: \(error)")

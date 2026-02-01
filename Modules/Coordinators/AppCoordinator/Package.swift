@@ -13,6 +13,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../Utilities/ModularDependencyContainer"),
+        .package(path: "../../Clients/MovieDomain"),
         .package(path: "../TabCoordinator"),
         .package(path: "../../Clients/TMDBClient")
     ],
@@ -21,6 +22,7 @@ let package = Package(
             name: "AppCoordinator",
             dependencies: [
                 .product(name: "ModularDependencyContainer", package: "ModularDependencyContainer"),
+                .product(name: "MovieDomain", package: "MovieDomain"),
                 .product(name: "TabCoordinator", package: "TabCoordinator"),
                 .product(name: "TMDBClient", package: "TMDBClient")
             ],

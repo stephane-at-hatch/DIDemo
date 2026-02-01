@@ -5,6 +5,4 @@
 //  Created by Stephane Magne
 //
 
-import Testing
-@testable import BoxOfficeScreen
-
+// Tests are in BoxOfficeViewModelTests.swift

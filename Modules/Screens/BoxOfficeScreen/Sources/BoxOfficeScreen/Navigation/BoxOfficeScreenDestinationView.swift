@@ -1,7 +1,7 @@
 import ModularNavigation
 import SwiftUI
 
-public extension TabCoordinator {
+public extension BoxOfficeScreen {
     struct DestinationView: View {
         let viewState: DestinationViewState
         let mode: NavigationMode
@@ -19,17 +19,21 @@ public extension TabCoordinator {
         
         public var body: some View {
             switch viewState {
-            case .boxOffice(let entry):
-                NavigationDestinationView(
-                    previousClient: client,
-                    mode: mode,
-                    entry: entry
-                )
-            case .discover:
-                Text("Discover")
-            case .watchlist:
-                Text("Watchlist")
+            case .main(let viewModel):
+                mainView(viewModel)
             }
+        }
+        
+        // MARK: - Destination Views
+        
+        func mainView(_ viewModel: BoxOfficeViewModel) -> some View {
+            BoxOfficeRootView(
+                viewModel: viewModel,
+                onMovieSelected: { movieId in
+                    // TODO: Navigate to detail screen
+                    // client.push(.external(.detail(movieId: movieId)))
+                }
+            )
         }
     }
 }

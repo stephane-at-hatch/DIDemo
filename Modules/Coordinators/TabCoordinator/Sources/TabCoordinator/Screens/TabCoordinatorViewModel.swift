@@ -12,9 +12,28 @@ import SwiftUI
 @Observable
 public final class TabCoordinatorViewModel {
 
-    public init(
-        dependencies: TabCoordinator.Dependencies
-    ) {
+    var currentTab: Tab = .boxOffice
 
+    let tabEntry: TabCoordinator.Entry
+
+    let navigationClient: NavigationClient<RootDestination>
+
+    public static func live(
+        dependencies: TabCoordinator.Dependencies
+    ) -> TabCoordinatorViewModel {
+        self.init(
+            tabEntry: TabCoordinator.liveEntry(
+                dependencies: dependencies
+            ),
+            navigationClient: .root()
+        )
+    }
+
+    public init(
+        tabEntry: TabCoordinator.Entry,
+        navigationClient: NavigationClient<RootDestination>
+    ) {
+        self.tabEntry = tabEntry
+        self.navigationClient = navigationClient
     }
 }

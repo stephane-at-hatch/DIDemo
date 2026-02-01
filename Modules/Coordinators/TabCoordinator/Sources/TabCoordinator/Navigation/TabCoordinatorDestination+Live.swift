@@ -1,25 +1,32 @@
+import BoxOfficeScreen
 import ModularNavigation
 import SwiftUI
 
-public extension TabCoordinator {
+extension TabCoordinator {
     @MainActor
     static func liveEntry(
-        at publicDestination: Destination.Public,
+        tabDestination: Destination.Tab = .boxOffice,
         dependencies: Dependencies
     ) -> Entry {
         Entry(
-            entryDestination: .public(publicDestination),
+            entryDestination: .tab(tabDestination),
             builder: { destination, mode, navigationClient in
                 let viewState: DestinationViewState
 
                 switch destination.type {
-                case .public(let publicDestination):
-                    switch publicDestination {
-                    case .main:
-                        // TODO: Create production ViewModel with dependencies
-                        viewState = .main(MainDestinationViewState(
-                            viewModel: nil
-                        ))
+                case .tab(let tabDestination):
+                    switch tabDestination {
+                    case .boxOffice:
+                        let boxOfficeDependencies = dependencies.buildChild(BoxOfficeScreen.Dependencies.self)
+                        let entry = BoxOfficeScreen.liveEntry(
+                            at: .main,
+                            dependencies: boxOfficeDependencies
+                        )
+                        viewState = .boxOffice(entry)
+                    case .discover:
+                        fatalError()
+                    case .watchlist:
+                        fatalError()
                     }
                 }
 

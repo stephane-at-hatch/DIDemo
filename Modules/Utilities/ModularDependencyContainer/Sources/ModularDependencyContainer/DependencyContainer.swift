@@ -28,6 +28,7 @@ public struct DependencyContainer<Marker>: Sendable {
 
     let metadata: [RegistrationKey: RegistrationMetadata]
     let inputs: [ObjectIdentifier: any Sendable]
+    let inputMetadata: [ObjectIdentifier: InputMetadata]
     let parent: AnyFrozenContainer?
 
     // MARK: - Caches
@@ -49,6 +50,7 @@ public struct DependencyContainer<Marker>: Sendable {
         localMainActorScopedFactories: [RegistrationKey: MainActorFactory],
         metadata: [RegistrationKey: RegistrationMetadata],
         inputs: [ObjectIdentifier: any Sendable],
+        inputMetadata: [ObjectIdentifier: InputMetadata],
         parent: AnyFrozenContainer?
     ) {
         self.factories = factories
@@ -61,6 +63,7 @@ public struct DependencyContainer<Marker>: Sendable {
         self.localMainActorScopedFactories = localMainActorScopedFactories
         self.metadata = metadata
         self.inputs = inputs
+        self.inputMetadata = inputMetadata
         self.parent = parent
         self.scopedCache = ScopedCache()
         self.mainActorScopedCache = MainActorAnyScopedCache()
@@ -269,6 +272,7 @@ public struct DependencyContainer<Marker>: Sendable {
             localMainActorScopedFactories: localMainActorScopedFactories,
             metadata: metadata,
             inputs: inputs,
+            inputMetadata: inputMetadata,
             parent: parent
         )
     }
@@ -338,7 +342,7 @@ public struct DependencyContainer<Marker>: Sendable {
             output += parent.diagnose(level: level)
         }
 
-        let markerName = String(describing: Marker.self)
+        let markerName = Self.fullyQualifiedTypeName(Marker.self)
         output += "\n\(indent)▶︎ \(markerName) Container\n"
 
         let allMetadata = metadata.sorted { $0.value.line < $1.value.line }
@@ -350,7 +354,34 @@ public struct DependencyContainer<Marker>: Sendable {
             output += "\(indent)  ├─ \(meta.scope.rawValue): \(localPart)\(meta.typeDescription) \(keyPart)@ \(fileName):\(meta.line)\n"
         }
 
+        let allInputMetadata = inputMetadata.sorted { $0.value.line < $1.value.line }
+
+        for (_, inputMeta) in allInputMetadata {
+            let fileName = URL(fileURLWithPath: inputMeta.file).lastPathComponent
+            output += "\(indent)  ├─ input: \(inputMeta.typeDescription) @ \(fileName):\(inputMeta.line)\n"
+        }
+
         return output
+    }
+
+    // MARK: - Helpers (for diagnostics)
+
+    /// Returns the fully qualified type name, stripping the module prefix.
+    /// For example: `MyModule.Dependencies` instead of just `Dependencies`.
+    private static func fullyQualifiedTypeName(_ type: Any.Type) -> String {
+        // _typeName gives us something like "ModuleName.ParentType.NestedType"
+        let fullName = _typeName(type, qualified: true)
+
+        // Strip the module name (first component) if present
+        if let dotIndex = fullName.firstIndex(of: ".") {
+            let afterModule = fullName[fullName.index(after: dotIndex)...]
+            // Only return the shortened version if there's still meaningful content
+            if !afterModule.isEmpty {
+                return String(afterModule)
+            }
+        }
+
+        return fullName
     }
 
     // Two overloads of buildResolutionErrorMessage

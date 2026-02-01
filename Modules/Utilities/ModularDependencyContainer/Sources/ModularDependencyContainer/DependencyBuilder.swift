@@ -40,6 +40,7 @@ public final class DependencyBuilder<Marker> {
 
     private var metadata: [RegistrationKey: RegistrationMetadata] = [:]
     private var inputs: [ObjectIdentifier: any Sendable]
+    private var inputMetadata: [ObjectIdentifier: InputMetadata] = [:]
     private let parent: AnyFrozenContainer?
 
     // MARK: - Namespace Accessors
@@ -68,8 +69,19 @@ public final class DependencyBuilder<Marker> {
 
     // MARK: - Input Management
 
-    public func provideInput<T: Sendable>(_ type: T.Type, _ value: T) {
-        inputs[ObjectIdentifier(type)] = value
+    public func provideInput<T: Sendable>(
+        _ type: T.Type,
+        _ value: T,
+        file: String = #file,
+        line: Int = #line
+    ) {
+        let key = ObjectIdentifier(type)
+        inputs[key] = value
+        inputMetadata[key] = InputMetadata(
+            typeDescription: String(describing: T.self),
+            file: file,
+            line: line
+        )
     }
 
     // MARK: - Registration (Type-Only)
@@ -540,6 +552,7 @@ public final class DependencyBuilder<Marker> {
             localMainActorScopedFactories: localMainActorScopedFactories,
             metadata: metadata,
             inputs: inputs,
+            inputMetadata: inputMetadata,
             parent: parent
         )
     }
