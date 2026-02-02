@@ -19,7 +19,8 @@ public extension BoxOfficeScreen {
                     case .main:
                         let viewModel = BoxOfficeViewModel(
                             movieRepository: .fixtureData,
-                            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
+                            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+                            navigationClient: navigationClient
                         )
                         viewState = .main(viewModel)
                     }
@@ -28,7 +29,7 @@ public extension BoxOfficeScreen {
                     switch externalDestination {
                     case .detail(let movieId):
                         let entry = DetailScreen.mockEntry(at: .detail(movieId: movieId))
-                        viewState = .detail(DetailDestinationViewState(entry: entry))
+                        viewState = .detail(entry)
                     }
                 }
 

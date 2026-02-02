@@ -31,18 +31,15 @@ public extension BoxOfficeScreen {
 
         func mainView(_ viewModel: BoxOfficeViewModel) -> some View {
             BoxOfficeRootView(
-                viewModel: viewModel,
-                onMovieSelected: { movieId in
-                    client.push(.external(.detail(movieId: movieId)))
-                }
+                viewModel: viewModel
             )
         }
 
-        func detailView(_ model: DetailDestinationViewState) -> some View {
+        func detailView(_ entry: DetailScreen.Entry) -> some View {
             NavigationDestinationView(
                 previousClient: client,
                 mode: mode,
-                entry: model.entry
+                entry: entry
             )
         }
     }

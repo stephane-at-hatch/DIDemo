@@ -19,7 +19,8 @@ public extension BoxOfficeScreen {
                     case .main:
                         let viewModel = BoxOfficeViewModel(
                             movieRepository: dependencies.movieRepository,
-                            imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL
+                            imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL,
+                            navigationClient: navigationClient
                         )
                         viewState = .main(viewModel)
                     }
@@ -32,7 +33,7 @@ public extension BoxOfficeScreen {
                             at: .detail(movieId: movieId),
                             dependencies: detailDependencies
                         )
-                        viewState = .detail(DetailDestinationViewState(entry: entry))
+                        viewState = .detail(entry)
                     }
                 }
 

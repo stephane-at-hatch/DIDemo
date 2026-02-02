@@ -12,7 +12,7 @@ public struct DetailView: View {
     let state: DetailViewState
     let imageBaseURL: URL
     let onAction: (DetailAction) -> Void
-
+    
     public init(
         state: DetailViewState,
         imageBaseURL: URL,
@@ -22,7 +22,7 @@ public struct DetailView: View {
         self.imageBaseURL = imageBaseURL
         self.onAction = onAction
     }
-
+    
     public var body: some View {
         content
             .navigationBarTitleDisplayMode(.inline)
@@ -35,9 +35,9 @@ public struct DetailView: View {
                 onAction(.onAppear)
             }
     }
-
+    
     // MARK: - Content
-
+    
     @ViewBuilder
     private var content: some View {
         switch state.loadState {
@@ -53,9 +53,9 @@ public struct DetailView: View {
             }
         }
     }
-
+    
     // MARK: - Loading
-
+    
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -66,9 +66,9 @@ public struct DetailView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-
+    
     // MARK: - Error
-
+    
     private func errorView(message: String) -> some View {
         ContentUnavailableView {
             Label("Unable to Load", systemImage: "exclamationmark.triangle")
@@ -81,21 +81,24 @@ public struct DetailView: View {
             .buttonStyle(.bordered)
         }
     }
-
+    
     // MARK: - Movie Content
-
+    
     private func movieContent(_ movie: MovieDetailViewState) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                backdropHeader(movie)
+                StretchyHeader(height: 250) {
+                    backdropHeader(movie)
+                }
                 movieInfo(movie)
+                    .padding(.horizontal)
             }
         }
         .ignoresSafeArea(edges: .top)
     }
-
+    
     // MARK: - Backdrop Header
-
+    
     private func backdropHeader(_ movie: MovieDetailViewState) -> some View {
         ZStack(alignment: .bottomLeading) {
             // Backdrop image
@@ -111,14 +114,12 @@ public struct DetailView: View {
                             .fill(Color(.systemGray5))
                     }
                 }
-                .frame(height: 250)
-                .clipped()
             } else {
                 Rectangle()
                     .fill(Color(.systemGray5))
                     .frame(height: 250)
             }
-
+            
             // Gradient overlay
             LinearGradient(
                 colors: [.clear, .black.opacity(0.7)],
@@ -126,14 +127,14 @@ public struct DetailView: View {
                 endPoint: .bottom
             )
             .frame(height: 250)
-
+            
             // Title overlay
             VStack(alignment: .leading, spacing: 4) {
                 Text(movie.title)
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
-
+                
                 if let tagline = movie.tagline, !tagline.isEmpty {
                     Text(tagline)
                         .font(.subheadline)
@@ -144,35 +145,35 @@ public struct DetailView: View {
             .padding()
         }
     }
-
+    
     // MARK: - Movie Info
-
+    
     private func movieInfo(_ movie: MovieDetailViewState) -> some View {
         VStack(alignment: .leading, spacing: 20) {
             // Quick stats
             quickStats(movie)
-
+            
             // Genres
             if !movie.genres.isEmpty {
                 genreChips(movie.genres)
             }
-
+            
             // Overview
             overviewSection(movie.overview)
-
+            
             // Credits
             if let credits = state.credits {
                 creditsSection(credits)
             }
-
+            
             // Box office
             if movie.budget != nil || movie.revenue != nil {
                 boxOfficeSection(movie)
             }
         }
-        .padding()
+        .padding(.vertical)
     }
-
+    
     private func quickStats(_ movie: MovieDetailViewState) -> some View {
         HStack(spacing: 16) {
             if let year = movie.releaseYear {
@@ -186,7 +187,7 @@ public struct DetailView: View {
         }
         .font(.subheadline)
     }
-
+    
     private func statItem(icon: String, value: String, color: Color = .secondary) -> some View {
         HStack(spacing: 4) {
             Image(systemName: icon)
@@ -195,33 +196,31 @@ public struct DetailView: View {
                 .foregroundStyle(.primary)
         }
     }
-
+    
     private func genreChips(_ genres: [String]) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(genres, id: \.self) { genre in
-                    Text(genre)
-                        .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color(.systemGray5))
-                        .clipShape(Capsule())
-                }
+        FlowLayout(spacing: 8) {
+            ForEach(genres, id: \.self) { genre in
+                Text(genre)
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(.systemGray5))
+                    .clipShape(Capsule())
             }
         }
     }
-
+    
     private func overviewSection(_ overview: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Overview")
                 .font(.headline)
-
+            
             Text(overview)
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
     }
-
+    
     private func creditsSection(_ credits: MovieCreditsViewState) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             if !credits.directors.isEmpty {
@@ -233,11 +232,11 @@ public struct DetailView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-
+            
             if !credits.cast.isEmpty {
                 Text("Cast")
                     .font(.headline)
-
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(credits.cast) { member in
@@ -245,10 +244,12 @@ public struct DetailView: View {
                         }
                     }
                 }
+                .scrollClipDisabled()
+                .contentMargins(.horizontal, 0, for: .scrollContent)
             }
         }
     }
-
+    
     private func castCard(_ member: CastMemberViewState) -> some View {
         VStack(spacing: 8) {
             AsyncImage(url: profileURL(for: member.profilePath)) { phase in
@@ -268,13 +269,13 @@ public struct DetailView: View {
             }
             .frame(width: 70, height: 70)
             .clipShape(Circle())
-
+            
             VStack(spacing: 2) {
                 Text(member.name)
                     .font(.caption)
                     .fontWeight(.medium)
                     .lineLimit(1)
-
+                
                 Text(member.character)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -283,12 +284,12 @@ public struct DetailView: View {
         }
         .frame(width: 80)
     }
-
+    
     private func boxOfficeSection(_ movie: MovieDetailViewState) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Box Office")
                 .font(.headline)
-
+            
             HStack {
                 if let budget = movie.budget {
                     VStack(alignment: .leading) {
@@ -301,7 +302,7 @@ public struct DetailView: View {
                     }
                     Spacer()
                 }
-
+                
                 if let revenue = movie.revenue {
                     VStack(alignment: .trailing) {
                         Text("Revenue")
@@ -315,9 +316,9 @@ public struct DetailView: View {
             }
         }
     }
-
+    
     // MARK: - Watchlist Button
-
+    
     private var watchlistButton: some View {
         Button {
             onAction(.watchlistTapped)
@@ -326,15 +327,15 @@ public struct DetailView: View {
                 .foregroundStyle(state.isInWatchlist ? .yellow : .primary)
         }
     }
-
+    
     // MARK: - Image URLs
-
+    
     private func backdropURL(for path: String) -> URL? {
         imageBaseURL
             .appendingPathComponent("w780")
             .appendingPathComponent(path)
     }
-
+    
     private func profileURL(for path: String?) -> URL? {
         guard let path else { return nil }
         return imageBaseURL
@@ -346,67 +347,61 @@ public struct DetailView: View {
 // MARK: - Preview
 
 #Preview("Loaded") {
-    NavigationStack {
-        DetailView(
-            state: DetailViewState(
-                loadState: .idle,
-                movie: MovieDetailViewState(
-                    id: 550,
-                    title: "Fight Club",
-                    tagline: "Mischief. Mayhem. Soap.",
-                    overview: "A depressed man suffering from insomnia meets a strange soap salesman and soon finds himself living in his squalid house after his perfectly good apartment is destroyed.",
-                    releaseYear: "1999",
-                    runtime: "2h 19m",
-                    rating: "8.4",
-                    voteCount: "29.7K",
-                    posterPath: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-                    backdropPath: "/hZkgoQYus5vegHoetLkCJzb17zJ.jpg",
-                    genres: ["Drama", "Thriller", "Comedy"],
-                    budget: "$63,000,000",
-                    revenue: "$100,853,753"
-                ),
-                credits: MovieCreditsViewState(
-                    directors: ["David Fincher"],
-                    cast: [
-                        CastMemberViewState(id: 819, name: "Edward Norton", character: "The Narrator", profilePath: nil),
-                        CastMemberViewState(id: 287, name: "Brad Pitt", character: "Tyler Durden", profilePath: nil),
-                        CastMemberViewState(id: 1283, name: "Helena Bonham Carter", character: "Marla Singer", profilePath: nil)
-                    ]
-                ),
-                isInWatchlist: false
+    DetailView(
+        state: DetailViewState(
+            loadState: .idle,
+            movie: MovieDetailViewState(
+                id: 550,
+                title: "Fight Club",
+                tagline: "Mischief. Mayhem. Soap.",
+                overview: "A depressed man suffering from insomnia meets a strange soap salesman and soon finds himself living in his squalid house after his perfectly good apartment is destroyed.",
+                releaseYear: "1999",
+                runtime: "2h 19m",
+                rating: "8.4",
+                voteCount: "29.7K",
+                posterPath: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+                backdropPath: "/hZkgoQYus5vegHoetLkCJzb17zJ.jpg",
+                genres: ["Drama", "Thriller", "Comedy"],
+                budget: "$63,000,000",
+                revenue: "$100,853,753"
             ),
-            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
-            onAction: { _ in }
-        )
-    }
+            credits: MovieCreditsViewState(
+                directors: ["David Fincher"],
+                cast: [
+                    CastMemberViewState(id: 819, name: "Edward Norton", character: "The Narrator", profilePath: nil),
+                    CastMemberViewState(id: 287, name: "Brad Pitt", character: "Tyler Durden", profilePath: nil),
+                    CastMemberViewState(id: 1283, name: "Helena Bonham Carter", character: "Marla Singer", profilePath: nil)
+                ]
+            ),
+            isInWatchlist: false
+        ),
+        imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+        onAction: { _ in }
+    )
 }
 
 #Preview("Loading") {
-    NavigationStack {
-        DetailView(
-            state: DetailViewState(
-                loadState: .loading,
-                movie: nil,
-                credits: nil,
-                isInWatchlist: false
-            ),
-            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
-            onAction: { _ in }
-        )
-    }
+    DetailView(
+        state: DetailViewState(
+            loadState: .loading,
+            movie: nil,
+            credits: nil,
+            isInWatchlist: false
+        ),
+        imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+        onAction: { _ in }
+    )
 }
 
 #Preview("Error") {
-    NavigationStack {
-        DetailView(
-            state: DetailViewState(
-                loadState: .error(message: "Failed to load movie details. Please try again."),
-                movie: nil,
-                credits: nil,
-                isInWatchlist: false
-            ),
-            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
-            onAction: { _ in }
-        )
-    }
+    DetailView(
+        state: DetailViewState(
+            loadState: .error(message: "Failed to load movie details. Please try again."),
+            movie: nil,
+            credits: nil,
+            isInWatchlist: false
+        ),
+        imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+        onAction: { _ in }
+    )
 }

@@ -5,7 +5,9 @@ import ModularDependencyContainer
 extension DetailScreen {
     @DependencyRequirements([
         Requirement(MovieRepository.self),
-        Requirement(TMDBConfiguration.self)
+    ],
+    inputs: [
+        InputRequirement(TMDBConfiguration.self)
     ])
     public struct Dependencies: DependencyRequirements {}
 }

@@ -7,10 +7,11 @@
 
 import Foundation
 import MovieDomainInterface
+import ModularNavigation
 import BoxOfficeScreenViews
 
 @MainActor @Observable
-public final class BoxOfficeViewModel {
+final class BoxOfficeViewModel {
 
     // MARK: - Private State
 
@@ -25,10 +26,11 @@ public final class BoxOfficeViewModel {
 
     private let movieRepository: MovieRepository
     private let imageBaseURL: URL
+    private let navigationClient: NavigationClient<BoxOfficeScreen.Destination>
 
     // MARK: - Computed ViewState
 
-    public var viewState: BoxOfficeViewState {
+    var viewState: BoxOfficeViewState {
         BoxOfficeViewState(
             loadState: loadState,
             movies: movies.map { movie in
@@ -45,23 +47,25 @@ public final class BoxOfficeViewModel {
         )
     }
 
-    public var imageBaseURLForView: URL {
+    var imageBaseURLForView: URL {
         imageBaseURL
     }
 
     // MARK: - Init
 
-    public init(
+    init(
         movieRepository: MovieRepository,
-        imageBaseURL: URL
+        imageBaseURL: URL,
+        navigationClient: NavigationClient<BoxOfficeScreen.Destination>
     ) {
         self.movieRepository = movieRepository
         self.imageBaseURL = imageBaseURL
+        self.navigationClient = navigationClient
     }
 
-    // MARK: - Public Methods
+    // MARK: - Methods
 
-    public func handleOnAppear() {
+    func handleOnAppear() {
         guard !hasAppeared else { return }
         hasAppeared = true
         Task {
@@ -69,28 +73,32 @@ public final class BoxOfficeViewModel {
         }
     }
 
-    public func handleRefresh() async {
+    func handleRefresh() async {
         loadState = .refreshing
         currentPage = 1
         await loadMovies(isRefresh: true)
     }
 
-    public func handleLoadMore() {
+    func handleLoadMore() {
         guard !loadState.isLoading, currentPage < totalPages else { return }
         Task {
             await loadNextPage()
         }
     }
 
-    public func handleRetry() {
+    func handleRetry() {
         Task {
             await loadMovies()
         }
     }
 
-    public func movieId(at index: Int) -> Int? {
+    func movieId(at index: Int) -> Int? {
         guard index < movies.count else { return nil }
         return movies[index].id
+    }
+
+    func movieSelected(_ movieId: Int) {
+        navigationClient.push(.external(.detail(movieId: movieId)))
     }
 
     // MARK: - Private Methods

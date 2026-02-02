@@ -24,17 +24,15 @@ public struct BoxOfficeView: View {
     }
 
     public var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Box Office")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        if state.loadState == .refreshing {
-                            ProgressView()
-                        }
+        content
+            .navigationTitle("Box Office")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if state.loadState == .refreshing {
+                        ProgressView()
                     }
                 }
-        }
+            }
         .onAppear {
             onAction(.onAppear)
         }

@@ -9,20 +9,16 @@ import SwiftUI
 import BoxOfficeScreenViews
 
 /// Root view that wires the BoxOfficeView to the BoxOfficeViewModel.
-public struct BoxOfficeRootView: View {
+struct BoxOfficeRootView: View {
     @State private var viewModel: BoxOfficeViewModel
 
-    private let onMovieSelected: (Int) -> Void
-
-    public init(
-        viewModel: BoxOfficeViewModel,
-        onMovieSelected: @escaping (Int) -> Void
+    init(
+        viewModel: BoxOfficeViewModel
     ) {
         self._viewModel = State(initialValue: viewModel)
-        self.onMovieSelected = onMovieSelected
     }
 
-    public var body: some View {
+    var body: some View {
         BoxOfficeView(
             state: viewModel.viewState,
             imageBaseURL: viewModel.imageBaseURLForView,
@@ -40,7 +36,7 @@ public struct BoxOfficeRootView: View {
                     viewModel.handleLoadMore()
 
                 case .movieTapped(let movieId):
-                    onMovieSelected(movieId)
+                    viewModel.movieSelected(movieId)
 
                 case .retryTapped:
                     viewModel.handleRetry()
@@ -56,10 +52,8 @@ public struct BoxOfficeRootView: View {
     BoxOfficeRootView(
         viewModel: BoxOfficeViewModel(
             movieRepository: .fixtureData,
-            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
-        ),
-        onMovieSelected: { movieId in
-            print("Selected movie: \(movieId)")
-        }
+            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+            navigationClient: .mock()
+        )
     )
 }

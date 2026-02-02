@@ -48,14 +48,12 @@ public struct DetailRootView: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationStack {
-        DetailRootView(
-            viewModel: DetailViewModel(
-                movieId: 550,
-                movieRepository: .fixtureData,
-                imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
-            ),
-            onBack: {}
-        )
-    }
+    DetailRootView(
+        viewModel: DetailViewModel(
+            movieId: 550,
+            movieRepository: .fixtureData,
+            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
+        ),
+        onBack: {}
+    )
 }
