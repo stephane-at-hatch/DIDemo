@@ -12,14 +12,10 @@ import DiscoverScreenViews
 public struct DiscoverRootView: View {
     @State private var viewModel: DiscoverViewModel
 
-    private let onMovieSelected: (Int) -> Void
-
     public init(
-        viewModel: DiscoverViewModel,
-        onMovieSelected: @escaping (Int) -> Void
+        viewModel: DiscoverViewModel
     ) {
         self._viewModel = State(initialValue: viewModel)
-        self.onMovieSelected = onMovieSelected
     }
 
     public var body: some View {
@@ -35,7 +31,7 @@ public struct DiscoverRootView: View {
                     viewModel.handleSearchQueryChanged(query)
 
                 case .movieTapped(let movieId):
-                    onMovieSelected(movieId)
+                    viewModel.movieSelected(movieId)
 
                 case .retryTapped:
                     viewModel.handleRetry()
@@ -51,10 +47,8 @@ public struct DiscoverRootView: View {
     DiscoverRootView(
         viewModel: DiscoverViewModel(
             movieRepository: .fixtureData,
-            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
-        ),
-        onMovieSelected: { movieId in
-            print("Selected movie: \(movieId)")
-        }
+            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+            navigationClient: .mock()
+        )
     )
 }

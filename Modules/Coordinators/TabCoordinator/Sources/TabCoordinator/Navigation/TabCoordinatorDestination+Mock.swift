@@ -9,7 +9,7 @@ extension TabCoordinator {
         Entry(
             entryDestination: .tab(tabDestination),
             builder: { destination, mode, navigationClient in
-                let viewState: DestinationViewState
+                let state: DestinationState
 
                 switch destination.type {
                 case .tab(let tabDestination):
@@ -24,7 +24,7 @@ extension TabCoordinator {
                 }
 
                 return DestinationView(
-                    viewState: viewState,
+                    state: state,
                     mode: mode,
                     client: navigationClient
                 )

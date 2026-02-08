@@ -4,43 +4,33 @@ import SwiftUI
 
 public extension BoxOfficeScreen {
     struct DestinationView: View {
-        let viewState: DestinationViewState
+        let state: DestinationState
         let mode: NavigationMode
         let client: NavigationClient<Destination>
 
         init(
-            viewState: DestinationViewState,
+            state: DestinationState,
             mode: NavigationMode,
             client: NavigationClient<Destination>
         ) {
-            self.viewState = viewState
+            self.state = state
             self.mode = mode
             self.client = client
         }
 
         public var body: some View {
-            switch viewState {
+            switch state {
             case .main(let viewModel):
-                mainView(viewModel)
-            case .detail(let model):
-                detailView(model)
+                BoxOfficeRootView(
+                    viewModel: viewModel
+                )
+            case .detail(let entry):
+                NavigationDestinationView(
+                    previousClient: client,
+                    mode: mode,
+                    entry: entry
+                )
             }
-        }
-
-        // MARK: - Destination Views
-
-        func mainView(_ viewModel: BoxOfficeViewModel) -> some View {
-            BoxOfficeRootView(
-                viewModel: viewModel
-            )
-        }
-
-        func detailView(_ entry: DetailScreen.Entry) -> some View {
-            NavigationDestinationView(
-                previousClient: client,
-                mode: mode,
-                entry: entry
-            )
         }
     }
 }

@@ -4,25 +4,24 @@ import SwiftUI
 public extension WatchlistScreen {
     @MainActor
     static func liveEntry(
-        at publicDestination: Destination.Public,
+        publicDestination: Destination.Public,
         dependencies: Dependencies
     ) -> Entry {
         Entry(
             entryDestination: .public(publicDestination),
             builder: { destination, mode, navigationClient in
-                let viewState: DestinationViewState
+                let state: DestinationState
 
                 switch destination.type {
                 case .public(let publicDestination):
                     switch publicDestination {
                     case .main:
-                        // TODO: Create production ViewModel with dependencies
-                        viewState = .main
+                        state = .main
                     }
                 }
 
                 return DestinationView(
-                    viewState: viewState,
+                    state: state,
                     mode: mode,
                     client: navigationClient
                 )

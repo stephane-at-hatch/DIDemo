@@ -98,7 +98,13 @@ final class BoxOfficeViewModel {
     }
 
     func movieSelected(_ movieId: Int) {
-        navigationClient.push(.external(.detail(movieId: movieId)))
+        navigationClient.push(
+            .external(
+                .detail(
+                    .detail(movieId: movieId)
+                )
+            )
+        )
     }
 
     // MARK: - Private Methods

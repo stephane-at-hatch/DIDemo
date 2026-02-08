@@ -3,22 +3,22 @@ import SwiftUI
 
 public extension WatchlistScreen {
     struct DestinationView: View {
-        let viewState: DestinationViewState
+        let state: DestinationState
         let mode: NavigationMode
         let client: NavigationClient<Destination>
         
         init(
-            viewState: DestinationViewState,
+            state: DestinationState,
             mode: NavigationMode,
             client: NavigationClient<Destination>
         ) {
-            self.viewState = viewState
+            self.state = state
             self.mode = mode
             self.client = client
         }
         
         public var body: some View {
-            switch viewState {
+            switch state {
             case .main:
                 Text("main View")
             }

@@ -6,12 +6,12 @@ import SwiftUI
 public extension DiscoverScreen {
     @MainActor
     static func mockEntry(
-        at publicDestination: Destination.Public = .main
+        publicDestination: Destination.Public = .main
     ) -> Entry {
         Entry(
             entryDestination: .public(publicDestination),
             builder: { destination, mode, navigationClient in
-                let viewState: DestinationViewState
+                let state: DestinationState
 
                 switch destination.type {
                 case .public(let publicDestination):
@@ -19,21 +19,22 @@ public extension DiscoverScreen {
                     case .main:
                         let viewModel = DiscoverViewModel(
                             movieRepository: .fixtureData,
-                            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
+                            imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+                            navigationClient: navigationClient
                         )
-                        viewState = .main(viewModel)
+                        state = .main(viewModel)
                     }
 
                 case .external(let externalDestination):
                     switch externalDestination {
-                    case .detail(let movieId):
-                        let entry = DetailScreen.mockEntry(at: .detail(movieId: movieId))
-                        viewState = .detail(entry)
+                    case .detail(let detailDestination):
+                        let entry = DetailScreen.mockEntry(publicDestination: detailDestination)
+                        state = .detail(entry)
                     }
                 }
 
                 return DestinationView(
-                    viewState: viewState,
+                    state: state,
                     mode: mode,
                     client: navigationClient
                 )

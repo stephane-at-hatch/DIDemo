@@ -11,7 +11,7 @@ public extension BoxOfficeScreen {
         }
 
         public enum External: Hashable {
-            case detail(movieId: Int)
+            case detail(DetailScreen.Destination.Public)
         }
 
         enum DestinationType: Hashable {

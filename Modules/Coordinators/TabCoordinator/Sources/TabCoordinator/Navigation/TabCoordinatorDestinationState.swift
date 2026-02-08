@@ -8,7 +8,7 @@ import SwiftUI
 // MARK: - ViewState Enum
 
 extension TabCoordinator {
-    enum DestinationViewState {
+    enum DestinationState {
         case boxOffice(BoxOfficeScreen.Entry)
         case discover(DiscoverScreen.Entry)
         case watchlist

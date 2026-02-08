@@ -9,19 +9,19 @@ public extension WatchlistScreen {
         Entry(
             entryDestination: .public(publicDestination),
             builder: { destination, mode, navigationClient in
-                let viewState: DestinationViewState
+                let state: DestinationState
 
                 switch destination.type {
                 case .public(let publicDestination):
                     switch publicDestination {
                     case .main:
                         // TODO: Create mock ViewModel
-                        viewState = .main
+                        state = .main
                     }
                 }
 
                 return DestinationView(
-                    viewState: viewState,
+                    state: state,
                     mode: mode,
                     client: navigationClient
                 )

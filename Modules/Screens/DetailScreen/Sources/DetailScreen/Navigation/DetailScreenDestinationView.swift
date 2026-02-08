@@ -3,36 +3,30 @@ import SwiftUI
 
 public extension DetailScreen {
     struct DestinationView: View {
-        let viewState: DestinationViewState
+        let state: DestinationState
         let mode: NavigationMode
         let client: NavigationClient<Destination>
 
         init(
-            viewState: DestinationViewState,
+            state: DestinationState,
             mode: NavigationMode,
             client: NavigationClient<Destination>
         ) {
-            self.viewState = viewState
+            self.state = state
             self.mode = mode
             self.client = client
         }
 
         public var body: some View {
-            switch viewState {
+            switch state {
             case .detail(let viewModel):
-                detailView(viewModel)
+                DetailRootView(
+                    viewModel: viewModel,
+                    onBack: {
+                        client.dismiss()
+                    }
+                )
             }
-        }
-
-        // MARK: - Destination Views
-
-        func detailView(_ viewModel: DetailViewModel) -> some View {
-            DetailRootView(
-                viewModel: viewModel,
-                onBack: {
-                    client.dismiss()
-                }
-            )
         }
     }
 }

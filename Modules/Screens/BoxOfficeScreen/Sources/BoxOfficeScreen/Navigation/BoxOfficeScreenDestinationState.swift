@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - ViewState Enum
 
 extension BoxOfficeScreen {
-    enum DestinationViewState {
+    enum DestinationState {
         case main(BoxOfficeViewModel)
         case detail(DetailScreen.Entry)
     }

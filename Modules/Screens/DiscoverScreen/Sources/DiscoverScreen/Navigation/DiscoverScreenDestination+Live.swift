@@ -5,13 +5,13 @@ import SwiftUI
 public extension DiscoverScreen {
     @MainActor
     static func liveEntry(
-        at publicDestination: Destination.Public,
+        publicDestination: Destination.Public,
         dependencies: Dependencies
     ) -> Entry {
         Entry(
             entryDestination: .public(publicDestination),
             builder: { destination, mode, navigationClient in
-                let viewState: DestinationViewState
+                let state: DestinationState
 
                 switch destination.type {
                 case .public(let publicDestination):
@@ -19,25 +19,26 @@ public extension DiscoverScreen {
                     case .main:
                         let viewModel = DiscoverViewModel(
                             movieRepository: dependencies.movieRepository,
-                            imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL
+                            imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL,
+                            navigationClient: navigationClient
                         )
-                        viewState = .main(viewModel)
+                        state = .main(viewModel)
                     }
 
                 case .external(let externalDestination):
                     switch externalDestination {
-                    case .detail(let movieId):
+                    case .detail(let detailDestination):
                         let detailDependencies = dependencies.buildChild(DetailScreen.Dependencies.self)
                         let entry = DetailScreen.liveEntry(
-                            at: .detail(movieId: movieId),
+                            publicDestination: detailDestination,
                             dependencies: detailDependencies
                         )
-                        viewState = .detail(entry)
+                        state = .detail(entry)
                     }
                 }
 
                 return DestinationView(
-                    viewState: viewState,
+                    state: state,
                     mode: mode,
                     client: navigationClient
                 )

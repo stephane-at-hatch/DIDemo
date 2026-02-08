@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import ModularNavigation
 import MovieDomainInterface
 import DiscoverScreenViews
 
@@ -31,6 +32,7 @@ public final class DiscoverViewModel {
 
     private let movieRepository: MovieRepository
     private let imageBaseURL: URL
+    private let navigationClient: NavigationClient<DiscoverScreen.Destination>
 
     // MARK: - Computed ViewState
 
@@ -53,10 +55,12 @@ public final class DiscoverViewModel {
 
     public init(
         movieRepository: MovieRepository,
-        imageBaseURL: URL
+        imageBaseURL: URL,
+        navigationClient: NavigationClient<DiscoverScreen.Destination>
     ) {
         self.movieRepository = movieRepository
         self.imageBaseURL = imageBaseURL
+        self.navigationClient = navigationClient
     }
 
     // MARK: - Public Methods
@@ -90,6 +94,16 @@ public final class DiscoverViewModel {
 
     public func movieId(for cardId: Int) -> Int {
         cardId
+    }
+
+    public func movieSelected(_ movieId: Int) {
+        navigationClient.push(
+            .external(
+                .detail(
+                    .detail(movieId: movieId))
+                )
+            )
+
     }
 
     // MARK: - Private Methods

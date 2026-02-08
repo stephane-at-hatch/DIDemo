@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - ViewState Enum
 
 extension DiscoverScreen {
-    enum DestinationViewState {
+    enum DestinationState {
         case main(DiscoverViewModel)
         case detail(DetailScreen.Entry)
     }

@@ -4,7 +4,7 @@ import SwiftUI
 // MARK: - ViewState Enum
 
 extension DetailScreen {
-    enum DestinationViewState {
+    enum DestinationState {
         case detail(DetailViewModel)
     }
 }

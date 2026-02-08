@@ -4,46 +4,33 @@ import SwiftUI
 
 public extension DiscoverScreen {
     struct DestinationView: View {
-        let viewState: DestinationViewState
+        let state: DestinationState
         let mode: NavigationMode
         let client: NavigationClient<Destination>
-
+        
         init(
-            viewState: DestinationViewState,
+            state: DestinationState,
             mode: NavigationMode,
             client: NavigationClient<Destination>
         ) {
-            self.viewState = viewState
+            self.state = state
             self.mode = mode
             self.client = client
         }
-
+        
         public var body: some View {
-            switch viewState {
+            switch state {
             case .main(let viewModel):
-                mainView(viewModel)
+                DiscoverRootView(
+                    viewModel: viewModel
+                )
             case .detail(let entry):
-                detailView(entry)
+                NavigationDestinationView(
+                    previousClient: client,
+                    mode: mode,
+                    entry: entry
+                )
             }
-        }
-
-        // MARK: - Destination Views
-
-        func mainView(_ viewModel: DiscoverViewModel) -> some View {
-            DiscoverRootView(
-                viewModel: viewModel,
-                onMovieSelected: { movieId in
-                    client.push(.external(.detail(movieId: movieId)))
-                }
-            )
-        }
-
-        func detailView(_ entry: DetailScreen.Entry) -> some View {
-            NavigationDestinationView(
-                previousClient: client,
-                mode: mode,
-                entry: entry
-            )
         }
     }
 }

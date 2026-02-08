@@ -4,7 +4,7 @@ import SwiftUI
 // MARK: - ViewState Enum
 
 extension WatchlistScreen {
-    enum DestinationViewState {
+    enum DestinationState {
         case main
     }
 }

@@ -114,28 +114,6 @@ extension Module {
 
     // MARK: Utilities
 
-    static var modularDependencyContainer: Module {
-        Module(
-            name: "ModularDependencyContainer",
-            type: .utility
-        )
-    }
-
-    static var modularNavigation: Module {
-        Module(
-            name: "ModularNavigation",
-            type: .utility
-        )
-    }
-
-    static var sharedUI: Module {
-        Module(
-            name: "SharedUI",
-            type: .utility,
-            hasTests: false
-        )
-    }
-
     static var uiComponents: Module {
         Module(
             name: "UIComponents",

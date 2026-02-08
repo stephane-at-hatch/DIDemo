@@ -4,13 +4,13 @@ import SwiftUI
 public extension DetailScreen {
     @MainActor
     static func liveEntry(
-        at publicDestination: Destination.Public,
+        publicDestination: Destination.Public,
         dependencies: Dependencies
     ) -> Entry {
         Entry(
             entryDestination: .public(publicDestination),
             builder: { destination, mode, navigationClient in
-                let viewState: DestinationViewState
+                let state: DestinationState
 
                 switch destination.type {
                 case .public(let publicDestination):
@@ -21,12 +21,12 @@ public extension DetailScreen {
                             movieRepository: dependencies.movieRepository,
                             imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL
                         )
-                        viewState = .detail(viewModel)
+                        state = .detail(viewModel)
                     }
                 }
 
                 return DestinationView(
-                    viewState: viewState,
+                    state: state,
                     mode: mode,
                     client: navigationClient
                 )
