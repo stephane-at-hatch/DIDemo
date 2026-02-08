@@ -16,6 +16,8 @@ public struct DependencyRequirementInfo {
 public struct InputRequirementInfo {
     public let typeExpr: String // e.g. "LoggerConfiguration.self"
     public let valueType: String // e.g. "LoggerConfiguration"
+    public let keyExpr: String? // e.g. "ConfigKey.logger" or nil
+    public let accessorName: String? // e.g. "myLogger" from `accessorName: "myLogger"`
 }
 
 public struct DependencyRequirementsMacro: MemberMacro {
@@ -110,25 +112,9 @@ public struct DependencyRequirementsMacro: MemberMacro {
 
         if let arrayExpr = inputsArrayExpr {
             for element in arrayExpr.elements {
-                guard let call = element.expression.as(FunctionCallExprSyntax.self) else { continue }
-                guard call.calledExpression.trimmedDescription == "InputRequirement" else { continue }
-
-                guard let typeArg = call.arguments.first else { continue }
-
-                guard let member = typeArg.expression.as(MemberAccessExprSyntax.self),
-                      member.declName.baseName.text == "self",
-                      let base = member.base
-                else { continue }
-
-                let typeExpr = member.trimmedDescription
-                let valueType = valueTypeString(from: base)
-
-                inputInfos.append(
-                    InputRequirementInfo(
-                        typeExpr: typeExpr,
-                        valueType: valueType
-                    )
-                )
+                if let info = parseInputRequirement(from: element) {
+                    inputInfos.append(info)
+                }
             }
         }
 
@@ -332,26 +318,52 @@ public struct DependencyRequirementsMacro: MemberMacro {
         for info in inputInfos {
             let valueType = info.valueType
             let typeExpr = info.typeExpr
+            let keyExpr = info.keyExpr
 
-            let baseNameForSuffix: String = {
+            let propertyName: String
+
+            // Derive base type name
+            let baseTypeName: String = {
                 if valueType.hasPrefix("any ") {
                     return String(valueType.dropFirst("any ".count))
                 }
                 return valueType
             }()
+            let typeSuffix = stripRedundantPrefix(from: baseTypeName).replacingOccurrences(of: ".", with: "")
 
-            let suffix = stripRedundantPrefix(from: baseNameForSuffix)
-            let propertyName = lowerFirst(suffix)
-
-            accessorsBody += """
-            var \(propertyName): \(valueType) {
-                guard let \(propertyName) = try? container.resolveInput(\(typeExpr)) else {
-                    preconditionFailure("Could not resolve input \(valueType)")
-                }
-                return \(propertyName)
+            if let accessorName = info.accessorName {
+                // Explicit alias provided via `accessorName:`
+                propertyName = accessorName
+            } else if let keyExpression = keyExpr {
+                // If a key is provided, combine key name with type name
+                let keyName = String(keyExpression.split(separator: ".").last ?? "")
+                propertyName = lowerFirst(keyName) + typeSuffix
+            } else {
+                // No key provided, derive name from the type alone
+                propertyName = lowerFirst(typeSuffix)
             }
 
-            """
+            if let keyExpr {
+                accessorsBody += """
+                var \(propertyName): \(valueType) {
+                    guard let \(propertyName) = try? container.resolveInput(\(typeExpr), key: \(keyExpr)) else {
+                        preconditionFailure("Could not resolve input \(valueType) with key \(keyExpr)")
+                    }
+                    return \(propertyName)
+                }
+
+                """
+            } else {
+                accessorsBody += """
+                var \(propertyName): \(valueType) {
+                    guard let \(propertyName) = try? container.resolveInput(\(typeExpr)) else {
+                        preconditionFailure("Could not resolve input \(valueType)")
+                    }
+                    return \(propertyName)
+                }
+
+                """
+            }
         }
 
         members.append(DeclSyntax(stringLiteral: accessorsBody))
@@ -461,4 +473,41 @@ private func valueTypeString(from base: some SyntaxProtocol) -> String {
         return String(inner)
     }
     return text
+}
+
+private func parseInputRequirement(from element: ArrayElementSyntax) -> InputRequirementInfo? {
+    guard let call = element.expression.as(FunctionCallExprSyntax.self) else { return nil }
+    guard call.calledExpression.trimmedDescription == "InputRequirement" else { return nil }
+
+    // Arg 1: type, e.g. `LoggerConfiguration.self`
+    guard let typeArg = call.arguments.first else { return nil }
+
+    guard let member = typeArg.expression.as(MemberAccessExprSyntax.self),
+          member.declName.baseName.text == "self",
+          let base = member.base
+    else { return nil }
+
+    let typeExpr = member.trimmedDescription // "LoggerConfiguration.self"
+    let valueType = valueTypeString(from: base) // "LoggerConfiguration"
+
+    // Arg 2: key (optional)
+    let keyArg = call.arguments.dropFirst().first { $0.label?.text == "key" }
+    let keyExpr = keyArg.map { $0.expression.trimmedDescription }
+
+    // Arg 3: accessorName (optional)
+    let accessorArg = call.arguments.first { $0.label?.text == "accessorName" }
+    let accessorName: String? = accessorArg.flatMap { arg in
+        if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
+           let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+            return segment.content.text
+        }
+        return nil
+    }
+
+    return InputRequirementInfo(
+        typeExpr: typeExpr,
+        valueType: valueType,
+        keyExpr: keyExpr,
+        accessorName: accessorName
+    )
 }

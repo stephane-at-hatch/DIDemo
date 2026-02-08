@@ -15,7 +15,6 @@ digraph ModuleDependencies {
 
         ModularDependencyContainer [label="ModularDependencyContainer", fillcolor="#ccccf0"];
         ModularNavigation [label="ModularNavigation", fillcolor="#ccccf0"];
-        SharedUI [label="SharedUI", fillcolor="#ccccf0"];
         UIComponents [label="UIComponents", fillcolor="#ccccf0"];
     }
 
@@ -89,30 +88,26 @@ digraph ModuleDependencies {
     BoxOfficeScreen -> ImageLoader;
     BoxOfficeScreen -> DetailScreen;
     BoxOfficeScreen -> UIComponents;
-    BoxOfficeScreen -> SharedUI;
     DiscoverScreen -> ModularDependencyContainer;
     DiscoverScreen -> ModularNavigation;
     DiscoverScreen -> MovieDomain;
     DiscoverScreen -> ImageLoader;
     DiscoverScreen -> DetailScreen;
     DiscoverScreen -> UIComponents;
-    DiscoverScreen -> SharedUI;
     DetailScreen -> ModularDependencyContainer;
     DetailScreen -> ModularNavigation;
     DetailScreen -> MovieDomain;
     DetailScreen -> WatchlistDomain;
     DetailScreen -> ImageLoader;
     DetailScreen -> UIComponents;
-    DetailScreen -> SharedUI;
     WatchlistScreen -> ModularDependencyContainer;
     WatchlistScreen -> ModularNavigation;
     WatchlistScreen -> WatchlistDomain;
     WatchlistScreen -> ImageLoader;
     WatchlistScreen -> DetailScreen;
     WatchlistScreen -> UIComponents;
-    WatchlistScreen -> SharedUI;
     MovieDomain -> TMDBClient;
     ModularDependencyContainer -> DependencyRequirementsMacro;
-    SharedUI -> ImageLoader;
     UIComponents -> CopyableMacro;
+    UIComponents -> ImageLoader;
 }

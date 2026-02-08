@@ -9,7 +9,7 @@ import SwiftSyntaxMacros
 
 @main
 struct DependencyAccessorsPlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
+    let providingMacros: [any Macro.Type] = [
         DependencyRequirementsMacro.self
     ]
 }

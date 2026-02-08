@@ -10,7 +10,7 @@ import Foundation
 @MainActor
 public enum RootDependencyBuilder {
     public static func buildChild<T: DependencyRequirements>(_ type: T.Type) -> T {
-        let dependencyBuilder = DependencyBuilder<AppRoot>()
+        let dependencyBuilder = DependencyBuilder<GraphRoot>()
         let dependencyContainer = dependencyBuilder.freeze()
         return dependencyContainer.buildChild(T.self)
     }
@@ -39,8 +39,8 @@ public final class DependencyBuilder<Marker> {
     // MARK: - Shared Storage
 
     private var metadata: [RegistrationKey: RegistrationMetadata] = [:]
-    private var inputs: [ObjectIdentifier: any Sendable]
-    private var inputMetadata: [ObjectIdentifier: InputMetadata] = [:]
+    private var inputs: [InputKey: any Sendable]
+    private var inputMetadata: [InputKey: InputMetadata] = [:]
     private let parent: AnyFrozenContainer?
 
     // MARK: - Namespace Accessors
@@ -56,13 +56,13 @@ public final class DependencyBuilder<Marker> {
     // MARK: - Initialization
 
     /// Creates a root builder (no parent).
-    public init() where Marker == AppRoot {
+    public init() where Marker == GraphRoot {
         self.parent = nil
         self.inputs = [:]
     }
 
     /// Creates a child builder with a frozen parent.
-    public init(parent: AnyFrozenContainer, inputs: [ObjectIdentifier: any Sendable] = [:]) {
+    init(parent: AnyFrozenContainer, inputs: [InputKey: any Sendable] = [:]) {
         self.parent = parent
         self.inputs = inputs
     }
@@ -75,12 +75,31 @@ public final class DependencyBuilder<Marker> {
         file: String = #file,
         line: Int = #line
     ) {
-        let key = ObjectIdentifier(type)
+        let key = InputKey(type: type)
         inputs[key] = value
         inputMetadata[key] = InputMetadata(
             typeDescription: String(describing: T.self),
             file: file,
-            line: line
+            line: line,
+            keyDescription: nil
+        )
+    }
+
+    public func provideInput<T: Sendable, Key: Hashable & Sendable>(
+        _ type: T.Type,
+        key: Key,
+        _ value: T,
+        file: String = #file,
+        line: Int = #line
+    ) {
+        let inputKey = InputKey(type: type, key: key)
+        let keyDescription = "\(String(describing: Key.self)).\(key)"
+        inputs[inputKey] = value
+        inputMetadata[inputKey] = InputMetadata(
+            typeDescription: String(describing: T.self),
+            file: file,
+            line: line,
+            keyDescription: keyDescription
         )
     }
 
@@ -156,7 +175,7 @@ public final class DependencyBuilder<Marker> {
 
     // MARK: - Registration (Keyed)
 
-    public func registerInstance<T: Sendable, Key: Hashable>(
+    public func registerInstance<T: Sendable, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -181,7 +200,7 @@ public final class DependencyBuilder<Marker> {
         )
     }
 
-    public func registerSingleton<T: Sendable, Key: Hashable>(
+    public func registerSingleton<T: Sendable, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -206,7 +225,7 @@ public final class DependencyBuilder<Marker> {
         )
     }
 
-    public func registerScoped<T: Sendable, Key: Hashable>(
+    public func registerScoped<T: Sendable, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -242,8 +261,8 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
     ) throws {
-        // Check for existing registration
-        if factories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check scoped)
+        if factories[key] != nil || scopedFactories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "Dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
@@ -262,6 +281,11 @@ public final class DependencyBuilder<Marker> {
             To replace it, set override: true.
             """)
 #endif
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            scopedFactories.removeValue(forKey: key)
         }
 
         // Type-erase the factory
@@ -289,11 +313,17 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
     ) throws {
-        if scopedFactories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check non-scoped)
+        if scopedFactories[key] != nil || factories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "Scoped dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
             )
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            factories.removeValue(forKey: key)
         }
 
         let erasedFactory: @Sendable (AnyFrozenContainer) throws -> any Sendable = { container in
@@ -323,8 +353,8 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
     ) throws {
-        // Check for existing registration
-        if mainActorFactories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check scoped)
+        if mainActorFactories[key] != nil || mainActorScopedFactories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "MainActor dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
@@ -343,6 +373,11 @@ public final class DependencyBuilder<Marker> {
             To replace it, set override: true.
             """)
 #endif
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            mainActorScopedFactories.removeValue(forKey: key)
         }
 
         // Type-erase the factory to Any (not `any Sendable`)
@@ -371,11 +406,17 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
     ) throws {
-        if mainActorScopedFactories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check non-scoped)
+        if mainActorScopedFactories[key] != nil || mainActorFactories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "MainActor scoped dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
             )
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            mainActorFactories.removeValue(forKey: key)
         }
 
         // Type-erase to Any (not `any Sendable`) - MainActor isolation is the safety mechanism
@@ -406,11 +447,17 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
     ) throws {
-        if localFactories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check scoped)
+        if localFactories[key] != nil || localScopedFactories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "Local dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
             )
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            localScopedFactories.removeValue(forKey: key)
         }
 
         let erasedFactory: @Sendable (AnyFrozenContainer) throws -> any Sendable = { container in
@@ -437,11 +484,17 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
     ) throws {
-        if localScopedFactories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check non-scoped)
+        if localScopedFactories[key] != nil || localFactories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "Local scoped dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
             )
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            localFactories.removeValue(forKey: key)
         }
 
         let erasedFactory: @Sendable (AnyFrozenContainer) throws -> any Sendable = { container in
@@ -471,11 +524,17 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
     ) throws {
-        if localMainActorFactories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check scoped)
+        if localMainActorFactories[key] != nil || localMainActorScopedFactories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "Local MainActor dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
             )
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            localMainActorScopedFactories.removeValue(forKey: key)
         }
 
         // Type-erase to Any (not `any Sendable`) - MainActor isolation is the safety mechanism
@@ -503,11 +562,17 @@ public final class DependencyBuilder<Marker> {
         line: Int,
         factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
     ) throws {
-        if localMainActorScopedFactories[key] != nil, !override {
+        // Check for existing registration (cross-map: also check non-scoped)
+        if localMainActorScopedFactories[key] != nil || localMainActorFactories[key] != nil, !override {
             let keyDesc = keyDescription ?? "type-only"
             throw DependencyError.registrationExists(
                 "Local MainActor scoped dependency \(type) with key \(keyDesc) already registered. Use override: true to replace."
             )
+        }
+
+        // Clean up cross-map entry when overriding
+        if override {
+            localMainActorFactories.removeValue(forKey: key)
         }
 
         // Type-erase to Any (not `any Sendable`) - MainActor isolation is the safety mechanism
@@ -561,7 +626,7 @@ public final class DependencyBuilder<Marker> {
 
     private func validateInputRequirements(_ inputRequirements: [InputRequirement]) {
         let missing = inputRequirements.filter { req in
-            inputs[req.typeId] == nil
+            inputs[req.key] == nil
         }
 
         if !missing.isEmpty {
@@ -657,9 +722,9 @@ public final class DependencyBuilder<Marker> {
 
 // MARK: - Root Builder Extension
 
-extension DependencyBuilder where Marker == AppRoot {
+extension DependencyBuilder where Marker == GraphRoot {
     /// Freezes a root builder into an immutable container.
-    public func freeze() -> DependencyContainer<AppRoot> {
+    public func freeze() -> DependencyContainer<GraphRoot> {
         freeze(
             requirements: [],
             mainActorRequirements: [],
@@ -753,7 +818,7 @@ public struct MainActorRegistrar<Marker> {
 
     // MARK: - Keyed Registration
 
-    public func registerInstance<T, Key: Hashable>(
+    public func registerInstance<T, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -778,7 +843,7 @@ public struct MainActorRegistrar<Marker> {
         )
     }
 
-    public func registerSingleton<T, Key: Hashable>(
+    public func registerSingleton<T, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -803,7 +868,7 @@ public struct MainActorRegistrar<Marker> {
         )
     }
 
-    public func registerScoped<T, Key: Hashable>(
+    public func registerScoped<T, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -917,7 +982,7 @@ public struct LocalRegistrar<Marker> {
 
     // MARK: - Keyed Registration
 
-    public func registerInstance<T: Sendable, Key: Hashable>(
+    public func registerInstance<T: Sendable, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -942,7 +1007,7 @@ public struct LocalRegistrar<Marker> {
         )
     }
 
-    public func registerSingleton<T: Sendable, Key: Hashable>(
+    public func registerSingleton<T: Sendable, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -967,7 +1032,7 @@ public struct LocalRegistrar<Marker> {
         )
     }
 
-    public func registerScoped<T: Sendable, Key: Hashable>(
+    public func registerScoped<T: Sendable, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -1076,7 +1141,7 @@ public struct LocalMainActorRegistrar<Marker> {
 
     // MARK: - Keyed Registration
 
-    public func registerInstance<T, Key: Hashable>(
+    public func registerInstance<T, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -1101,7 +1166,7 @@ public struct LocalMainActorRegistrar<Marker> {
         )
     }
 
-    public func registerSingleton<T, Key: Hashable>(
+    public func registerSingleton<T, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,
@@ -1126,7 +1191,7 @@ public struct LocalMainActorRegistrar<Marker> {
         )
     }
 
-    public func registerScoped<T, Key: Hashable>(
+    public func registerScoped<T, Key: Hashable & Sendable>(
         _ type: T.Type,
         key: Key,
         override: Bool = false,

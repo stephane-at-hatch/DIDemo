@@ -16,11 +16,9 @@ let package = Package(
         .package(path: "../../Utilities/ModularDependencyContainer"),
         .package(path: "../../Utilities/ModularNavigation"),
         .package(path: "../../Clients/MovieDomain"),
-        .package(path: "../../Clients/TMDBClient"),
         .package(path: "../../Clients/WatchlistDomain"),
         .package(path: "../../Clients/ImageLoader"),
-        .package(path: "../../Utilities/UIComponents"),
-        .package(path: "../../Utilities/SharedUI")
+        .package(path: "../../Utilities/UIComponents")
     ],
     targets: [
         .target(
@@ -30,7 +28,6 @@ let package = Package(
                 .product(name: "ModularNavigation", package: "ModularNavigation"),
                 "DetailScreenViews",
                 .product(name: "MovieDomainInterface", package: "MovieDomain"),
-                .product(name: "TMDBClientInterface", package: "TMDBClient"),
                 .product(name: "WatchlistDomainInterface", package: "WatchlistDomain"),
                 .product(name: "ImageLoaderInterface", package: "ImageLoader")
             ],
@@ -42,8 +39,7 @@ let package = Package(
                 .product(name: "UIComponents", package: "UIComponents"),
                 .product(name: "MovieDomainInterface", package: "MovieDomain"),
                 .product(name: "WatchlistDomainInterface", package: "WatchlistDomain"),
-                .product(name: "ImageLoaderInterface", package: "ImageLoader"),
-                .product(name: "SharedUI", package: "SharedUI")
+                .product(name: "ImageLoaderInterface", package: "ImageLoader")
             ],
             swiftSettings: swiftSettings
         ),

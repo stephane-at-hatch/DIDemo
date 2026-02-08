@@ -1,4 +1,5 @@
 import BoxOfficeScreen
+import DiscoverScreen
 import ModularNavigation
 import SwiftUI
 
@@ -9,7 +10,7 @@ import SwiftUI
 extension TabCoordinator {
     enum DestinationViewState {
         case boxOffice(BoxOfficeScreen.Entry)
-        case discover
+        case discover(DiscoverScreen.Entry)
         case watchlist
     }
 }

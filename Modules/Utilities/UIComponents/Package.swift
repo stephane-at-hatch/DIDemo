@@ -12,13 +12,15 @@ let package = Package(
         .library(name: "UIComponents", targets: ["UIComponents"])
     ],
     dependencies: [
-        .package(path: "../../Macros/CopyableMacro")
+        .package(path: "../../Macros/CopyableMacro"),
+        .package(path: "../../Clients/ImageLoader")
     ],
     targets: [
         .target(
             name: "UIComponents",
             dependencies: [
-                .product(name: "CopyableMacro", package: "CopyableMacro")
+                .product(name: "CopyableMacro", package: "CopyableMacro"),
+                .product(name: "ImageLoaderInterface", package: "ImageLoader")
             ],
             swiftSettings: swiftSettings
         )

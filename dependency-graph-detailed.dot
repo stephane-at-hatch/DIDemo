@@ -30,13 +30,6 @@ digraph ModuleDependencies {
             ModularNavigation_main [label="main", fillcolor="#ccccf0"];
             ModularNavigation_tests [label="Tests", fillcolor="#ccccf0"];
         }
-        subgraph cluster_SharedUI {
-            label="SharedUI";
-            style=rounded;
-            color="#666666";
-        
-            SharedUI_main [label="main", fillcolor="#ccccf0"];
-        }
         subgraph cluster_UIComponents {
             label="UIComponents";
             style=rounded;
@@ -216,7 +209,6 @@ digraph ModuleDependencies {
     BoxOfficeScreen_views -> UIComponents_main;
     BoxOfficeScreen_views -> MovieDomain_interface;
     BoxOfficeScreen_views -> ImageLoader_interface;
-    BoxOfficeScreen_views -> SharedUI_main;
     DiscoverScreen_main -> ModularDependencyContainer_main;
     DiscoverScreen_main -> ModularNavigation_main;
     DiscoverScreen_main -> MovieDomain_interface;
@@ -225,7 +217,6 @@ digraph ModuleDependencies {
     DiscoverScreen_views -> UIComponents_main;
     DiscoverScreen_views -> MovieDomain_interface;
     DiscoverScreen_views -> ImageLoader_interface;
-    DiscoverScreen_views -> SharedUI_main;
     DetailScreen_main -> ModularDependencyContainer_main;
     DetailScreen_main -> ModularNavigation_main;
     DetailScreen_main -> MovieDomain_interface;
@@ -235,7 +226,6 @@ digraph ModuleDependencies {
     DetailScreen_views -> MovieDomain_interface;
     DetailScreen_views -> WatchlistDomain_interface;
     DetailScreen_views -> ImageLoader_interface;
-    DetailScreen_views -> SharedUI_main;
     WatchlistScreen_main -> ModularDependencyContainer_main;
     WatchlistScreen_main -> ModularNavigation_main;
     WatchlistScreen_main -> WatchlistDomain_interface;
@@ -244,9 +234,8 @@ digraph ModuleDependencies {
     WatchlistScreen_views -> UIComponents_main;
     WatchlistScreen_views -> WatchlistDomain_interface;
     WatchlistScreen_views -> ImageLoader_interface;
-    WatchlistScreen_views -> SharedUI_main;
     MovieDomain_main -> TMDBClient_interface;
     ModularDependencyContainer_main -> DependencyRequirementsMacro_main;
-    SharedUI_main -> ImageLoader_interface;
     UIComponents_main -> CopyableMacro_main;
+    UIComponents_main -> ImageLoader_interface;
 }

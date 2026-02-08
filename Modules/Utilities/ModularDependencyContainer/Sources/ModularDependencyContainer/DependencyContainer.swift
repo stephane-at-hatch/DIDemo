@@ -27,8 +27,8 @@ public struct DependencyContainer<Marker>: Sendable {
     // MARK: - Shared Storage
 
     let metadata: [RegistrationKey: RegistrationMetadata]
-    let inputs: [ObjectIdentifier: any Sendable]
-    let inputMetadata: [ObjectIdentifier: InputMetadata]
+    let inputs: [InputKey: any Sendable]
+    let inputMetadata: [InputKey: InputMetadata]
     let parent: AnyFrozenContainer?
 
     // MARK: - Caches
@@ -49,8 +49,8 @@ public struct DependencyContainer<Marker>: Sendable {
         localMainActorFactories: [RegistrationKey: MainActorFactory],
         localMainActorScopedFactories: [RegistrationKey: MainActorFactory],
         metadata: [RegistrationKey: RegistrationMetadata],
-        inputs: [ObjectIdentifier: any Sendable],
-        inputMetadata: [ObjectIdentifier: InputMetadata],
+        inputs: [InputKey: any Sendable],
+        inputMetadata: [InputKey: InputMetadata],
         parent: AnyFrozenContainer?
     ) {
         self.factories = factories
@@ -78,16 +78,25 @@ public struct DependencyContainer<Marker>: Sendable {
         return try resolve(key: key, type: type, keyDescription: nil)
     }
 
-    public func resolve<T, Key: Hashable>(_ type: T.Type, key: Key) throws -> T {
+    public func resolve<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key) throws -> T {
         let registrationKey = RegistrationKey(type: type, key: key)
         let keyDescription = "\(String(describing: Key.self)).\(key)"
         return try resolve(key: registrationKey, type: type, keyDescription: keyDescription)
     }
 
     public func resolveInput<T>(_ type: T.Type) throws -> T {
-        let key = ObjectIdentifier(type)
+        let key = InputKey(type: type)
         guard let value = inputs[key], let typed = value as? T else {
             throw DependencyError.inputNotFound(String(describing: type))
+        }
+        return typed
+    }
+
+    public func resolveInput<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key) throws -> T {
+        let inputKey = InputKey(type: type, key: key)
+        guard let value = inputs[inputKey], let typed = value as? T else {
+            let keyDescription = "\(String(describing: Key.self)).\(key)"
+            throw DependencyError.inputNotFound("\(String(describing: type)) [key: \(keyDescription)]")
         }
         return typed
     }
@@ -101,7 +110,7 @@ public struct DependencyContainer<Marker>: Sendable {
     }
 
     @MainActor
-    public func resolveMainActor<T, Key: Hashable>(_ type: T.Type, key: Key) throws -> T {
+    public func resolveMainActor<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key) throws -> T {
         let registrationKey = RegistrationKey(type: type, key: key, isolation: .mainActor)
         let keyDescription = "\(String(describing: Key.self)).\(key)"
         return try resolveMainActor(key: registrationKey, type: type, keyDescription: keyDescription)
@@ -110,21 +119,22 @@ public struct DependencyContainer<Marker>: Sendable {
     // MARK: - Resolution (Internal)
 
     private func resolve<T>(key: RegistrationKey, type: T.Type, keyDescription: String?) throws -> T {
+        let resolved: any Sendable
         do {
-            let resolved = try resolveAny(key: key)
-
-            guard let typed = resolved as? T else {
-                throw DependencyError.resolutionFailed(
-                    "Type mismatch: expected \(T.self), got \(Swift.type(of: resolved))"
-                )
-            }
-            return typed
+            resolved = try resolveAny(key: key)
         } catch DependencyError.resolutionFailed {
-            // Enrich the error message with type information if it's a generic "not found" error
+            // Enrich the error message with type information for "not found" errors
             throw DependencyError.resolutionFailed(
                 buildResolutionErrorMessage(for: key, typeDescription: String(describing: T.self))
             )
         }
+
+        guard let typed = resolved as? T else {
+            throw DependencyError.resolutionFailed(
+                "Type mismatch: expected \(T.self), got \(Swift.type(of: resolved))"
+            )
+        }
+        return typed
     }
 
     private func resolveAny(key: RegistrationKey) throws -> any Sendable {
@@ -152,9 +162,9 @@ public struct DependencyContainer<Marker>: Sendable {
             }
         }
 
-        // 5. Walk up parent chain (parent only has inherited factories visible)
+        // 5. Walk up parent chain (inherited only - excludes parent's local factories)
         if let parent {
-            return try parent.resolveErased(key: key)
+            return try parent.resolveInheritedErased(key: key)
         }
 
         // 6. Not found
@@ -165,20 +175,22 @@ public struct DependencyContainer<Marker>: Sendable {
 
     @MainActor
     private func resolveMainActor<T>(key: RegistrationKey, type: T.Type, keyDescription: String?) throws -> T {
+        let resolved: Any
         do {
-            let resolved = try resolveMainActorAny(key: key)
-
-            guard let typed = resolved as? T else {
-                throw DependencyError.resolutionFailed(
-                    "Type mismatch: expected \(T.self), got \(Swift.type(of: resolved))"
-                )
-            }
-            return typed
+            resolved = try resolveMainActorAny(key: key)
         } catch DependencyError.resolutionFailed {
+            // Enrich the error message with type information for "not found" errors
             throw DependencyError.resolutionFailed(
                 buildResolutionErrorMessage(for: key, typeDescription: String(describing: T.self))
             )
         }
+
+        guard let typed = resolved as? T else {
+            throw DependencyError.resolutionFailed(
+                "Type mismatch: expected \(T.self), got \(Swift.type(of: resolved))"
+            )
+        }
+        return typed
     }
 
     @MainActor
@@ -207,9 +219,9 @@ public struct DependencyContainer<Marker>: Sendable {
             }
         }
 
-        // 5. Walk up parent chain (parent only has inherited factories visible)
+        // 5. Walk up parent chain (inherited only - excludes parent's local factories)
         if let parent {
-            return try parent.resolveMainActorErased(key: key)
+            return try parent.resolveMainActorInheritedErased(key: key)
         }
 
         // 6. Not found
@@ -286,6 +298,45 @@ public struct DependencyContainer<Marker>: Sendable {
     @MainActor
     func resolveMainActorErased(key: RegistrationKey) throws -> Any {
         try resolveMainActorAny(key: key)
+    }
+
+    /// Resolves inherited factories only (excludes local). Used by children walking the parent chain.
+    func resolveInheritedErased(key: RegistrationKey) throws -> any Sendable {
+        if let factory = factories[key] {
+            return try factory.resolve(in: AnyFrozenContainer(self))
+        }
+
+        if let factory = scopedFactories[key] {
+            return try scopedCache.getOrCreate(key: key) {
+                try factory.resolve(in: AnyFrozenContainer(self))
+            }
+        }
+
+        if let parent {
+            return try parent.resolveInheritedErased(key: key)
+        }
+
+        throw DependencyError.resolutionFailed(buildResolutionErrorMessage(for: key))
+    }
+
+    /// Resolves inherited MainActor factories only (excludes local). Used by children walking the parent chain.
+    @MainActor
+    func resolveMainActorInheritedErased(key: RegistrationKey) throws -> Any {
+        if let factory = mainActorFactories[key] {
+            return try factory.resolve(in: AnyFrozenContainer(self))
+        }
+
+        if let factory = mainActorScopedFactories[key] {
+            return try mainActorScopedCache.getOrCreate(key: key) {
+                try factory.resolve(in: AnyFrozenContainer(self))
+            }
+        }
+
+        if let parent {
+            return try parent.resolveMainActorInheritedErased(key: key)
+        }
+
+        throw DependencyError.resolutionFailed(buildResolutionErrorMessage(for: key))
     }
 
     /// Checks if a dependency can be resolved (used by parent lookups).
@@ -411,6 +462,6 @@ public struct DependencyContainer<Marker>: Sendable {
     }
 }
 
-// MARK: - App Root Marker
+// MARK: - Graph Root Marker
 
-public enum AppRoot {}
+public enum GraphRoot {}

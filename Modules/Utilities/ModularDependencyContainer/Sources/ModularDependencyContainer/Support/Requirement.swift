@@ -25,7 +25,7 @@ public struct Requirement: Sendable {
     
     /// Requires a keyed dependency
     /// swiftformat:disable:next opaqueGenericParameters
-    public init<T, Key: Hashable>(_ type: T.Type, key: Key, accessorName: String? = nil) {
+    public init<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key, accessorName: String? = nil) {
         self.key = RegistrationKey(type: type, key: key)
         self.description = "\(String(describing: type)) [key: \(String(describing: Key.self)).\(key)]"
         self.isOptional = false
@@ -43,7 +43,7 @@ public struct Requirement: Sendable {
     
     /// Requires an optional keyed dependency
     /// swiftformat:disable:next opaqueGenericParameters
-    public init<T, Key: Hashable>(optional type: T.Type, key: Key, accessorName: String? = nil) {
+    public init<T, Key: Hashable & Sendable>(optional type: T.Type, key: Key, accessorName: String? = nil) {
         self.key = RegistrationKey(type: type, key: key)
         self.description = "\(String(describing: type)) [key: \(String(describing: Key.self)).\(key)]"
         self.isOptional = true
@@ -57,13 +57,23 @@ public struct Requirement: Sendable {
 /// Inputs are runtime configuration values provided by the caller before building a child module.
 /// Unlike dependencies, inputs are NOT copied to grandchildren - they exist only for the immediate child.
 public struct InputRequirement: Sendable {
-    let typeId: ObjectIdentifier
+    let key: InputKey
     let description: String
-    
-    /// Requires an input of the specified type
+    let accessorName: String?
+
+    /// Requires a type-only input
     /// swiftformat:disable:next opaqueGenericParameters
-    public init<T>(_ type: T.Type) {
-        self.typeId = ObjectIdentifier(type)
+    public init<T>(_ type: T.Type, accessorName: String? = nil) {
+        self.key = InputKey(type: type)
         self.description = String(describing: type)
+        self.accessorName = accessorName
+    }
+
+    /// Requires a keyed input
+    /// swiftformat:disable:next opaqueGenericParameters
+    public init<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key, accessorName: String? = nil) {
+        self.key = InputKey(type: type, key: key)
+        self.description = "\(String(describing: type)) [key: \(String(describing: Key.self)).\(key)]"
+        self.accessorName = accessorName
     }
 }

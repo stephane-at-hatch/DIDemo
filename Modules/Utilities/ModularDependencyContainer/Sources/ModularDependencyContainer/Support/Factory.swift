@@ -46,7 +46,7 @@ struct Factory: Sendable {
 /// Unlike regular Factory, this works with `Any` instead of `any Sendable` because:
 /// 1. MainActor-isolated types don't need to be Sendable (they never cross isolation boundaries)
 /// 2. All access is gated by @MainActor, so thread safety is guaranteed by actor isolation
-/// 
+///
 /// This struct is Sendable because it only stores Sendable components:
 /// - `scope` is a Sendable enum
 /// - `factory` closure is stored and only accessed on MainActor
@@ -87,15 +87,17 @@ struct MainActorFactory: Sendable {
 // MARK: - Type-Erased Frozen Container
 
 /// Type-erased container for parent lookups and factory closures.
-/// 
+///
 /// This uses `@unchecked Sendable` because:
 /// - All Sendable closures are truly Sendable (marked @Sendable)
 /// - MainActor closures are stored directly and only accessed via @MainActor methods
 /// - The original container is Sendable (DependencyContainer is Sendable)
 public struct AnyFrozenContainer: Sendable {
     private let _resolveErased: @Sendable (RegistrationKey) throws -> any Sendable
+    private let _resolveInheritedErased: @Sendable (RegistrationKey) throws -> any Sendable
     private let _resolveMainActorErased: @MainActor (RegistrationKey) throws -> Any
-    private let _resolveInput: @Sendable (ObjectIdentifier) throws -> any Sendable
+    private let _resolveMainActorInheritedErased: @MainActor (RegistrationKey) throws -> Any
+    private let _resolveInput: @Sendable (InputKey) throws -> any Sendable
     private let _canResolve: @Sendable (RegistrationKey) -> Bool
     private let _findKeyedRegistrations: @Sendable (ObjectIdentifier) -> [String]
     private let _hasNonKeyedRegistration: @Sendable (ObjectIdentifier) -> Bool
@@ -108,7 +110,9 @@ public struct AnyFrozenContainer: Sendable {
     init<Marker>(_ container: DependencyContainer<Marker>) {
         self._originalContainer = container
         self._resolveErased = { try container.resolveErased(key: $0) }
+        self._resolveInheritedErased = { try container.resolveInheritedErased(key: $0) }
         self._resolveMainActorErased = { key in try container.resolveMainActorErased(key: key) }
+        self._resolveMainActorInheritedErased = { key in try container.resolveMainActorInheritedErased(key: key) }
         self._resolveInput = { key in
             guard let value = container.inputs[key] else {
                 throw DependencyError.inputNotFound("Input not found for key")
@@ -121,9 +125,9 @@ public struct AnyFrozenContainer: Sendable {
         self._diagnose = { container.diagnose(level: $0) }
     }
 
+    // swiftformat:disable:next opaqueGenericParameters
     /// Retrieves the original typed container.
     /// Use this when registering local factories that need access to the typed DependencyRequirements.
-    // swiftformat:disable:next opaqueGenericParameters
     public func typed<Marker>(_ type: DependencyContainer<Marker>.Type) -> DependencyContainer<Marker> {
         // swiftlint:disable:next force_cast
         _originalContainer as! DependencyContainer<Marker>
@@ -133,9 +137,20 @@ public struct AnyFrozenContainer: Sendable {
         try _resolveErased(key)
     }
 
+    /// Resolves inherited factories only (excludes local). Used by children walking the parent chain.
+    func resolveInheritedErased(key: RegistrationKey) throws -> any Sendable {
+        try _resolveInheritedErased(key)
+    }
+
     @MainActor
     func resolveMainActorErased(key: RegistrationKey) throws -> Any {
         try _resolveMainActorErased(key)
+    }
+
+    /// Resolves inherited MainActor factories only (excludes local). Used by children walking the parent chain.
+    @MainActor
+    func resolveMainActorInheritedErased(key: RegistrationKey) throws -> Any {
+        try _resolveMainActorInheritedErased(key)
     }
 
     func canResolve(key: RegistrationKey) -> Bool {
@@ -175,7 +190,7 @@ extension AnyFrozenContainer {
     }
 
     // swiftformat:disable:next opaqueGenericParameters
-    public func resolve<T, Key: Hashable>(_ type: T.Type, key: Key) throws -> T {
+    public func resolve<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key) throws -> T {
         let registrationKey = RegistrationKey(type: type, key: key)
         let resolved = try resolveErased(key: registrationKey)
         
@@ -188,8 +203,21 @@ extension AnyFrozenContainer {
     }
     
     public func resolveInput<T>(_ type: T.Type) throws -> T {
-        let key = ObjectIdentifier(type)
+        let key = InputKey(type: type)
         let resolved = try _resolveInput(key)
+
+        guard let typed = resolved as? T else {
+            throw DependencyError.resolutionFailed(
+                "Input type mismatch: expected \(T.self), got \(Swift.type(of: resolved))"
+            )
+        }
+        return typed
+    }
+
+    // swiftformat:disable:next opaqueGenericParameters
+    public func resolveInput<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key) throws -> T {
+        let inputKey = InputKey(type: type, key: key)
+        let resolved = try _resolveInput(inputKey)
 
         guard let typed = resolved as? T else {
             throw DependencyError.resolutionFailed(
@@ -216,7 +244,7 @@ extension AnyFrozenContainer {
 
     @MainActor
     // swiftformat:disable:next opaqueGenericParameters
-    public func resolveMainActor<T, Key: Hashable>(_ type: T.Type, key: Key) throws -> T {
+    public func resolveMainActor<T, Key: Hashable & Sendable>(_ type: T.Type, key: Key) throws -> T {
         let registrationKey = RegistrationKey(type: type, key: key, isolation: .mainActor)
         let resolved = try resolveMainActorErased(key: registrationKey)
 

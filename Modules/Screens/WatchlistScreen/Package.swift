@@ -18,8 +18,7 @@ let package = Package(
         .package(path: "../../Clients/WatchlistDomain"),
         .package(path: "../../Clients/ImageLoader"),
         .package(path: "../DetailScreen"),
-        .package(path: "../../Utilities/UIComponents"),
-        .package(path: "../../Utilities/SharedUI")
+        .package(path: "../../Utilities/UIComponents")
     ],
     targets: [
         .target(
@@ -39,8 +38,7 @@ let package = Package(
             dependencies: [
                 .product(name: "UIComponents", package: "UIComponents"),
                 .product(name: "WatchlistDomainInterface", package: "WatchlistDomain"),
-                .product(name: "ImageLoaderInterface", package: "ImageLoader"),
-                .product(name: "SharedUI", package: "SharedUI")
+                .product(name: "ImageLoaderInterface", package: "ImageLoader")
             ],
             swiftSettings: swiftSettings
         ),

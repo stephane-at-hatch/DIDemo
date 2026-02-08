@@ -61,8 +61,7 @@ let graph: [ModuleNode] = [
             ],
             .views: [
                 .target(.interface, module: .movieDomain),
-                .target(.interface, module: .imageLoader),
-                .module(.sharedUI)
+                .target(.interface, module: .imageLoader)
             ]
         ]
     ),
@@ -76,8 +75,7 @@ let graph: [ModuleNode] = [
             ],
             .views: [
                 .target(.interface, module: .movieDomain),
-                .target(.interface, module: .imageLoader),
-                .module(.sharedUI)
+                .target(.interface, module: .imageLoader)
             ]
         ]
     ),
@@ -92,8 +90,7 @@ let graph: [ModuleNode] = [
             .views: [
                 .target(.interface, module: .movieDomain),
                 .target(.interface, module: .watchlistDomain),
-                .target(.interface, module: .imageLoader),
-                .module(.sharedUI)
+                .target(.interface, module: .imageLoader)
             ]
         ]
     ),
@@ -107,8 +104,7 @@ let graph: [ModuleNode] = [
             ],
             .views: [
                 .target(.interface, module: .watchlistDomain),
-                .target(.interface, module: .imageLoader),
-                .module(.sharedUI)
+                .target(.interface, module: .imageLoader)
             ]
         ]
     ),
@@ -161,15 +157,10 @@ let graph: [ModuleNode] = [
         module: .modularNavigation
     ),
     ModuleNode(
-        module: .sharedUI,
-        dependencies: [
-            .target(.interface, module: .imageLoader)
-        ]
-    ),
-    ModuleNode(
         module: .uiComponents,
         dependencies: [
-            .copyableMacro
+            .target(.main, module: .copyableMacro),
+            .target(.interface, module: .imageLoader)
         ],
         exports: [
             .copyableMacro

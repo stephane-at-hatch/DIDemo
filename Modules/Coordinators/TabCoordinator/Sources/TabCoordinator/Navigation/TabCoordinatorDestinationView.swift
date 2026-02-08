@@ -25,8 +25,12 @@ public extension TabCoordinator {
                     mode: mode,
                     entry: entry
                 )
-            case .discover:
-                Text("Discover")
+            case .discover(let entry):
+                NavigationDestinationView(
+                    previousClient: client,
+                    mode: mode,
+                    entry: entry
+                )
             case .watchlist:
                 Text("Watchlist")
             }

@@ -128,5 +128,5 @@ public macro DependencyRequirements(
 ) =
     #externalMacro(
         module: "DependencyRequirementsMacroImplementation",
-        type: "DependencyRequirementsMacro"
+        type: "DependencyRequirementMacro"
     )

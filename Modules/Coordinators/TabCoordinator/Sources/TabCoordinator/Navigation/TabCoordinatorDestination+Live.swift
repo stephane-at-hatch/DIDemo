@@ -1,4 +1,5 @@
 import BoxOfficeScreen
+import DiscoverScreen
 import ModularNavigation
 import SwiftUI
 
@@ -24,7 +25,12 @@ extension TabCoordinator {
                         )
                         viewState = .boxOffice(entry)
                     case .discover:
-                        fatalError()
+                        let discoverDependencies = dependencies.buildChild(DiscoverScreen.Dependencies.self)
+                        let entry = DiscoverScreen.liveEntry(
+                            at: .main,
+                            dependencies: discoverDependencies
+                        )
+                        viewState = .discover(entry)
                     case .watchlist:
                         fatalError()
                     }
