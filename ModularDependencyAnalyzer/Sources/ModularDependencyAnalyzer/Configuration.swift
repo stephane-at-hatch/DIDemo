@@ -11,10 +11,14 @@ struct Configuration {
     let dependencyGraphOnly: Bool
     let appSourceDirectory: URL?
     let cacheMode: CacheMode
-    
+    let testAdoption: Bool
+    let testAlignment: Bool
+    let testRedundancy: Bool
+    let testAll: Bool
+
     static func parse() -> Configuration {
         let arguments = CommandLine.arguments
-        
+
         // Default values
         var appName = "AppShell"
         var projectRoot: URL?
@@ -24,11 +28,15 @@ struct Configuration {
         var dependencyGraphOnly = false
         var appSourcePath: String?
         var cacheMode: CacheMode = .normal
-        
+        var testAdoption = false
+        var testAlignment = false
+        var testRedundancy = false
+        var testAll = false
+
         var argIndex = 1
         while argIndex < arguments.count {
             let arg = arguments[argIndex]
-            
+
             switch arg {
             case "--app",
                  "-a":
@@ -99,15 +107,35 @@ struct Configuration {
                 } else {
                     printUsageAndExit("Missing value for \(arg)")
                 }
-                
+
             case "--cache-only":
                 cacheMode = .cacheOnly
                 argIndex += 1
-                
+
             case "--no-cache":
                 cacheMode = .noCache
                 argIndex += 1
-                
+
+            case "--test-adoption",
+                 "-ta":
+                testAdoption = true
+                argIndex += 1
+
+            case "--test-alignment",
+                 "-tal":
+                testAlignment = true
+                argIndex += 1
+
+            case "--test-redundancy",
+                 "-tr":
+                testRedundancy = true
+                argIndex += 1
+
+            case "--test-all",
+                 "-tall":
+                testAll = true
+                argIndex += 1
+
             default:
                 if projectRoot == nil {
                     projectRoot = URL(fileURLWithPath: arg)
@@ -115,9 +143,9 @@ struct Configuration {
                 argIndex += 1
             }
         }
-        
+
         let resolvedProjectRoot = projectRoot ?? findProjectRoot()
-        
+
         let resolvedModulesDir: URL = if let modulesPath {
             if modulesPath.hasPrefix("/") {
                 URL(fileURLWithPath: modulesPath)
@@ -127,7 +155,7 @@ struct Configuration {
         } else {
             resolvedProjectRoot.appendingPathComponent(mode == .monorepo ? "Sources" : "Modules")
         }
-        
+
         let resolvedAppSourceDir: URL? = appSourcePath.map { path in
             if path.hasPrefix("/") {
                 return URL(fileURLWithPath: path)
@@ -137,7 +165,7 @@ struct Configuration {
                 return URL(fileURLWithPath: (fullPath as NSString).standardizingPath)
             }
         }
-        
+
         return Configuration(
             appName: appName,
             projectRoot: resolvedProjectRoot,
@@ -146,21 +174,25 @@ struct Configuration {
             graphOnly: graphOnly,
             dependencyGraphOnly: dependencyGraphOnly,
             appSourceDirectory: resolvedAppSourceDir,
-            cacheMode: cacheMode
+            cacheMode: cacheMode,
+            testAdoption: testAdoption,
+            testAlignment: testAlignment,
+            testRedundancy: testRedundancy,
+            testAll: testAll
         )
     }
-    
+
     static func printUsageAndExit(_ error: String?) -> Never {
         if let error {
             print("Error: \(error)\n")
         }
-        
+
         print("""
         ModularDependencyAnalyzer - Validates dependency injection graphs
-        
+
         USAGE:
             ModularDependencyAnalyzer [OPTIONS] [PROJECT_ROOT]
-        
+
         OPTIONS:
             -a, --app <name>        App name (default: AppShell)
             -p, --project <path>    Project root directory
@@ -171,20 +203,24 @@ struct Configuration {
             -dg, --dependency-graph Print only discovered DI graphs
             --cache-only            Only use cached data (fail if stale)
             --no-cache              Ignore cache entirely
+            -ta, --test-adoption    Report TestDependencyProvider adoption status
+            -tal, --test-alignment  Compare importDependencies vs buildChild alignment
+            -tr, --test-redundancy  Flag mock registrations covered by importDependencies
+            -tall, --test-all       Run all test reports (adoption + alignment + redundancy)
             -h, --help              Show this help
-        
+
         DISCOVERY:
             The analyzer discovers dependency graphs by:
             1. Finding all types conforming to DependencyRequirements (nodes)
             2. Finding DependencyBuilder<T>() instantiations (graph roots)
             3. Tracing buildChild() calls to build edges between nodes
-        
+
         EXAMPLES:
             swift run ModularDependencyAnalyzer
             swift run ModularDependencyAnalyzer --app MyApp --mode monorepo
             swift run ModularDependencyAnalyzer -dg  # Show discovered graphs only
         """)
-        
+
         exit(error == nil ? 0 : 1)
     }
 }
@@ -194,11 +230,11 @@ struct Configuration {
 func findProjectRoot() -> URL {
     let fileManager = FileManager.default
     let cwd = URL(fileURLWithPath: fileManager.currentDirectoryPath)
-    
+
     if isValidProjectRoot(cwd) {
         return cwd
     }
-    
+
     var currentDir = cwd
     for _ in 0..<10 {
         let parent = currentDir.deletingLastPathComponent()
@@ -206,29 +242,29 @@ func findProjectRoot() -> URL {
             break
         }
         currentDir = parent
-        
+
         if isValidProjectRoot(currentDir) {
             return currentDir
         }
     }
-    
+
     return cwd
 }
 
 func isValidProjectRoot(_ dir: URL) -> Bool {
     let fileManager = FileManager.default
-    
+
     if dir.path.contains("/.build/") {
         return false
     }
-    
+
     // Check for Modules folder with Package.swift (distributed mode)
     let modulesPath = dir.appendingPathComponent("Modules")
     let modulesPackage = modulesPath.appendingPathComponent("Package.swift")
     if fileManager.fileExists(atPath: modulesPackage.path) {
         return true
     }
-    
+
     // Check for Modules folder containing subdirectories with Package.swift
     if fileManager.fileExists(atPath: modulesPath.path),
        let contents = try? fileManager.contentsOfDirectory(at: modulesPath, includingPropertiesForKeys: nil) {
@@ -239,7 +275,7 @@ func isValidProjectRoot(_ dir: URL) -> Bool {
             }
         }
     }
-    
+
     // Check for monorepo: Package.swift with Sources directory
     let packagePath = dir.appendingPathComponent("Package.swift")
     let sourcesPath = dir.appendingPathComponent("Sources")
@@ -250,6 +286,6 @@ func isValidProjectRoot(_ dir: URL) -> Bool {
             return true
         }
     }
-    
+
     return false
 }

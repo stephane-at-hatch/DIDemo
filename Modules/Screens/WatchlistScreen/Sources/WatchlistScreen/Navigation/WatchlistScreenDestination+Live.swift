@@ -1,4 +1,5 @@
 import ModularNavigation
+import DetailScreen
 import SwiftUI
 
 public extension WatchlistScreen {
@@ -16,7 +17,23 @@ public extension WatchlistScreen {
                 case .public(let publicDestination):
                     switch publicDestination {
                     case .main:
-                        state = .main
+                        let viewModel = WatchlistViewModel(
+                            watchlistRepository: dependencies.watchlistRepository,
+                            imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL,
+                            navigationClient: navigationClient
+                        )
+                        state = .main(viewModel)
+                    }
+
+                case .external(let externalDestination):
+                    switch externalDestination {
+                    case .detail(let detailDestination):
+                        let detailDependencies = dependencies.buildChild(DetailScreen.Dependencies.self)
+                        let entry = DetailScreen.liveEntry(
+                            publicDestination: detailDestination,
+                            dependencies: detailDependencies
+                        )
+                        state = .detail(entry)
                     }
                 }
 

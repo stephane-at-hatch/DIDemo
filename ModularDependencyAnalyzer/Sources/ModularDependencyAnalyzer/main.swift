@@ -5,21 +5,21 @@ import Foundation
 func main() {
     // Parse configuration
     let config = Configuration.parse()
-    
+
     printBanner(config: config)
-    
+
     // Verify paths exist
     guard verifyPaths(config: config) else {
         exit(1)
     }
-    
+
     // Build module graph
     print("\nBuilding module dependency graph (\(config.mode.rawValue) mode)...")
     let moduleGraph = buildModuleGraph(config: config)
-    
+
     let nonTestModules = moduleGraph.allModuleNames.filter { !isTestModule($0) }
     print("Found \(nonTestModules.count) modules: \(nonTestModules.sorted().joined(separator: ", "))")
-    
+
     // If --graph flag, print module graph and exit
     if config.graphOnly {
         let reporter = Reporter(
@@ -31,7 +31,11 @@ func main() {
                 requirementsByModule: [:],
                 inputRequirementsByModule: [:],
                 provisionsByModule: [:],
-                providedInputsByModule: [:]
+                providedInputsByModule: [:],
+                testDependencyProviderConformancesByModule: [:],
+                mockRegistrationImplementationsByModule: [:],
+                importDependenciesByModule: [:],
+                mockRegistrationsByModule: [:]
             ),
             moduleGraph: moduleGraph,
             diagnostics: [],
@@ -40,46 +44,100 @@ func main() {
         reporter.printModuleGraphOnly()
         exit(0)
     }
-    
+
     // Initialize cache
     let cache = FileCache(projectRoot: config.projectRoot, mode: config.cacheMode)
-    
+
     // Find all Swift files
     var allFiles = findSwiftFiles(at: config.projectRoot)
     if let appSourceDir = config.appSourceDirectory {
         allFiles.append(contentsOf: findSwiftFiles(at: appSourceDir))
     }
     print("Found \(allFiles.count) Swift files to analyze.")
-    
+
     // Scan all files
     print("\nScanning files...")
     let scanner = Scanner(moduleGraph: moduleGraph, cache: cache)
     let scanResults = scanner.scanAll(files: allFiles)
-    
+
     // Prune and save cache
     cache.pruneStaleEntries()
     cache.save()
     cache.printStats()
-    
+
     // Check for cache-only failures
     if cache.isCacheOnly, cache.hasMisses {
         print("\nError: --cache-only specified but some files were not in cache.")
         print("       Run a full build first to populate the cache.")
         exit(1)
     }
-    
+
     print("\nDiscovered \(scanResults.nodes.count) nodes, \(scanResults.roots.count) graph roots")
-    
+
+    // If --test-all flag, run all test reports and exit
+    if config.testAll {
+        let reporter = Reporter(
+            graphs: [],
+            scanResults: scanResults,
+            moduleGraph: moduleGraph,
+            diagnostics: [],
+            orphanNodes: []
+        )
+        reporter.printTestAdoptionReport()
+        reporter.printTestAlignmentReport()
+        reporter.printTestRedundancyReport()
+        exit(0)
+    }
+
+    // If --test-adoption flag, print adoption report and exit
+    if config.testAdoption {
+        let reporter = Reporter(
+            graphs: [],
+            scanResults: scanResults,
+            moduleGraph: moduleGraph,
+            diagnostics: [],
+            orphanNodes: []
+        )
+        reporter.printTestAdoptionReport()
+        exit(0)
+    }
+
+    // If --test-alignment flag, print alignment report and exit
+    if config.testAlignment {
+        let reporter = Reporter(
+            graphs: [],
+            scanResults: scanResults,
+            moduleGraph: moduleGraph,
+            diagnostics: [],
+            orphanNodes: []
+        )
+        reporter.printTestAlignmentReport()
+        exit(0)
+    }
+
+    // If --test-redundancy flag, print redundancy report and exit
+    if config.testRedundancy {
+        let reporter = Reporter(
+            graphs: [],
+            scanResults: scanResults,
+            moduleGraph: moduleGraph,
+            diagnostics: [],
+            orphanNodes: []
+        )
+        reporter.printTestRedundancyReport()
+        exit(0)
+    }
+
     // Build graphs
     print("Building dependency graphs...")
     let graphBuilder = GraphBuilder(scanResults: scanResults, moduleGraph: moduleGraph)
     let buildResult = graphBuilder.build()
-    
+
     print("Built \(buildResult.graphs.count) graph(s)")
     if !buildResult.orphanNodes.isEmpty {
         print("Found \(buildResult.orphanNodes.count) orphan node(s)")
     }
-    
+
     // If --dependency-graph flag, print DI graphs and exit
     if config.dependencyGraphOnly {
         let reporter = Reporter(
@@ -92,7 +150,7 @@ func main() {
         reporter.printDependencyGraphOnly()
         exit(0)
     }
-    
+
     // Analyze graphs
     print("Analyzing graphs...")
     let analyzer = Analyzer(
@@ -101,7 +159,7 @@ func main() {
         moduleGraph: moduleGraph
     )
     let diagnostics = analyzer.analyze()
-    
+
     // Report results
     let reporter = Reporter(
         graphs: buildResult.graphs,
@@ -111,7 +169,7 @@ func main() {
         orphanNodes: buildResult.orphanNodes
     )
     reporter.printFullReport()
-    
+
     exit(reporter.exitCode)
 }
 
@@ -144,24 +202,24 @@ func verifyPaths(config: Configuration) -> Bool {
         atPath: config.projectRoot.path,
         isDirectory: &isDirectory
     )
-    
+
     guard projectExists, isDirectory.boolValue else {
         print("Error: Project root does not exist or is not a directory:")
         print("       \(config.projectRoot.path)")
         return false
     }
-    
+
     if !FileManager.default.fileExists(atPath: config.modulesDirectory.path, isDirectory: &isDirectory) {
         print("Warning: Modules directory does not exist: \(config.modulesDirectory.path)")
         print("         Continuing with project root for file scanning...")
     }
-    
+
     return true
 }
 
 func buildModuleGraph(config: Configuration) -> ModuleGraph {
     let moduleGraph = ModuleGraph()
-    
+
     switch config.mode {
     case .distributed:
         let packageFiles = findPackageSwiftFiles(at: config.projectRoot)
@@ -170,7 +228,7 @@ func buildModuleGraph(config: Configuration) -> ModuleGraph {
                 moduleGraph.addModule(info)
             }
         }
-        
+
     case .monorepo:
         let packageSwiftURL = config.projectRoot.appendingPathComponent("Package.swift")
         if FileManager.default.fileExists(atPath: packageSwiftURL.path) {
@@ -183,7 +241,7 @@ func buildModuleGraph(config: Configuration) -> ModuleGraph {
             exit(1)
         }
     }
-    
+
     moduleGraph.buildDependentsGraph()
     return moduleGraph
 }

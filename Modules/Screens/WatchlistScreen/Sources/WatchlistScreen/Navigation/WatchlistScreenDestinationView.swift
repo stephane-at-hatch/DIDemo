@@ -1,4 +1,5 @@
 import ModularNavigation
+import DetailScreen
 import SwiftUI
 
 public extension WatchlistScreen {
@@ -19,8 +20,16 @@ public extension WatchlistScreen {
         
         public var body: some View {
             switch state {
-            case .main:
-                Text("main View")
+            case .main(let viewModel):
+                WatchlistRootView(
+                    viewModel: viewModel
+                )
+            case .detail(let entry):
+                NavigationDestinationView(
+                    previousClient: client,
+                    mode: mode,
+                    entry: entry
+                )
             }
         }
     }

@@ -20,8 +20,14 @@ public struct NavigationTabModel<Tab: Hashable, Destination: Hashable, Content: 
     let destination: Destination
     /// The tab identifier used in the selection binding
     let tab: Tab
-    
-    /// Initialize a navigation tab model.
+
+    /// Optional custom image paths for active/inactive states
+    let customActiveImageName: String?
+    let customInactiveImageName: String?
+    let customImageBundle: Bundle?
+    let customTitle: String?
+
+    /// Initialize a navigation tab model with an SF Symbol or single image.
     /// - Parameters:
     ///   - label: The label shown in the tab bar
     ///   - destination: The destination to navigate to when this tab is selected
@@ -34,6 +40,36 @@ public struct NavigationTabModel<Tab: Hashable, Destination: Hashable, Content: 
         self.label = label
         self.destination = destination
         self.tab = tab
+        self.customActiveImageName = nil
+        self.customInactiveImageName = nil
+        self.customImageBundle = nil
+        self.customTitle = nil
+    }
+
+    /// Initialize a navigation tab model with custom active/inactive images.
+    /// - Parameters:
+    ///   - title: The text title shown in the tab bar
+    ///   - activeImageName: The name of the image asset to show when tab is selected
+    ///   - inactiveImageName: The name of the image asset to show when tab is not selected
+    ///   - bundle: The bundle containing the image assets (typically .module for SPM)
+    ///   - destination: The destination to navigate to when this tab is selected
+    ///   - tab: The tab identifier
+    public init(
+        title: String,
+        activeImageName: String,
+        inactiveImageName: String,
+        bundle: Bundle,
+        destination: Destination,
+        tab: Tab
+    ) {
+        // Create label with active image as default (will be overridden by tabItem modifier)
+        self.label = Label(title, image: activeImageName)
+        self.destination = destination
+        self.tab = tab
+        self.customActiveImageName = activeImageName
+        self.customInactiveImageName = inactiveImageName
+        self.customImageBundle = bundle
+        self.customTitle = title
     }
     
     /// Equality based on destination only (labels and tabs are part of configuration)
@@ -135,8 +171,24 @@ public struct NavigationTabView<Tab: Hashable, Destination: Hashable, Content: V
                     coordinator: tabCoordinator,
                     builder: builder
                 )
+                .equatable()
                 .tabItem {
-                    tabModel.label
+                    if let activeImageName = tabModel.customActiveImageName,
+                       let inactiveImageName = tabModel.customInactiveImageName,
+                       let bundle = tabModel.customImageBundle,
+                       let title = tabModel.customTitle {
+                        // Use custom images with state-based selection
+                        let isSelected = selectedTab == tab
+                        let imageName = isSelected ? activeImageName : inactiveImageName
+                        Label {
+                            Text(title)
+                        } icon: {
+                            Image(imageName, bundle: bundle)
+                        }
+                    } else {
+                        // Fall back to default label (SF Symbol or single image)
+                        tabModel.label
+                    }
                 }
                 .tag(tab)
             }
@@ -159,7 +211,7 @@ public struct NavigationTabView<Tab: Hashable, Destination: Hashable, Content: V
 ///
 /// Each tab maintains its own navigation state independently. This view prevents SwiftUI from
 /// recreating tab content when switching between tabs, preserving navigation history.
-public struct TabContentView<Destination: Hashable, Content: View>: View {
+nonisolated struct TabContentView<Destination: Hashable, Content: View>: View, Equatable {
     /// The root destination for this tab
     let destination: Destination
     /// The coordinator managing this tab's navigation
@@ -182,13 +234,17 @@ public struct TabContentView<Destination: Hashable, Content: View>: View {
         self.builder = builder
     }
     
-    public var body: some View {
+    var body: some View {
         NavigationDestinationView(
             previousCoordinator: coordinator,
             mode: .root,
             destination: destination,
             builder: builder
         )
+    }
+    
+    static func == (lhs: TabContentView, rhs: TabContentView) -> Bool {
+        lhs.destination == rhs.destination
     }
 }
 

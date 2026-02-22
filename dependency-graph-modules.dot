@@ -77,6 +77,7 @@ digraph ModuleDependencies {
     AppCoordinator -> MovieDomain;
     AppCoordinator -> TabCoordinator;
     AppCoordinator -> TMDBClient;
+    AppCoordinator -> WatchlistDomain;
     TabCoordinator -> ModularDependencyContainer;
     TabCoordinator -> BoxOfficeScreen;
     TabCoordinator -> DiscoverScreen;
@@ -103,6 +104,7 @@ digraph ModuleDependencies {
     WatchlistScreen -> ModularDependencyContainer;
     WatchlistScreen -> ModularNavigation;
     WatchlistScreen -> WatchlistDomain;
+    WatchlistScreen -> TMDBClient;
     WatchlistScreen -> ImageLoader;
     WatchlistScreen -> DetailScreen;
     WatchlistScreen -> UIComponents;

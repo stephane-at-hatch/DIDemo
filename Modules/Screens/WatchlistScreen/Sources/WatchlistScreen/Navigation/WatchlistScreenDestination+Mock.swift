@@ -1,10 +1,12 @@
+import DetailScreen
 import ModularNavigation
 import SwiftUI
+import WatchlistDomainInterface
 
 public extension WatchlistScreen {
     @MainActor
     static func mockEntry(
-        at publicDestination: Destination.Public = .main
+        publicDestination: Destination.Public = .main
     ) -> Entry {
         Entry(
             entryDestination: .public(publicDestination),
@@ -15,8 +17,22 @@ public extension WatchlistScreen {
                 case .public(let publicDestination):
                     switch publicDestination {
                     case .main:
-                        // TODO: Create mock ViewModel
-                        state = .main
+                        let viewModel = WatchlistViewModel(
+                            watchlistRepository: .mock(),
+                            imageBaseURL: URL(filePath: "/test"),
+                            navigationClient: navigationClient
+                        )
+                        state = .main(viewModel)
+                    }
+
+                case .external(let externalDestination):
+                    switch externalDestination {
+                    case .detail(let detailDestination):
+                        state = .detail(
+                            DetailScreen.mockEntry(
+                                publicDestination: detailDestination
+                            )
+                        )
                     }
                 }
 

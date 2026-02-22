@@ -6,7 +6,7 @@ import Foundation
 struct FileLocation: Codable, Hashable {
     let filePath: String
     let line: Int
-    
+
     var fileName: String {
         URL(fileURLWithPath: filePath).lastPathComponent
     }
@@ -20,7 +20,7 @@ struct GraphOrigin: Codable, Hashable {
     let functionName: String
     let filePath: String
     let line: Int
-    
+
     var displayName: String {
         "\(fileName).\(functionName)()"
     }
@@ -56,11 +56,11 @@ enum ProvisionScope: Codable, Hashable {
     /// Registered inside a DependencyRequirements type's registerDependencies function.
     /// These are scoped to the node and available when that node is on the path.
     case node(typeName: String)
-    
+
     /// Registered inline on a DependencyBuilder/container variable in a graph root function.
     /// These are scoped to that specific graph and only available within it.
     case graphRoot(filePath: String, functionName: String)
-    
+
     /// Legacy/unknown scope - treated as module-wide (fallback)
     case module
 }
@@ -82,7 +82,7 @@ struct Dependency: Codable, Hashable {
         self.scope = scope
         self.location = location
     }
-    
+
     /// Matches requirements (ignores scope for comparison)
     func satisfies(_ requirement: Dependency) -> Bool {
         type == requirement.type
@@ -103,7 +103,7 @@ struct ProvidedInput: Codable, Hashable {
     let targetModule: String // The module this input is provided TO
     let location: FileLocation
     let scope: ProvisionScope
-    
+
     init(type: String, targetModule: String, location: FileLocation, scope: ProvisionScope = .module) {
         self.type = type
         self.targetModule = targetModule
@@ -120,7 +120,7 @@ struct ModuleInfo: Codable {
     let sourcePath: String
     let dependencies: [String] // Names of modules this depends on
     let isTestTarget: Bool
-    
+
     init(name: String, sourcePath: String, dependencies: [String], isTestTarget: Bool = false) {
         self.name = name
         self.sourcePath = sourcePath
@@ -135,23 +135,58 @@ struct ModuleInfo: Codable {
 struct ScannedFileData: Codable {
     let mtime: TimeInterval
     let moduleName: String
-    
+
     // Node discovery
     let discoveredNode: DiscoveredNode? // At most one per module
-    
+
     // Root discovery
     let discoveredRoots: [DiscoveredRoot]
-    
+
     // Edge discovery (for non-root contexts)
     let discoveredEdges: [DiscoveredEdge]
-    
+
     // Dependency requirements
     let requirements: [Dependency]
     let inputRequirements: [InputDependency]
-    
+
     // Provisions
     let provisions: [Dependency]
     let providedInputs: [ProvidedInput]
+
+    // Test adoption
+    let testAdoption: TestAdoptionData
+
+    // Test alignment
+    let importDependenciesCalls: [ImportDependenciesCall]
+
+    // Mock registrations (register* calls inside mockRegistration bodies)
+    let mockRegistrations: [Dependency]
+}
+
+/// Test adoption information discovered from a single file
+struct TestAdoptionData: Codable {
+    /// Type names that conform to TestDependencyProvider (via struct declaration or extension)
+    let testDependencyProviderConformances: [String]
+
+    /// Type names that have a mockRegistration function with a non-empty body
+    let mockRegistrationImplementations: [String]
+
+    static let empty = TestAdoptionData(testDependencyProviderConformances: [], mockRegistrationImplementations: [])
+}
+
+/// An importDependencies(X.self) call discovered in source
+struct ImportDependenciesCall: Codable, Hashable {
+    /// The type being imported (X in importDependencies(X.self))
+    let importedType: String
+    let location: FileLocation
+}
+
+// MARK: - Dependency Matching Key
+
+/// A lightweight key for comparing dependencies by (type, key) pair
+struct DependencyKey: Hashable {
+    let type: String
+    let key: String?
 }
 
 // MARK: - Graph Structures (Builder Output)
@@ -162,28 +197,28 @@ struct DependencyGraph {
     let rootType: String
     let edges: [GraphEdge]
     let nodes: Set<String> // All node types reachable in this graph
-    
+
     /// Returns all paths from root to a given node type
     func pathsTo(_ nodeType: String) -> [[String]] {
         guard nodes.contains(nodeType) else { return [] }
-        
+
         var allPaths: [[String]] = []
-        
+
         func dfs(current: String, path: [String]) {
             let newPath = path + [current]
-            
+
             if current == nodeType {
                 allPaths.append(newPath)
                 return
             }
-            
+
             let children = edges.filter { $0.fromType == current }.map { $0.toType }
             for child in children {
                 guard !path.contains(child) else { continue } // Avoid cycles
                 dfs(current: child, path: newPath)
             }
         }
-        
+
         dfs(current: rootType, path: [])
         return allPaths
     }
@@ -204,13 +239,13 @@ struct Diagnostic {
         case warning
         case info
     }
-    
+
     let severity: Severity
     let message: String
     let location: FileLocation?
     let graph: GraphOrigin?
     let context: [String] // Additional context lines
-    
+
     init(
         severity: Severity,
         message: String,

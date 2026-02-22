@@ -2,6 +2,7 @@ import BoxOfficeScreen
 import DiscoverScreen
 import ModularNavigation
 import SwiftUI
+import WatchlistScreen
 
 extension TabCoordinator {
     @MainActor
@@ -32,7 +33,12 @@ extension TabCoordinator {
                         )
                         state = .discover(entry)
                     case .watchlist:
-                        fatalError()
+                        let watchlistDependencies = dependencies.buildChild(WatchlistScreen.Dependencies.self)
+                        let entry = WatchlistScreen.liveEntry(
+                            publicDestination: .main,
+                            dependencies: watchlistDependencies
+                        )
+                        state = .watchlist(entry)
                     }
                 }
 

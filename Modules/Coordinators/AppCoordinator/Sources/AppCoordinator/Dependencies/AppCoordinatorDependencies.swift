@@ -1,5 +1,6 @@
 import ModularDependencyContainer
 import MovieDomain
+import WatchlistDomain
 import TMDBClient
 
 extension AppCoordinator {
@@ -21,6 +22,9 @@ extension AppCoordinator {
                 try builder.registerSingleton(MovieRepository.self) { container in
                     let dependencies = Self(container)
                     return MovieRepository.live(client: dependencies.tmdbClient)
+                }
+                try builder.registerSingleton(WatchlistRepository.self) { _ in
+                    WatchlistRepository.live()
                 }
             } catch {
                 preconditionFailure("Failed to build dependencies with error: \(error)")

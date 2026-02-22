@@ -36,7 +36,8 @@ let graph: [ModuleNode] = [
         dependencies: [
             .movieDomain,
             .tabCoordinator,
-            .tmdbClient
+            .tmdbClient,
+            .watchlistDomain
         ]
     ),
     ModuleNode(
@@ -99,6 +100,7 @@ let graph: [ModuleNode] = [
         dependencies: [
             .main: [
                 .target(.interface, module: .watchlistDomain),
+                .target(.interface, module: .tmdbClient),
                 .target(.interface, module: .imageLoader),
                 .module(.detailScreen)
             ],
@@ -121,7 +123,7 @@ let graph: [ModuleNode] = [
     ),
     ModuleNode(
         module: .watchlistDomain
-        // No external dependencies - uses SwiftData directly
+        // No external dependencies - file-based JSON persistence
     ),
 
     // MARK: Clients

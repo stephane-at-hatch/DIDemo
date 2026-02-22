@@ -19,6 +19,7 @@ public extension DetailScreen {
                         let viewModel = DetailViewModel(
                             movieId: movieId,
                             movieRepository: dependencies.movieRepository,
+                            watchlistRepository: dependencies.watchlistRepository,
                             imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL
                         )
                         state = .detail(viewModel)

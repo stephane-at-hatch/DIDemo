@@ -52,6 +52,7 @@ public struct DetailRootView: View {
         viewModel: DetailViewModel(
             movieId: 550,
             movieRepository: .fixtureData,
+            watchlistRepository: .fixtureData,
             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
         ),
         onBack: {}

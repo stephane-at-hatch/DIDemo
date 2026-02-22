@@ -1,5 +1,6 @@
 import ModularNavigation
 import MovieDomainInterface
+import WatchlistDomainInterface
 import SwiftUI
 
 public extension DetailScreen {
@@ -19,6 +20,7 @@ public extension DetailScreen {
                         let viewModel = DetailViewModel(
                             movieId: movieId,
                             movieRepository: .fixtureData,
+                            watchlistRepository: .fixtureData,
                             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!
                         )
                         state = .detail(viewModel)

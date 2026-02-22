@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="377.0833px" preserveAspectRatio="none" style="width:419px;height:377px;background:#13294B;" version="1.1" viewBox="0 0 419 377" width="419.7917px" zoomAndPan="magnify"><defs><filter height="1" id="b19jrat4fzv9ag0" width="1" x="0" y="0"><feFlood flood-color="#2FAAC2" result="flood"/><feComposite in="SourceGraphic" in2="flood" operator="over"/></filter><filter height="1" id="b19jrat4fzv9ag1" width="1" x="0" y="0"><feFlood flood-color="#CD9F52" result="flood"/><feComposite in="SourceGraphic" in2="flood" operator="over"/></filter><filter height="1" id="b19jrat4fzv9ag2" width="1" x="0" y="0"><feFlood flood-color="#FFFFFF" result="flood"/><feComposite in="SourceGraphic" in2="flood" operator="over"/></filter></defs><g><!--MD5=[f1d26ff7eba050ec7935cfce4a092924]
+entity modulardependencyanalyzer--><g id="elem_modulardependencyanalyzer"><rect fill="#2FAAC2" height="43.5181" rx="4.1667" ry="4.1667" style="stroke:#FFFFFF;stroke-width:2.0833333333333335;" width="179.1667" x="123.9583" y="7.2917"/><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="10.4167" lengthAdjust="spacing" textLength="147.9167" x="139.5833" y="32.9875">ModularDependencyAnalyzer</text></g><!--MD5=[07714600b62c40d72d7f93bcb5456644]
+entity swift_syntax--><g id="elem_swift_syntax"><rect fill="#CD9F52" height="41.2028" rx="4.1667" ry="4.1667" style="stroke:#FFFFFF;stroke-width:2.0833333333333335;" width="95.8333" x="165.625" y="113.3125"/><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="10.4167" lengthAdjust="spacing" textLength="64.5833" x="181.25" y="131.7166">swift-syntax</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="10.4167" lengthAdjust="spacing" textLength="37.5" x="181.25" y="143.9847">601.0.1</text></g><!--MD5=[511510e4959352a11910193591bd2bb4]
+link modulardependencyanalyzer to swift_syntax--><g id="link_modulardependencyanalyzer_swift_syntax"><path d="M213.5417,51.2917 C213.5417,51.2917 213.5417,106.3438 213.5417,106.3438 " fill="none" id="modulardependencyanalyzer-to-swift_syntax" style="stroke:#FFFFFF;stroke-width:1.0416666666666667;stroke-dasharray:7.0,7.0;"/><polygon fill="#FFFFFF" points="213.5417,111.5521,217.7083,102.1771,213.5417,106.3438,209.375,102.1771,213.5417,111.5521" style="stroke:#FFFFFF;stroke-width:1.0416666666666667;"/></g><rect fill="none" height="192.6351" id="_legend" rx="4.1667" ry="4.1667" style="stroke:#FFFFFF;stroke-width:2.0833333333333335;" width="394.7917" x="8.3333" y="168.057"/><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" font-weight="bold" lengthAdjust="spacing" textLength="40.625" x="30.2083" y="200.9061">Color</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" font-weight="bold" lengthAdjust="spacing" textLength="69.7917" x="107.2917" y="200.9061">Summary</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" font-weight="bold" lengthAdjust="spacing" textLength="86.4583" x="197.9167" y="200.9061">Description</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="25" y="228.498"> </text><text fill="#FFFFFF" filter="url(#b19jrat4fzv9ag0)" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="62.5" x="29.1667" y="229.1572">                    </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="102.0833" y="228.498"> </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="48.9583" x="106.25" y="229.1572">1st Party</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="185.4167" x="196.875" y="228.498">Packages written by Hatch</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="25" y="256.09"> </text><text fill="#FFFFFF" filter="url(#b19jrat4fzv9ag1)" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="62.5" x="29.1667" y="256.7492">                    </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="102.0833" y="256.09"> </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="51.0417" x="106.25" y="256.7492">3rd Party</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="144.7917" x="196.875" y="256.09">Not written by Hatch</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="25" y="283.682"> </text><text fill="#FFFFFF" filter="url(#b19jrat4fzv9ag2)" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="62.5" x="29.1667" y="284.3411">                    </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="102.0833" y="283.682"> </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="53.125" x="106.25" y="284.3411">Solid Line</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="147.9167" x="196.875" y="283.682">1st party to 1st party</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="25" y="311.2739"> </text><text fill="#FFFFFF" filter="url(#b19jrat4fzv9ag2)" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="62.5" x="29.1667" y="311.9331">                    </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="102.0833" y="311.2739"> </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="67.7083" x="106.25" y="311.9331">Dashed Line</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="151.0417" x="196.875" y="311.2739">1st party to 3rd party</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="25" y="338.8659"> </text><text fill="#FFFFFF" filter="url(#b19jrat4fzv9ag2)" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="62.5" x="29.1667" y="339.5251">                    </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="4.1667" x="102.0833" y="338.8659"> </text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="11.4583" lengthAdjust="spacing" textLength="63.5417" x="106.25" y="339.5251">Dotted Line</text><text fill="#FFFFFF" font-family="&quot;Verdana&quot;" font-size="14.5833" lengthAdjust="spacing" textLength="154.1667" x="196.875" y="338.8659">3rd party to 3rd party</text><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="391.6667" y1="181.5986" y2="181.5986"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="391.6667" y1="209.1906" y2="209.1906"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="391.6667" y1="236.7826" y2="236.7826"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="391.6667" y1="264.3745" y2="264.3745"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="391.6667" y1="291.9665" y2="291.9665"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="391.6667" y1="319.5584" y2="319.5584"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="391.6667" y1="347.1504" y2="347.1504"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="19.7917" x2="19.7917" y1="181.5986" y2="347.1504"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="96.875" x2="96.875" y1="181.5986" y2="347.1504"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="187.5" x2="187.5" y1="181.5986" y2="347.1504"/><line style="stroke:#FFFFFF;stroke-width:1.0416666666666667;" x1="391.6667" x2="391.6667" y1="181.5986" y2="347.1504"/><!--MD5=[6a49914ebeea7b74c334461ca0c62f6d]
+@startuml
+
+' Use custom Hatch themeOptions (see file "puml-themeOptions-hatch.puml")
+!theme hatch
+
+
+' skinparam linetype polyline
+skinparam linetype ortho
+
+rectangle modulardependencyanalyzer as "ModularDependencyAnalyzer" $TEAL400
+card swift_syntax as "swift-syntax\n601.0.1" $RESTPLUS
+
+modulardependencyanalyzer -[dashed]-> swift_syntax
+
+legend
+    |= Color |= Summary |= Description |
+    | <size:11><back:$TEAL400>                    </back></size>| <size:11>1st Party</size>| Packages written by Hatch |
+    | <size:11><back:$RESTPLUS>                    </back></size>| <size:11>3rd Party</size>| Not written by Hatch |
+    | <size:11><back:#white>                    </back></size>| <size:11>Solid Line </size>| 1st party to 1st party |
+    | <size:11><back:#white>                    </back></size>| <size:11>Dashed Line </size>| 1st party to 3rd party |
+    | <size:11><back:#white>                    </back></size>| <size:11>Dotted Line </size>| 3rd party to 3rd party |
+endlegend
+
+@enduml
+
+@startuml
+
+
+
+
+skinparam BackgroundColor #13294B
+skinparam useBetaStyle false
+
+
+
+
+
+
+
+
+
+
+
+
+
+    !assume transparent dark
+skinparam defaultFontName       "Verdana"
+skinparam defaultFontSize       10
+skinparam dpi                   100
+skinparam shadowing             false
+skinparam roundcorner           8
+skinparam ParticipantPadding    40
+skinparam BoxPadding            40
+skinparam Padding               5
+skinparam ArrowColor            #4E5D6C
+skinparam stereotype {
+    CBackgroundColor #32373D
+    CBorderColor #222529
+    ABackgroundColor #81C84A
+    ABorderColor #558C2A
+    IBackgroundColor #FFA3A7
+    IBorderColor #FF1721
+    EBackgroundColor #FFFFFF
+    EBorderColor #CCCCCC
+    NBackgroundColor #4DBED4
+    NBorderColor #26889B
+}
+skinparam title {
+	FontSize	    	         20
+	BorderRoundCorner            8
+	BorderThickness 	         1
+	BackgroundColor  #32373D-#2a2e33
+	FontColor #FFF
+	BorderColor #2a2e33
+}
+
+skinparam legend {
+    		FontColor #FFF
+		BorderColor #222529
+		BackgroundColor #32373D-#2a2e33
+    BackgroundColor transparent
+	BorderColor #FFF
+	BorderThickness 2
+}
+
+skinparam swimlane {
+	BorderColor #2FAAC2
+	BorderThickness 2
+	TitleBackgroundColor  #32373D-#2a2e33
+	TitleFontColor #FFF
+}
+
+
+skinparam activity {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	BarColor #6aaf35
+	StartColor #2FAAC2
+	EndColor #2FAAC2
+	DiamondBackgroundColor #2a2e33
+  	DiamondBorderColor #32373D
+  	DiamondFontColor #FFF
+}
+
+skinparam participant {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	ParticipantBorderThickness 2
+}
+
+skinparam actor {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	FontColor #FFF
+}
+
+skinparam arrow {
+	Color #FFF
+	FontColor #FFF
+}
+
+skinparam sequence {
+	ArrowThickness 1
+	DefaultTextAlignment "center"
+	MessageAlignment "center"
+	MessageTextAlignment "center"
+
+	BorderColor #FFF
+	TitleFontColor #FFF
+	BackgroundColor #13294B
+	StartColor #FFF
+	EndColor #FFF
+	BoxBackgroundColor #13294B
+	BoxBorderColor #4E5D6C
+	BoxFontColor #4E5D6C
+	DelayFontColor #4E5D6C
+	LifeLineBorderColor #abb6c2
+	LifeLineBorderThickness 1
+	LifeLineBackgroundColor #8191A3
+	GroupBorderColor #4E5D6C
+	GroupFontColor #4E5D6C
+	GroupHeaderFontColor #2FAAC2
+	GroupBackgroundColor #2a2e33
+	GroupBodyBackgroundColor #13294B
+	GroupHeaderBackgroundColor #13294B
+	DividerBackgroundColor #4E5D6C
+    DividerBorderColor #4E5D6C
+    DividerBorderThickness 2
+    DividerFontColor #abb6c2
+	ReferenceBackgroundColor #13294B
+	ReferenceBorderColor #4E5D6C
+	ReferenceFontColor #4E5D6C
+	ReferenceHeaderFontColor #2FAAC2
+	ReferenceHeaderBackgroundColor #2a2e33
+	StereotypeFontColor #FFF
+	StereotypeFontSize 12
+}
+
+
+skinparam collections {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+}
+
+skinparam control {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	FontColor #4E5D6C
+}
+
+skinparam entity {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	FontColor #4E5D6C
+}
+
+skinparam boundary {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	FontColor #4E5D6C
+}
+
+skinparam agent {
+	BackgroundColor #FFF
+	BorderColor #FFFFFF
+	FontColor #4E5D6C
+}
+
+skinparam note {
+	BorderThickness 1
+	BackgroundColor #2FAAC2
+	BorderColor #26889B
+	FontColor #FFF
+}
+
+skinparam artifact {
+	BackgroundColor #4E5D6C
+	BorderColor #3E4A56
+	FontColor #abb6c2
+}
+
+skinparam component {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+}
+
+skinparam interface {
+	BackgroundColor  #FF1721
+	BorderColor  #ff5d64
+	FontColor #4E5D6C
+}
+
+skinparam storage {
+	BackgroundColor #FFF
+  	BorderColor #CCCCCC
+	FontColor #FFF
+}
+
+skinparam node {
+	BackgroundColor  #13294B
+	BorderColor #abb6c2
+	FontColor #abb6c2
+}
+
+skinparam cloud {
+	BackgroundColor transparent
+	BorderColor #4E5D6C
+	FontColor #FFF
+}
+
+skinparam database {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	FontColor #FFF
+	StereotypeFontColor #FFF
+}
+
+skinparam class {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	FontColor #FFF
+	HeaderBackgroundColor #FFFFFF-#FFF
+	StereotypeFontColor #4E5D6C
+	BorderThickness 1
+	AttributeFontColor #FFF
+	AttributeFontSize 11
+}
+
+skinparam object {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	StereotypeFontColor #4E5D6C
+	BorderThickness 1
+	AttributeFontColor #FFF
+	AttributeFontSize 11
+}
+
+skinparam usecase {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	BorderThickness 2
+	StereotypeFontColor #FFF
+}
+
+skinparam rectangle {
+	DefaultTextAlignment "center"
+	BackgroundColor #13294B
+	FontColor #FFF
+	BorderColor #FFF
+	BorderThickness 2
+	StereotypeFontColor #FFF
+}
+
+skinparam package {
+	BackgroundColor #13294B
+  	BorderColor #FFF
+	FontColor #FFF
+	BorderThickness 2
+}
+
+skinparam folder {
+	BackgroundColor #2a2e33
+  	BorderColor #FFF
+	FontColor #FFF
+	BorderThickness 2
+}
+
+skinparam frame {
+	BackgroundColor #2a2e33
+  	BorderColor #2FAAC2
+	FontColor #2FAAC2
+	BorderThickness 2
+}
+
+skinparam state {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	StartColor #2FAAC2
+	EndColor #2FAAC2
+	AttributeFontColor #FFF
+	AttributeFontSize 11
+}
+
+skinparam queue {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+}
+
+skinparam card {
+	DefaultTextAlignment "center"
+	BackgroundColor #2FAAC2
+	BorderColor #26889B
+	FontColor #FFF
+
+	BorderColor #FFF
+	BorderThickness 2
+
+}
+
+skinparam file {
+	BackgroundColor #2a2e33
+	BorderColor #abb6c2
+	FontColor #FFF
+}
+
+skinparam stack {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+}
+
+
+skinparam map {
+			FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+}
+
+<style>
+wbsDiagram, mindmapDiagram {
+  root {
+    BackgroundColor #13294B
+    FontColor #FFF
+    HyperLinkColor #2FAAC2
+    LineColor #CCCCCC
+    LineThickness 1
+    Margin 10
+    Padding 6
+    Shadowing 0.0
+  }
+  node {
+    		FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+    Padding 15
+    RoundCorner 20
+  }
+  caption {
+    LineThickness 0
+  }
+  footer {
+    LineThickness 0
+  }
+  groupHeader {
+    BackgroundColor #2a2e33
+    FontColor #2FAAC2
+    FontStyle bold
+  }
+  header {
+    LineThickness 0
+  }
+  referenceHeader {
+    BackgroundColor #13294B
+    FontColor #4E5D6C
+    FontStyle bold
+  }
+  separator {
+    BackgroundColor #FFF
+    FontColor #13294B
+    FontStyle bold
+  }
+  title {
+	FontSize 20
+	BorderRoundCorner            8
+	BorderThickness 	         1
+	BackgroundColor  #32373D-#2a2e33
+	FontColor #FFF
+	BorderColor #2a2e33
+  }	
+}
+nwdiagDiagram {
+  network {
+    		FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF    
+    LineColor $PRIMARY_BG
+    LineThickness 1.0
+    FontColor #CCCCCC
+  }
+  server {
+    		FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+  }
+  arrow {
+    FontColor #CCCCCC
+    LineColor #CCCCCC
+  }
+  group {
+    BackGroundColor $LIGHT_BG
+    LineColor #8191A3
+    Margin 5
+    Padding 5
+  }
+}
+ganttDiagram {
+  task {
+    		FontColor #FFF
+		BorderColor #FFF
+		BackgroundColor #FFFFFF-#FFF
+	LineColor $PRIMARY_BG
+    Margin 10
+    Padding 6
+  }
+  note {
+	FontColor #FFF
+	LineColor #26889B
+    BackGroundColor #2FAAC2
+  }
+  separator {
+	LineColor #2a2e33
+    BackGroundColor 		FontColor #FFF
+		BorderColor #222529
+		BackgroundColor #32373D-#2a2e33
+    FontColor #FFF
+  }
+  milestone {
+	FontColor #2FAAC2
+	FontSize 16
+	FontStyle italic
+	BackGroundColor $DIAMOND_BG
+	LineColor #222529
+  }
+  timeline {
+    BackgroundColor #2a2e33
+    FontColor #FFF
+  }
+  closed {
+	BackgroundColor #CCCCCC
+	FontColor #FFF
+  }
+}
+
+label {
+	FontColor #FFF
+}
+</style>
+
+
+
+skinparam linetype ortho
+
+rectangle modulardependencyanalyzer as "ModularDependencyAnalyzer" #2FAAC2
+card swift_syntax as "swift-syntax\n601.0.1" #CD9F52
+
+modulardependencyanalyzer -[dashed]-> swift_syntax
+
+legend
+    |= Color |= Summary |= Description |
+    | <size:11><back:#2FAAC2>                    </back></size>| <size:11>1st Party</size>| Packages written by Hatch |
+    | <size:11><back:#CD9F52>                    </back></size>| <size:11>3rd Party</size>| Not written by Hatch |
+    | <size:11><back:#white>                    </back></size>| <size:11>Solid Line </size>| 1st party to 1st party |
+    | <size:11><back:#white>                    </back></size>| <size:11>Dashed Line </size>| 1st party to 3rd party |
+    | <size:11><back:#white>                    </back></size>| <size:11>Dotted Line </size>| 3rd party to 3rd party |
+endlegend
+
+@enduml
+
+PlantUML version 1.2022.7(Mon Aug 22 10:01:30 PDT 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>

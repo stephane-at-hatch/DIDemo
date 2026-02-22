@@ -17,7 +17,7 @@ protocol TestServiceProtocol: Sendable {
 
 struct TestService: TestServiceProtocol, Sendable {
     let id: String
-    
+
     init(id: String = UUID().uuidString) {
         self.id = id
     }
@@ -30,7 +30,7 @@ struct AnotherService: Sendable {
 @MainActor
 final class MainActorService {
     let id: String
-    
+
     init(id: String = UUID().uuidString) {
         self.id = id
     }
@@ -46,7 +46,7 @@ enum ServiceKey: Hashable, Sendable {
 
 struct TestModule: DependencyRequirements {
     static var requirements: [Requirement] { [] }
-    
+
     static func registerDependencies(in builder: DependencyBuilder<TestModule>) {
         do {
             try builder.registerSingleton(TestService.self) { _ in
@@ -56,7 +56,7 @@ struct TestModule: DependencyRequirements {
             Issue.record(error, "Failed to register singleton: \(error)")
         }
     }
-    
+
     init(_ container: DependencyContainer<TestModule>) {}
 }
 
@@ -64,7 +64,7 @@ struct ChildModule: DependencyRequirements {
     static var requirements: [Requirement] {
         [Requirement(TestService.self)]
     }
-    
+
     static func registerDependencies(in builder: DependencyBuilder<ChildModule>) {
         do {
             try builder.registerInstance(AnotherService.self) { _ in
@@ -74,7 +74,7 @@ struct ChildModule: DependencyRequirements {
             Issue.record(error, "Failed to register instance: \(error)")
         }
     }
-    
+
     init(_ container: DependencyContainer<ChildModule>) {}
 }
 
@@ -82,9 +82,9 @@ struct ModuleWithInputs: DependencyRequirements {
     static var inputRequirements: [InputRequirement] {
         [InputRequirement(String.self)]
     }
-    
+
     static func registerDependencies(in builder: DependencyBuilder<ModuleWithInputs>) {}
-    
+
     init(_ container: DependencyContainer<ModuleWithInputs>) {}
 }
 
@@ -92,7 +92,7 @@ struct ModuleWithLocalDependencies: DependencyRequirements {
     static var localRequirements: [Requirement] {
         [Requirement(TestService.self)]
     }
-    
+
     static func registerDependencies(in builder: DependencyBuilder<ModuleWithLocalDependencies>) {
         do {
             try builder.local.registerSingleton(TestService.self) { _ in
@@ -102,7 +102,7 @@ struct ModuleWithLocalDependencies: DependencyRequirements {
             Issue.record(error, "Failed to register local singleton: \(error)")
         }
     }
-    
+
     init(_ container: DependencyContainer<ModuleWithLocalDependencies>) {}
 }
 
@@ -113,61 +113,61 @@ struct BasicRegistrationTests {
     @MainActor
     func registerAndResolveTransient() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerInstance(TestService.self) { _ in
             TestService() // Uses UUID - each call creates a unique instance
         }
-        
+
         let container = builder.freeze()
         let service1 = try container.resolve(TestService.self)
         let service2 = try container.resolve(TestService.self)
-        
+
         #expect(service1.id != service2.id, "Transient should create new instances")
     }
-    
+
     @Test("Register and resolve singleton")
     @MainActor
     func registerAndResolveSingleton() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerSingleton(TestService.self) { _ in
             TestService(id: "singleton")
         }
-        
+
         let container = builder.freeze()
         let service1 = try container.resolve(TestService.self)
         let service2 = try container.resolve(TestService.self)
-        
+
         #expect(service1.id == service2.id, "Singleton should return same instance")
         #expect(service1.id == "singleton")
     }
-    
+
     @Test("Register and resolve scoped dependency")
     @MainActor
     func registerAndResolveScoped() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerScoped(TestService.self) { _ in
             TestService()
         }
-        
+
         let container = builder.freeze()
-        
+
         let service1 = try container.resolve(TestService.self)
         let service2 = try container.resolve(TestService.self)
         #expect(service1.id == service2.id, "Same scope should return same instance")
-        
+
         let newScopeContainer = container.newScope()
         let service3 = try newScopeContainer.resolve(TestService.self)
         #expect(service1.id != service3.id, "New scope should create new instance")
     }
-    
+
     @Test("Resolve throws for unregistered dependency")
     @MainActor
     func resolveThrowsForUnregistered() throws {
         let builder = DependencyBuilder<GraphRoot>()
         let container = builder.freeze()
-        
+
         #expect(throws: DependencyError.self) {
             _ = try container.resolve(TestService.self)
         }
@@ -181,55 +181,55 @@ struct KeyedRegistrationTests {
     @MainActor
     func registerAndResolveKeyed() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerInstance(TestService.self, key: ServiceKey.primary) { _ in
             TestService(id: "primary")
         }
         try builder.registerInstance(TestService.self, key: ServiceKey.secondary) { _ in
             TestService(id: "secondary")
         }
-        
+
         let container = builder.freeze()
-        
+
         let primary = try container.resolve(TestService.self, key: ServiceKey.primary)
         let secondary = try container.resolve(TestService.self, key: ServiceKey.secondary)
-        
+
         #expect(primary.id == "primary")
         #expect(secondary.id == "secondary")
     }
-    
+
     @Test("Keyed and non-keyed registrations are independent")
     @MainActor
     func keyedAndNonKeyedAreIndependent() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerSingleton(TestService.self) { _ in
             TestService(id: "default")
         }
         try builder.registerSingleton(TestService.self, key: ServiceKey.primary) { _ in
             TestService(id: "keyed")
         }
-        
+
         let container = builder.freeze()
-        
+
         let defaultService = try container.resolve(TestService.self)
         let keyedService = try container.resolve(TestService.self, key: ServiceKey.primary)
-        
+
         #expect(defaultService.id == "default")
         #expect(keyedService.id == "keyed")
     }
-    
+
     @Test("Resolve throws for wrong key")
     @MainActor
     func resolveThrowsForWrongKey() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerInstance(TestService.self, key: ServiceKey.primary) { _ in
             TestService(id: "primary")
         }
-        
+
         let container = builder.freeze()
-        
+
         #expect(throws: DependencyError.self) {
             _ = try container.resolve(TestService.self, key: ServiceKey.secondary)
         }
@@ -243,54 +243,54 @@ struct MainActorRegistrationTests {
     @MainActor
     func registerAndResolveMainActorSingleton() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.mainActor.registerSingleton(MainActorService.self) { _ in
             MainActorService(id: "main-actor-singleton")
         }
-        
+
         let container = builder.freeze()
-        
+
         let service1 = try container.resolveMainActor(MainActorService.self)
         let service2 = try container.resolveMainActor(MainActorService.self)
-        
+
         #expect(service1.id == service2.id)
         #expect(service1.id == "main-actor-singleton")
     }
-    
+
     @Test("Register and resolve MainActor transient")
     @MainActor
     func registerAndResolveMainActorTransient() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.mainActor.registerInstance(MainActorService.self) { _ in
             MainActorService()
         }
-        
+
         let container = builder.freeze()
-        
+
         let service1 = try container.resolveMainActor(MainActorService.self)
         let service2 = try container.resolveMainActor(MainActorService.self)
-        
+
         #expect(service1.id != service2.id, "Transient should create new instances")
     }
-    
+
     @Test("Register and resolve keyed MainActor dependency")
     @MainActor
     func registerAndResolveKeyedMainActor() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.mainActor.registerSingleton(MainActorService.self, key: ServiceKey.primary) { _ in
             MainActorService(id: "primary-main-actor")
         }
         try builder.mainActor.registerSingleton(MainActorService.self, key: ServiceKey.secondary) { _ in
             MainActorService(id: "secondary-main-actor")
         }
-        
+
         let container = builder.freeze()
-        
+
         let primary = try container.resolveMainActor(MainActorService.self, key: ServiceKey.primary)
         let secondary = try container.resolveMainActor(MainActorService.self, key: ServiceKey.secondary)
-        
+
         #expect(primary.id == "primary-main-actor")
         #expect(secondary.id == "secondary-main-actor")
     }
@@ -303,23 +303,23 @@ struct LocalRegistrationTests {
     @MainActor
     func localDependenciesNotInherited() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         // Register an inherited dependency
         try builder.registerSingleton(AnotherService.self) { _ in
             AnotherService(value: 100)
         }
-        
+
         // Register a local dependency
         try builder.local.registerSingleton(TestService.self) { _ in
             TestService(id: "local-only")
         }
-        
+
         let container = builder.freeze()
-        
+
         // Local dependency should be resolvable in this container
         let localService = try container.resolve(TestService.self)
         #expect(localService.id == "local-only")
-        
+
         // Build a child that tries to use TestService
         struct SimpleChild: DependencyRequirements {
             static func registerDependencies(in builder: DependencyBuilder<SimpleChild>) {}
@@ -330,7 +330,7 @@ struct LocalRegistrationTests {
                 self.container = container
             }
         }
-        
+
         let childContainer = container.buildChild(SimpleChild.self)
 
         // The child should NOT be able to resolve the local dependency
@@ -338,38 +338,38 @@ struct LocalRegistrationTests {
             _ = try childContainer.container.resolve(TestService.self)
         }
     }
-    
+
     @Test("Local scoped dependencies reset with newScope")
     @MainActor
     func localScopedResetWithNewScope() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.local.registerScoped(TestService.self) { _ in
             TestService()
         }
-        
+
         let container = builder.freeze()
-        
+
         let service1 = try container.resolve(TestService.self)
         let service2 = try container.resolve(TestService.self)
         #expect(service1.id == service2.id, "Same scope returns same instance")
-        
+
         let newScope = container.newScope()
         let service3 = try newScope.resolve(TestService.self)
         #expect(service1.id != service3.id, "New scope creates new instance")
     }
-    
+
     @Test("Local MainActor registration works correctly")
     @MainActor
     func localMainActorRegistration() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.local.mainActor.registerSingleton(MainActorService.self) { _ in
             MainActorService(id: "local-main-actor")
         }
-        
+
         let container = builder.freeze()
-        
+
         let service = try container.resolveMainActor(MainActorService.self)
         #expect(service.id == "local-main-actor")
     }
@@ -382,51 +382,51 @@ struct InputTests {
     @MainActor
     func provideAndResolveInput() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         builder.provideInput(String.self, "test-input")
         builder.provideInput(Int.self, 42)
-        
+
         let container = builder.freeze()
-        
+
         let stringInput = try container.resolveInput(String.self)
         let intInput = try container.resolveInput(Int.self)
-        
+
         #expect(stringInput == "test-input")
         #expect(intInput == 42)
     }
-    
+
     @Test("Resolve throws for missing input")
     @MainActor
     func resolveThrowsForMissingInput() throws {
         let builder = DependencyBuilder<GraphRoot>()
         let container = builder.freeze()
-        
+
         #expect(throws: DependencyError.self) {
             _ = try container.resolveInput(String.self)
         }
     }
-    
+
     @Test("Inputs are passed to child containers")
     @MainActor
     func inputsPassedToChildren() throws {
         let rootBuilder = DependencyBuilder<GraphRoot>()
-        
+
         rootBuilder.provideInput(String.self, "parent-input")
-        
+
         let rootContainer = rootBuilder.freeze()
-        
+
         struct ChildWithInput: DependencyRequirements {
             static func registerDependencies(in builder: DependencyBuilder<ChildWithInput>) {}
             init(_ container: DependencyContainer<ChildWithInput>) {}
         }
-        
+
         // Build child without providing additional inputs
         let childBuilder = DependencyBuilder<ChildWithInput>(
             parent: AnyFrozenContainer(rootContainer),
             inputs: rootContainer.inputs
         )
         let childContainer = childBuilder.freeze()
-        
+
         let input = try childContainer.resolveInput(String.self)
         #expect(input == "parent-input")
     }
@@ -439,37 +439,37 @@ struct ChildBuildingTests {
     @MainActor
     func childInheritsParentDependencies() throws {
         let rootBuilder = DependencyBuilder<GraphRoot>()
-        
+
         try rootBuilder.registerSingleton(TestService.self) { _ in
             TestService(id: "root-service")
         }
-        
+
         let rootContainer = rootBuilder.freeze()
-        
+
         struct SimpleChild: DependencyRequirements {
             static var requirements: [Requirement] {
                 [Requirement(TestService.self)]
             }
-            
+
             static func registerDependencies(in builder: DependencyBuilder<SimpleChild>) {}
             init(_ container: DependencyContainer<SimpleChild>) {}
         }
-        
+
         // This should succeed because TestService is registered in parent
         _ = rootContainer.buildChild(SimpleChild.self)
     }
-    
+
     @Test("Child can override parent dependencies")
     @MainActor
     func childCanOverrideParent() throws {
         let rootBuilder = DependencyBuilder<GraphRoot>()
-        
+
         try rootBuilder.registerSingleton(TestService.self) { _ in
             TestService(id: "root-service")
         }
-        
+
         let rootContainer = rootBuilder.freeze()
-        
+
         struct OverridingChild: DependencyRequirements {
             static func registerDependencies(in builder: DependencyBuilder<OverridingChild>) {
                 do {
@@ -480,24 +480,24 @@ struct ChildBuildingTests {
                     Issue.record(error, "Failed to register singleton with override: \(error)")
                 }
             }
-            
+
             init(_ container: DependencyContainer<OverridingChild>) {}
         }
-        
+
         let child = rootContainer.buildChild(OverridingChild.self)
         _ = child
     }
-    
+
     @Test("buildChild with configure closure provides inputs")
     @MainActor
     func buildChildWithConfigureProvidesInputs() throws {
         let rootBuilder = DependencyBuilder<GraphRoot>()
         let rootContainer = rootBuilder.freeze()
-        
+
         let child = rootContainer.buildChild(ModuleWithInputs.self) { builder in
             builder.provideInput(String.self, "configured-input")
         }
-        
+
         _ = child // Should succeed without crashing
     }
 }
@@ -509,34 +509,34 @@ struct OverrideTests {
     @MainActor
     func registrationWithoutOverrideThrows() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerSingleton(TestService.self) { _ in
             TestService(id: "first")
         }
-        
+
         #expect(throws: DependencyError.self) {
             try builder.registerSingleton(TestService.self) { _ in
                 TestService(id: "second")
             }
         }
     }
-    
+
     @Test("Registration with override succeeds")
     @MainActor
     func registrationWithOverrideSucceeds() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerSingleton(TestService.self) { _ in
             TestService(id: "first")
         }
-        
+
         try builder.registerSingleton(TestService.self, override: true) { _ in
             TestService(id: "second")
         }
-        
+
         let container = builder.freeze()
         let service = try container.resolve(TestService.self)
-        
+
         #expect(service.id == "second")
     }
 }
@@ -761,36 +761,36 @@ struct FactoryResolutionTests {
     @MainActor
     func factoryCanResolveDependencies() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerSingleton(TestService.self) { _ in
             TestService(id: "dependency")
         }
-        
+
         try builder.registerSingleton(AnotherService.self) { container in
             let testService = try container.resolve(TestService.self)
             return AnotherService(value: testService.id.count)
         }
-        
+
         let container = builder.freeze()
-        
+
         let anotherService = try container.resolve(AnotherService.self)
         #expect(anotherService.value == "dependency".count)
     }
-    
+
     @Test("Factory can resolve inputs")
     @MainActor
     func factoryCanResolveInputs() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         builder.provideInput(Int.self, 99)
-        
+
         try builder.registerSingleton(AnotherService.self) { container in
             let value = try container.resolveInput(Int.self)
             return AnotherService(value: value)
         }
-        
+
         let container = builder.freeze()
-        
+
         let service = try container.resolve(AnotherService.self)
         #expect(service.value == 99)
     }
@@ -892,17 +892,17 @@ struct DiagnosticsTests {
     @MainActor
     func diagnoseReturnsInfo() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerSingleton(TestService.self) { _ in
             TestService(id: "test")
         }
         try builder.registerInstance(AnotherService.self) { _ in
             AnotherService(value: 1)
         }
-        
+
         let container = builder.freeze()
         let diagnosis = container.diagnose()
-        
+
         #expect(diagnosis.contains("GraphRoot"))
         #expect(diagnosis.contains("singleton"))
         #expect(diagnosis.contains("transient"))
@@ -930,7 +930,7 @@ struct ErrorMessageTests {
     func resolutionErrorIncludesTypeInfo() throws {
         let builder = DependencyBuilder<GraphRoot>()
         let container = builder.freeze()
-        
+
         do {
             _ = try container.resolve(TestService.self)
             Issue.record("Expected error to be thrown")
@@ -939,18 +939,18 @@ struct ErrorMessageTests {
             #expect(description.contains("TestService"))
         }
     }
-    
+
     @Test("Resolution error suggests available keyed registrations")
     @MainActor
     func resolutionErrorSuggestsKeyedRegistrations() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         try builder.registerSingleton(TestService.self, key: ServiceKey.primary) { _ in
             TestService(id: "primary")
         }
-        
+
         let container = builder.freeze()
-        
+
         do {
             // Try to resolve without a key when only keyed registration exists
             _ = try container.resolve(TestService.self)
@@ -975,102 +975,102 @@ struct KeyedInputTests {
     @MainActor
     func provideAndResolveKeyedInput() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         builder.provideInput(String.self, key: ConfigKey.primary, "primary-value")
-        
+
         let container = builder.freeze()
-        
+
         let input = try container.resolveInput(String.self, key: ConfigKey.primary)
         #expect(input == "primary-value")
     }
-    
+
     @Test("Multiple inputs of same type with different keys")
     @MainActor
     func multipleInputsWithDifferentKeys() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         builder.provideInput(String.self, key: ConfigKey.primary, "primary-value")
         builder.provideInput(String.self, key: ConfigKey.secondary, "secondary-value")
-        
+
         let container = builder.freeze()
-        
+
         let primary = try container.resolveInput(String.self, key: ConfigKey.primary)
         let secondary = try container.resolveInput(String.self, key: ConfigKey.secondary)
-        
+
         #expect(primary == "primary-value")
         #expect(secondary == "secondary-value")
     }
-    
+
     @Test("Keyed and non-keyed inputs are independent")
     @MainActor
     func keyedAndNonKeyedAreIndependent() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         builder.provideInput(String.self, "default-value")
         builder.provideInput(String.self, key: ConfigKey.primary, "keyed-value")
-        
+
         let container = builder.freeze()
-        
+
         let defaultInput = try container.resolveInput(String.self)
         let keyedInput = try container.resolveInput(String.self, key: ConfigKey.primary)
-        
+
         #expect(defaultInput == "default-value")
         #expect(keyedInput == "keyed-value")
     }
-    
+
     @Test("Resolve throws for wrong input key")
     @MainActor
     func resolveThrowsForWrongKey() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         builder.provideInput(String.self, key: ConfigKey.primary, "primary-value")
-        
+
         let container = builder.freeze()
-        
+
         #expect(throws: DependencyError.self) {
             _ = try container.resolveInput(String.self, key: ConfigKey.secondary)
         }
     }
-    
+
     @Test("Resolve throws for missing keyed input")
     @MainActor
     func resolveThrowsForMissingKeyedInput() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         // Provide non-keyed input but try to resolve keyed
         builder.provideInput(String.self, "default-value")
-        
+
         let container = builder.freeze()
-        
+
         #expect(throws: DependencyError.self) {
             _ = try container.resolveInput(String.self, key: ConfigKey.primary)
         }
     }
-    
+
     @Test("Factory can resolve keyed inputs")
     @MainActor
     func factoryCanResolveKeyedInputs() throws {
         let builder = DependencyBuilder<GraphRoot>()
-        
+
         builder.provideInput(Int.self, key: ConfigKey.logger, 42)
-        
+
         try builder.registerSingleton(AnotherService.self) { container in
             let value = try container.resolveInput(Int.self, key: ConfigKey.logger)
             return AnotherService(value: value)
         }
-        
+
         let container = builder.freeze()
-        
+
         let service = try container.resolve(AnotherService.self)
         #expect(service.value == 42)
     }
-    
+
     @Test("Keyed input error message includes key information")
     @MainActor
     func keyedInputErrorIncludesKeyInfo() throws {
         let builder = DependencyBuilder<GraphRoot>()
         let container = builder.freeze()
-        
+
         do {
             _ = try container.resolveInput(String.self, key: ConfigKey.primary)
             Issue.record("Expected error to be thrown")
@@ -1088,38 +1088,327 @@ struct InputRequirementTests {
     @Test("InputRequirement with type only")
     func inputRequirementTypeOnly() {
         let requirement = InputRequirement(String.self)
-        
+
         #expect(requirement.description == "String")
         #expect(requirement.accessorName == nil)
         #expect(requirement.key.isKeyed == false)
     }
-    
+
     @Test("InputRequirement with accessorName")
     func inputRequirementWithAccessorName() {
         let requirement = InputRequirement(String.self, accessorName: "myCustomName")
-        
+
         #expect(requirement.description == "String")
         #expect(requirement.accessorName == "myCustomName")
         #expect(requirement.key.isKeyed == false)
     }
-    
+
     @Test("InputRequirement with key")
     func inputRequirementWithKey() {
         let requirement = InputRequirement(String.self, key: ConfigKey.primary)
-        
+
         #expect(requirement.description.contains("String"))
         #expect(requirement.description.contains("primary") || requirement.description.contains("InputKey"))
         #expect(requirement.accessorName == nil)
         #expect(requirement.key.isKeyed == true)
     }
-    
+
     @Test("InputRequirement with key and accessorName")
     func inputRequirementWithKeyAndAccessorName() {
         let requirement = InputRequirement(String.self, key: ConfigKey.logger, accessorName: "configValue")
-        
+
         #expect(requirement.description.contains("String"))
         #expect(requirement.accessorName == "configValue")
         #expect(requirement.key.isKeyed == true)
+    }
+}
+
+// MARK: - TestDependencyProvider Tests
+
+/// A module that conforms to TestDependencyProvider with mock registrations.
+struct TestableModule: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self)]
+    }
+
+    static var localRequirements: [Requirement] {
+        [Requirement(AnotherService.self)]
+    }
+
+    let container: DependencyContainer<TestableModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<TestableModule>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in
+                TestService(id: "production")
+            }
+            try builder.local.registerSingleton(AnotherService.self) { _ in
+                AnotherService(value: 1)
+            }
+        } catch {
+            Issue.record(error, "Failed to register dependencies: \(error)")
+        }
+    }
+
+    static func mockRegistration(in builder: MockDependencyBuilder<TestableModule>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in
+                TestService(id: "mock")
+            }
+            try builder.local.registerSingleton(AnotherService.self) { _ in
+                AnotherService(value: -1)
+            }
+        } catch {
+            Issue.record(error, "Failed to register mocks: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<TestableModule>) {
+        self.container = container
+    }
+}
+
+/// A module that conforms to TestDependencyProvider with MainActor mocks.
+struct TestableMainActorModule: TestDependencyProvider {
+    static var mainActorRequirements: [Requirement] {
+        [Requirement(MainActorService.self)]
+    }
+
+    let container: DependencyContainer<TestableMainActorModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<TestableMainActorModule>) {
+        do {
+            try builder.mainActor.registerSingleton(MainActorService.self) { _ in
+                MainActorService(id: "production-main-actor")
+            }
+        } catch {
+            Issue.record(error, "Failed to register dependencies: \(error)")
+        }
+    }
+
+    static func mockRegistration(in builder: MockDependencyBuilder<TestableMainActorModule>) {
+        do {
+            try builder.mainActor.registerSingleton(MainActorService.self) { _ in
+                MainActorService(id: "mock-main-actor")
+            }
+        } catch {
+            Issue.record(error, "Failed to register mocks: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<TestableMainActorModule>) {
+        self.container = container
+    }
+}
+
+/// A module that only conforms to DependencyRequirements (no test support).
+struct NonTestableModule: DependencyRequirements {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self)]
+    }
+
+    let container: DependencyContainer<NonTestableModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<NonTestableModule>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in
+                TestService(id: "production-only")
+            }
+        } catch {
+            Issue.record(error, "Failed to register dependencies: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<NonTestableModule>) {
+        self.container = container
+    }
+}
+
+/// A testable child that depends on a parent-provided dependency.
+struct TestableChildModule: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self)]
+    }
+
+    let container: DependencyContainer<TestableChildModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<TestableChildModule>) {
+        // Production: relies on parent for TestService, registers nothing
+    }
+
+    static func mockRegistration(in builder: MockDependencyBuilder<TestableChildModule>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in
+                TestService(id: "child-mock")
+            }
+        } catch {
+            Issue.record(error, "Failed to register child mocks: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<TestableChildModule>) {
+        self.container = container
+    }
+}
+
+struct ContainerModeTests {
+    @Test("Production mode uses registerDependencies")
+    @MainActor
+    func productionModeUsesRegisterDependencies() throws {
+        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .production)
+        let service = try root.container.resolve(TestService.self)
+
+        #expect(service.id == "production")
+    }
+
+    @Test("Testing mode uses mockRegistration")
+    @MainActor
+    func testingModeUsesMockRegistration() throws {
+        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let service = try root.container.resolve(TestService.self)
+
+        #expect(service.id == "mock")
+    }
+
+    @Test("Testing mode uses mockRegistration for local dependencies")
+    @MainActor
+    func testingModeUsesLocalMocks() throws {
+        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let service = try root.container.resolve(AnotherService.self)
+
+        #expect(service.value == -1)
+    }
+
+    @Test("Testing mode uses mockRegistration for MainActor dependencies")
+    @MainActor
+    func testingModeUsesMainActorMocks() throws {
+        let root = RootDependencyBuilder.buildChild(TestableMainActorModule.self, mode: .testing)
+        let service = try root.container.resolveMainActor(MainActorService.self)
+
+        #expect(service.id == "mock-main-actor")
+    }
+
+    @Test("Testing mode falls back to registerDependencies for non-testable modules")
+    @MainActor
+    func testingModeFallsBackForNonTestable() throws {
+        let root = RootDependencyBuilder.buildChild(NonTestableModule.self, mode: .testing)
+        let service = try root.container.resolve(TestService.self)
+
+        #expect(service.id == "production-only")
+    }
+
+    @Test("Default mode is production")
+    @MainActor
+    func defaultModeIsProduction() throws {
+        let root = RootDependencyBuilder.buildChild(TestableModule.self)
+        let service = try root.container.resolve(TestService.self)
+
+        #expect(service.id == "production")
+    }
+
+    @Test("Mode propagates from parent to child via buildChild")
+    @MainActor
+    func modePropagatesFromParentToChild() throws {
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let child = rootContainer.buildChild(TestableModule.self)
+        let service = try child.container.resolve(TestService.self)
+
+        #expect(service.id == "mock", "Child should use mocks because parent is in testing mode")
+    }
+
+    @Test("Mode propagates through multiple levels")
+    @MainActor
+    func modePropagatesThroughMultipleLevels() throws {
+        // Root (testing) -> TestableModule -> TestableChildModule
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let parent = rootContainer.buildChild(TestableModule.self)
+        let child = parent.container.buildChild(TestableChildModule.self)
+        let service = try child.container.resolve(TestService.self)
+
+        // Parent provides TestService as "mock", child mocks it as "child-mock".
+        // Parent-wins: parent's registration takes precedence.
+        #expect(service.id == "mock", "Parent-provided mock should take precedence over child mock")
+    }
+
+    @Test("Mode propagates through newScope")
+    @MainActor
+    func modePropagatesThroughNewScope() throws {
+        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let newScope = root.container.newScope()
+        let service = try newScope.resolve(TestService.self)
+
+        #expect(service.id == "mock", "New scope should preserve testing mode")
+    }
+
+    @Test("Production parent with testable child uses production")
+    @MainActor
+    func productionParentUsesProductionForChild() throws {
+        let builder = DependencyBuilder<GraphRoot>(mode: .production)
+        let rootContainer = builder.freeze()
+
+        let child = rootContainer.buildChild(TestableModule.self)
+        let service = try child.container.resolve(TestService.self)
+
+        #expect(service.id == "production", "Production mode should use registerDependencies even for testable modules")
+    }
+
+    @Test("Mixed graph: testable and non-testable children in testing mode")
+    @MainActor
+    func mixedGraphInTestingMode() throws {
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let testable = rootContainer.buildChild(TestableModule.self)
+        let nonTestable = rootContainer.buildChild(NonTestableModule.self)
+
+        let testableService = try testable.container.resolve(TestService.self)
+        let nonTestableService = try nonTestable.container.resolve(TestService.self)
+
+        #expect(testableService.id == "mock", "Testable module should use mocks")
+        #expect(nonTestableService.id == "production-only", "Non-testable module should fall back to production")
+    }
+
+    @Test("buildChild with configure closure works in testing mode")
+    @MainActor
+    func buildChildWithConfigureInTestingMode() throws {
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        struct TestableWithInput: TestDependencyProvider {
+            static var inputRequirements: [InputRequirement] {
+                [InputRequirement(String.self)]
+            }
+
+            let container: DependencyContainer<TestableWithInput>
+
+            static func registerDependencies(in builder: DependencyBuilder<TestableWithInput>) {}
+
+            static func mockRegistration(in builder: MockDependencyBuilder<TestableWithInput>) {
+                do {
+                    try builder.registerSingleton(TestService.self) { container in
+                        let input = try container.resolveInput(String.self)
+                        return TestService(id: "mock-\(input)")
+                    }
+                } catch {
+                    Issue.record(error, "Failed to register mocks: \(error)")
+                }
+            }
+
+            init(_ container: DependencyContainer<TestableWithInput>) {
+                self.container = container
+            }
+        }
+
+        let child = rootContainer.buildChild(TestableWithInput.self) { builder in
+            builder.provideInput(String.self, "configured")
+        }
+
+        let service = try child.container.resolve(TestService.self)
+        #expect(service.id == "mock-configured")
     }
 }
 
@@ -1131,28 +1420,736 @@ struct InputKeyTests {
         let key1 = InputKey(type: String.self)
         let key2 = InputKey(type: String.self)
         let key3 = InputKey(type: Int.self)
-        
+
         #expect(key1 == key2)
         #expect(key1 != key3)
     }
-    
+
     @Test("InputKey keyed equality")
     func inputKeyKeyedEquality() {
         let key1 = InputKey(type: String.self, key: ConfigKey.primary)
         let key2 = InputKey(type: String.self, key: ConfigKey.primary)
         let key3 = InputKey(type: String.self, key: ConfigKey.secondary)
-        
+
         #expect(key1 == key2)
         #expect(key1 != key3)
     }
-    
+
     @Test("InputKey keyed vs non-keyed are different")
     func inputKeyKeyedVsNonKeyed() {
         let nonKeyed = InputKey(type: String.self)
         let keyed = InputKey(type: String.self, key: ConfigKey.primary)
-        
+
         #expect(nonKeyed != keyed)
         #expect(nonKeyed.isKeyed == false)
         #expect(keyed.isKeyed == true)
+    }
+}
+
+// MARK: - Mock Priority Tests (Parent-Wins Behavior)
+
+/// A parent module that provides TestService for its children.
+struct ParentProviderModule: TestDependencyProvider {
+    let container: DependencyContainer<ParentProviderModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<ParentProviderModule>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in
+                TestService(id: "parent-production")
+            }
+        } catch {
+            Issue.record(error, "Failed to register: \(error)")
+        }
+    }
+
+    static func mockRegistration(in builder: MockDependencyBuilder<ParentProviderModule>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in
+                TestService(id: "parent-mock")
+            }
+        } catch {
+            Issue.record(error, "Failed to register mock: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<ParentProviderModule>) {
+        self.container = container
+    }
+}
+
+struct MockPriorityTests {
+    @Test("Parent-provided dependency is preserved over child mock")
+    @MainActor
+    func parentProvidedDependencyPreserved() throws {
+        // Parent provides TestService as "parent-mock"
+        // Child also mocks TestService as "child-mock"
+        // Parent-wins: the parent's registration should persist
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let parent = rootContainer.buildChild(ParentProviderModule.self)
+        let child = parent.container.buildChild(TestableChildModule.self)
+        let service = try child.container.resolve(TestService.self)
+
+        #expect(service.id == "parent-mock", "Parent's mock should be preserved")
+    }
+
+    @Test("Child mock is used when parent doesn't provide the dependency")
+    @MainActor
+    func childMockUsedWhenParentDoesntProvide() throws {
+        // Parent does NOT provide AnotherService
+        // Child mocks AnotherService
+        // The child's mock should apply for unfulfilled dependencies
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let parent = rootContainer.buildChild(ParentProviderModule.self)
+
+        // TestableModule mocks both TestService and AnotherService (local)
+        // Parent provides TestService, so that mock is skipped
+        // Parent does NOT provide AnotherService, so that mock applies
+        let child = parent.container.buildChild(TestableModule.self)
+        let anotherService = try child.container.resolve(AnotherService.self)
+
+        #expect(anotherService.value == -1, "Child mock should apply when parent doesn't provide the dependency")
+    }
+
+    @Test("Parent-wins propagates through multiple levels")
+    @MainActor
+    func parentWinsPropagatesThroughLevels() throws {
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let parent = rootContainer.buildChild(ParentProviderModule.self)
+        let child = parent.container.buildChild(TestableChildModule.self)
+
+        // TestableChildModule mocks TestService as "child-mock"
+        // But parent already provides TestService as "parent-mock"
+        // Parent's version should win
+        let service = try child.container.resolve(TestService.self)
+        #expect(service.id == "parent-mock")
+    }
+
+    @Test("isTesting returns correct values")
+    func isTestingValues() {
+        #expect(ContainerMode.testing.isTesting == true)
+        #expect(ContainerMode.production.isTesting == false)
+    }
+
+    @Test("Parent-wins with MainActor dependency: parent-provided MainActor dep is preserved")
+    @MainActor
+    func parentWinsWithMainActorDependency() throws {
+        // Build a parent that provides a MainActor dependency
+        struct MainActorParent: TestDependencyProvider {
+            let container: DependencyContainer<MainActorParent>
+
+            static func registerDependencies(in builder: DependencyBuilder<MainActorParent>) {
+                do {
+                    try builder.mainActor.registerSingleton(MainActorService.self) { _ in
+                        MainActorService(id: "parent-main-actor")
+                    }
+                } catch {
+                    Issue.record(error, "Failed: \(error)")
+                }
+            }
+
+            static func mockRegistration(in builder: MockDependencyBuilder<MainActorParent>) {
+                do {
+                    try builder.mainActor.registerSingleton(MainActorService.self) { _ in
+                        MainActorService(id: "parent-main-actor-mock")
+                    }
+                } catch {
+                    Issue.record(error, "Failed: \(error)")
+                }
+            }
+
+            init(_ container: DependencyContainer<MainActorParent>) {
+                self.container = container
+            }
+        }
+
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let parent = rootContainer.buildChild(MainActorParent.self)
+        let child = parent.container.buildChild(TestableMainActorModule.self)
+        let service = try child.container.resolveMainActor(MainActorService.self)
+
+        #expect(service.id == "parent-main-actor-mock", "Parent's MainActor mock should be preserved")
+    }
+
+    @Test("Root-level module with no parent: all mocks apply")
+    @MainActor
+    func rootLevelModuleAllMocksApply() throws {
+        // When there's no parent, all mock registrations should take effect
+        // (parent-wins has nothing to win over)
+        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let service = try root.container.resolve(TestService.self)
+        let anotherService = try root.container.resolve(AnotherService.self)
+
+        #expect(service.id == "mock")
+        #expect(anotherService.value == -1)
+    }
+}
+
+// MARK: - buildChildWithOverrides Tests
+
+struct BuildChildWithOverridesTests {
+    @Test("Override replaces mock registration (highest priority)")
+    @MainActor
+    func overrideReplacesMockRegistration() throws {
+        let root = RootDependencyBuilder.buildChildWithOverrides(
+            TestableModule.self,
+            mode: .testing
+        ) { overrides in
+            do {
+                try overrides.registerSingleton(TestService.self) { _ in
+                    TestService(id: "test-site-override")
+                }
+            } catch {
+                Issue.record(error, "Failed to register override: \(error)")
+            }
+        }
+
+        let service = try root.container.resolve(TestService.self)
+        #expect(service.id == "test-site-override", "Test-site override should have highest priority")
+    }
+
+    @Test("Override can provide inputs")
+    @MainActor
+    func overrideCanProvideInputs() throws {
+        struct TestableWithInput: TestDependencyProvider {
+            static var inputRequirements: [InputRequirement] {
+                [InputRequirement(String.self)]
+            }
+
+            let container: DependencyContainer<TestableWithInput>
+
+            static func registerDependencies(in builder: DependencyBuilder<TestableWithInput>) {}
+
+            static func mockRegistration(in builder: MockDependencyBuilder<TestableWithInput>) {
+                do {
+                    try builder.registerSingleton(TestService.self) { container in
+                        let input = try container.resolveInput(String.self)
+                        return TestService(id: "mock-\(input)")
+                    }
+                } catch {
+                    Issue.record(error, "Failed: \(error)")
+                }
+            }
+
+            init(_ container: DependencyContainer<TestableWithInput>) {
+                self.container = container
+            }
+        }
+
+        let root = RootDependencyBuilder.buildChildWithOverrides(
+            TestableWithInput.self,
+            mode: .testing
+        ) { overrides in
+            overrides.provideInput(String.self, "injected")
+        }
+
+        let service = try root.container.resolve(TestService.self)
+        #expect(service.id == "mock-injected")
+    }
+
+    @Test("Override wins over parent-provided dependency")
+    @MainActor
+    func overrideWinsOverParent() throws {
+        // Parent provides TestService as "parent-mock"
+        // Child's mockRegistration also provides TestService as "child-mock"
+        // Parent would normally win, but the testingOverride closure should beat everything
+        let builder = DependencyBuilder<GraphRoot>(mode: .testing)
+        let rootContainer = builder.freeze()
+
+        let parent = rootContainer.buildChild(ParentProviderModule.self)
+        let child = parent.container.buildChildWithOverrides(TestableChildModule.self) { overrides in
+            do {
+                try overrides.registerSingleton(TestService.self) { _ in
+                    TestService(id: "override-wins")
+                }
+            } catch {
+                Issue.record(error, "Failed: \(error)")
+            }
+        }
+
+        let service = try child.container.resolve(TestService.self)
+        #expect(service.id == "override-wins", "Test-site override should beat parent-provided dependency")
+    }
+
+    @Test("Non-overridden mocks still apply")
+    @MainActor
+    func nonOverriddenMocksStillApply() throws {
+        // Override only TestService, but TestableModule also mocks AnotherService (local)
+        // AnotherService mock should still be present
+        let root = RootDependencyBuilder.buildChildWithOverrides(
+            TestableModule.self,
+            mode: .testing
+        ) { overrides in
+            do {
+                try overrides.registerSingleton(TestService.self) { _ in
+                    TestService(id: "overridden")
+                }
+            } catch {
+                Issue.record(error, "Failed: \(error)")
+            }
+        }
+
+        let service = try root.container.resolve(TestService.self)
+        let anotherService = try root.container.resolve(AnotherService.self)
+
+        #expect(service.id == "overridden", "Overridden dependency should use test-site value")
+        #expect(anotherService.value == -1, "Non-overridden mock should still be present")
+    }
+
+    @Test("RootDependencyBuilder.buildChildWithOverrides works")
+    @MainActor
+    func rootBuilderWithOverrides() throws {
+        let root = RootDependencyBuilder.buildChildWithOverrides(
+            TestableModule.self,
+            mode: .testing
+        ) { overrides in
+            do {
+                try overrides.registerSingleton(TestService.self) { _ in
+                    TestService(id: "root-override")
+                }
+            } catch {
+                Issue.record(error, "Failed: \(error)")
+            }
+        }
+
+        let service = try root.container.resolve(TestService.self)
+        #expect(service.id == "root-override")
+    }
+
+    @Test("Override with MainActor dependency")
+    @MainActor
+    func overrideWithMainActorDependency() throws {
+        let root = RootDependencyBuilder.buildChildWithOverrides(
+            TestableMainActorModule.self,
+            mode: .testing
+        ) { overrides in
+            do {
+                try overrides.mainActor.registerSingleton(MainActorService.self) { _ in
+                    MainActorService(id: "main-actor-override")
+                }
+            } catch {
+                Issue.record(error, "Failed: \(error)")
+            }
+        }
+
+        let service = try root.container.resolveMainActor(MainActorService.self)
+        #expect(service.id == "main-actor-override")
+    }
+}
+
+// MARK: - importDependencies Test Helpers
+
+/// A leaf module that provides TestService and AnotherService mocks.
+struct LeafModuleA: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self), Requirement(AnotherService.self)]
+    }
+
+    let container: DependencyContainer<LeafModuleA>
+
+    static func registerDependencies(in builder: DependencyBuilder<LeafModuleA>) {}
+
+    static func mockRegistration(in builder: MockDependencyBuilder<LeafModuleA>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in TestService(id: "leaf-a-service") }
+            try builder.registerSingleton(AnotherService.self) { _ in AnotherService(value: 100) }
+        } catch {
+            Issue.record(error, "Failed: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<LeafModuleA>) {
+        self.container = container
+    }
+}
+
+/// A second leaf module that provides TestService (overlaps with LeafModuleA) and a MainActor dep.
+struct LeafModuleB: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self)]
+    }
+
+    static var mainActorRequirements: [Requirement] {
+        [Requirement(MainActorService.self)]
+    }
+
+    let container: DependencyContainer<LeafModuleB>
+
+    static func registerDependencies(in builder: DependencyBuilder<LeafModuleB>) {}
+
+    static func mockRegistration(in builder: MockDependencyBuilder<LeafModuleB>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in TestService(id: "leaf-b-service") }
+            try builder.mainActor.registerSingleton(MainActorService.self) { _ in
+                MainActorService(id: "leaf-b-main-actor")
+            }
+        } catch {
+            Issue.record(error, "Failed: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<LeafModuleB>) {
+        self.container = container
+    }
+}
+
+/// A leaf module with a local dependency (should NOT be exported during import).
+struct LeafModuleWithLocal: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self)]
+    }
+
+    static var localRequirements: [Requirement] {
+        [Requirement(AnotherService.self)]
+    }
+
+    let container: DependencyContainer<LeafModuleWithLocal>
+
+    static func registerDependencies(in builder: DependencyBuilder<LeafModuleWithLocal>) {}
+
+    static func mockRegistration(in builder: MockDependencyBuilder<LeafModuleWithLocal>) {
+        do {
+            try builder.registerSingleton(TestService.self) { _ in TestService(id: "leaf-local-service") }
+            try builder.local.registerSingleton(AnotherService.self) { _ in AnotherService(value: 999) }
+        } catch {
+            Issue.record(error, "Failed: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<LeafModuleWithLocal>) {
+        self.container = container
+    }
+}
+
+/// A leaf module that itself imports from LeafModuleA (for testing recursion).
+struct MidLevelModule: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self), Requirement(AnotherService.self)]
+    }
+
+    static var mainActorRequirements: [Requirement] {
+        [Requirement(MainActorService.self)]
+    }
+
+    let container: DependencyContainer<MidLevelModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<MidLevelModule>) {}
+
+    static func mockRegistration(in builder: MockDependencyBuilder<MidLevelModule>) {
+        // Import from LeafModuleA (brings in TestService + AnotherService)
+        builder.importDependencies(LeafModuleA.self)
+
+        // Only register what the import doesn't cover
+        do {
+            try builder.mainActor.registerSingleton(MainActorService.self) { _ in
+                MainActorService(id: "mid-level-main-actor")
+            }
+        } catch {
+            Issue.record(error, "Failed: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<MidLevelModule>) {
+        self.container = container
+    }
+}
+
+/// A parent module that imports from two children with overlapping registrations.
+struct ParentImportModule: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self), Requirement(AnotherService.self)]
+    }
+
+    static var mainActorRequirements: [Requirement] {
+        [Requirement(MainActorService.self)]
+    }
+
+    let container: DependencyContainer<ParentImportModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<ParentImportModule>) {}
+
+    static func mockRegistration(in builder: MockDependencyBuilder<ParentImportModule>) {
+        // Import from two children that both provide TestService
+        builder.importDependencies(LeafModuleA.self) // TestService="leaf-a-service", AnotherService=100
+        builder.importDependencies(LeafModuleB.self) // TestService="leaf-b-service" (collision, skipped), MainActorService
+    }
+
+    init(_ container: DependencyContainer<ParentImportModule>) {
+        self.container = container
+    }
+}
+
+/// A module that imports then explicitly overrides an imported registration.
+struct ExplicitOverImportModule: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self), Requirement(AnotherService.self)]
+    }
+
+    let container: DependencyContainer<ExplicitOverImportModule>
+
+    static func registerDependencies(in builder: DependencyBuilder<ExplicitOverImportModule>) {}
+
+    static func mockRegistration(in builder: MockDependencyBuilder<ExplicitOverImportModule>) {
+        // Import brings in TestService="leaf-a-service" and AnotherService=100
+        builder.importDependencies(LeafModuleA.self)
+
+        // Explicitly override TestService with something different
+        do {
+            try builder.registerSingleton(TestService.self) { _ in
+                TestService(id: "explicit-override")
+            }
+        } catch {
+            Issue.record(error, "Failed: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<ExplicitOverImportModule>) {
+        self.container = container
+    }
+}
+
+/// A module that imports from a module with inputs.
+struct LeafModuleWithInputs: TestDependencyProvider {
+    static var requirements: [Requirement] {
+        [Requirement(TestService.self)]
+    }
+
+    static var inputRequirements: [InputRequirement] {
+        [InputRequirement(String.self)]
+    }
+
+    let container: DependencyContainer<LeafModuleWithInputs>
+
+    static func registerDependencies(in builder: DependencyBuilder<LeafModuleWithInputs>) {}
+
+    static func mockRegistration(in builder: MockDependencyBuilder<LeafModuleWithInputs>) {
+        builder.provideInput(String.self, "imported-input")
+        do {
+            try builder.registerSingleton(TestService.self) { _ in TestService(id: "leaf-with-input") }
+        } catch {
+            Issue.record(error, "Failed: \(error)")
+        }
+    }
+
+    init(_ container: DependencyContainer<LeafModuleWithInputs>) {
+        self.container = container
+    }
+}
+
+// MARK: - importDependencies Tests
+
+struct ImportDependenciesTests {
+    @Test("Basic import brings in child registrations")
+    @MainActor
+    func basicImport() throws {
+        let root = RootDependencyBuilder.buildChild(ParentImportModule.self, mode: .testing)
+
+        let service = try root.container.resolve(TestService.self)
+        let another = try root.container.resolve(AnotherService.self)
+        let mainActorService = try root.container.resolveMainActor(MainActorService.self)
+
+        #expect(service.id == "leaf-a-service", "Should get TestService from first import (LeafModuleA)")
+        #expect(another.value == 100, "Should get AnotherService from LeafModuleA")
+        #expect(mainActorService.id == "leaf-b-main-actor", "Should get MainActorService from LeafModuleB")
+    }
+
+    @Test("Import-import collision: first-in wins")
+    @MainActor
+    func importImportCollisionFirstInWins() throws {
+        // ParentImportModule imports LeafModuleA then LeafModuleB.
+        // Both provide TestService. LeafModuleA's should win (first-in).
+        let root = RootDependencyBuilder.buildChild(ParentImportModule.self, mode: .testing)
+        let service = try root.container.resolve(TestService.self)
+
+        #expect(service.id == "leaf-a-service", "First import should win for colliding registrations")
+    }
+
+    @Test("Explicit registration after import overrides imported value")
+    @MainActor
+    func explicitOverridesImport() throws {
+        let root = RootDependencyBuilder.buildChild(ExplicitOverImportModule.self, mode: .testing)
+
+        let service = try root.container.resolve(TestService.self)
+        let another = try root.container.resolve(AnotherService.self)
+
+        #expect(service.id == "explicit-override", "Explicit registration should override imported value")
+        #expect(another.value == 100, "Non-overridden import should still be present")
+    }
+
+    @Test("Local registrations are NOT imported")
+    @MainActor
+    func localRegistrationsNotImported() throws {
+        // LeafModuleWithLocal registers AnotherService as local.
+        // When imported, the local registration should NOT be transferred.
+        struct ParentOfLocal: TestDependencyProvider {
+            static var requirements: [Requirement] {
+                [Requirement(TestService.self)]
+            }
+
+            let container: DependencyContainer<ParentOfLocal>
+
+            static func registerDependencies(in builder: DependencyBuilder<ParentOfLocal>) {}
+
+            static func mockRegistration(in builder: MockDependencyBuilder<ParentOfLocal>) {
+                builder.importDependencies(LeafModuleWithLocal.self)
+            }
+
+            init(_ container: DependencyContainer<ParentOfLocal>) {
+                self.container = container
+            }
+        }
+
+        let root = RootDependencyBuilder.buildChild(ParentOfLocal.self, mode: .testing)
+
+        // TestService should be imported (inherited)
+        let service = try root.container.resolve(TestService.self)
+        #expect(service.id == "leaf-local-service")
+
+        // AnotherService was local in LeafModuleWithLocal — should NOT be available
+        #expect(throws: DependencyError.self) {
+            _ = try root.container.resolve(AnotherService.self)
+        }
+    }
+
+    @Test("Recursive import: child imports from grandchild")
+    @MainActor
+    func recursiveImport() throws {
+        // MidLevelModule imports LeafModuleA, then adds MainActorService.
+        // A parent importing MidLevelModule should get all three.
+        struct TopModule: TestDependencyProvider {
+            static var requirements: [Requirement] {
+                [Requirement(TestService.self), Requirement(AnotherService.self)]
+            }
+
+            static var mainActorRequirements: [Requirement] {
+                [Requirement(MainActorService.self)]
+            }
+
+            let container: DependencyContainer<TopModule>
+
+            static func registerDependencies(in builder: DependencyBuilder<TopModule>) {}
+
+            static func mockRegistration(in builder: MockDependencyBuilder<TopModule>) {
+                builder.importDependencies(MidLevelModule.self)
+            }
+
+            init(_ container: DependencyContainer<TopModule>) {
+                self.container = container
+            }
+        }
+
+        let root = RootDependencyBuilder.buildChild(TopModule.self, mode: .testing)
+
+        let service = try root.container.resolve(TestService.self)
+        let another = try root.container.resolve(AnotherService.self)
+        let mainActorService = try root.container.resolveMainActor(MainActorService.self)
+
+        #expect(service.id == "leaf-a-service", "Should get TestService transitively from LeafModuleA")
+        #expect(another.value == 100, "Should get AnotherService transitively from LeafModuleA")
+        #expect(mainActorService.id == "mid-level-main-actor", "Should get MainActorService from MidLevelModule")
+    }
+
+    @Test("Import with inputs: inputs are transferred")
+    @MainActor
+    func importTransfersInputs() throws {
+        struct ParentOfInputModule: TestDependencyProvider {
+            static var requirements: [Requirement] {
+                [Requirement(TestService.self)]
+            }
+
+            static var inputRequirements: [InputRequirement] {
+                [InputRequirement(String.self)]
+            }
+
+            let container: DependencyContainer<ParentOfInputModule>
+
+            static func registerDependencies(in builder: DependencyBuilder<ParentOfInputModule>) {}
+
+            static func mockRegistration(in builder: MockDependencyBuilder<ParentOfInputModule>) {
+                builder.importDependencies(LeafModuleWithInputs.self)
+            }
+
+            init(_ container: DependencyContainer<ParentOfInputModule>) {
+                self.container = container
+            }
+        }
+
+        let root = RootDependencyBuilder.buildChild(ParentOfInputModule.self, mode: .testing)
+
+        let service = try root.container.resolve(TestService.self)
+        let input = try root.container.resolveInput(String.self)
+
+        #expect(service.id == "leaf-with-input")
+        #expect(input == "imported-input")
+    }
+
+    @Test("buildChildWithOverrides works with imported dependencies")
+    @MainActor
+    func overridesWorkWithImports() throws {
+        let root = RootDependencyBuilder.buildChildWithOverrides(
+            ParentImportModule.self,
+            mode: .testing
+        ) { overrides in
+            do {
+                try overrides.registerSingleton(TestService.self) { _ in
+                    TestService(id: "override-after-import")
+                }
+            } catch {
+                Issue.record(error, "Failed: \(error)")
+            }
+        }
+
+        let service = try root.container.resolve(TestService.self)
+        let another = try root.container.resolve(AnotherService.self)
+
+        #expect(service.id == "override-after-import", "Override should beat imported value")
+        #expect(another.value == 100, "Non-overridden import should still be present")
+    }
+
+    @Test("suppressMissingRequirementAssertions prevents crash")
+    @MainActor
+    func suppressMissingRequirementAssertions() throws {
+        // This module has requirements but doesn't register all of them.
+        // Without suppression, this would assert in DEBUG.
+        struct PartialModule: TestDependencyProvider {
+            static var requirements: [Requirement] {
+                [Requirement(TestService.self), Requirement(AnotherService.self)]
+            }
+
+            let container: DependencyContainer<PartialModule>
+
+            static func registerDependencies(in builder: DependencyBuilder<PartialModule>) {}
+
+            static func mockRegistration(in builder: MockDependencyBuilder<PartialModule>) {
+                builder.suppressMissingRequirementAssertions()
+                do {
+                    // Only register one of two requirements
+                    try builder.registerSingleton(TestService.self) { _ in TestService(id: "partial") }
+                } catch {
+                    Issue.record(error, "Failed: \(error)")
+                }
+            }
+
+            init(_ container: DependencyContainer<PartialModule>) {
+                self.container = container
+            }
+        }
+
+        // This should not crash due to suppression
+        // (the freeze() will still crash on missing reqs, but the mock validation won't assert)
+        // We can't fully test this without disabling the freeze validation too,
+        // but we can verify the suppression flag is set
+        let builder = DependencyBuilder<PartialModule>(scratchForImport: .testing)
+        let mockBuilder = MockDependencyBuilder(builder: builder, parent: nil)
+        PartialModule.mockRegistration(in: mockBuilder)
+
+        #expect(builder.isMissingRequirementAssertionsSuppressed == true)
     }
 }

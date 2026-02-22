@@ -7,6 +7,7 @@
 
 import Foundation
 import MovieDomainInterface
+import WatchlistDomainInterface
 import DetailScreenViews
 
 @MainActor @Observable
@@ -24,6 +25,7 @@ public final class DetailViewModel {
 
     private let movieId: Int
     private let movieRepository: MovieRepository
+    private let watchlistRepository: WatchlistRepository
     private let imageBaseURL: URL
 
     // MARK: - Computed ViewState
@@ -46,10 +48,12 @@ public final class DetailViewModel {
     public init(
         movieId: Int,
         movieRepository: MovieRepository,
+        watchlistRepository: WatchlistRepository,
         imageBaseURL: URL
     ) {
         self.movieId = movieId
         self.movieRepository = movieRepository
+        self.watchlistRepository = watchlistRepository
         self.imageBaseURL = imageBaseURL
     }
 
@@ -60,6 +64,7 @@ public final class DetailViewModel {
         hasAppeared = true
         Task {
             await loadDetails()
+            await checkWatchlistStatus()
         }
     }
 
@@ -70,8 +75,9 @@ public final class DetailViewModel {
     }
 
     public func handleWatchlistTapped() {
-        isInWatchlist.toggle()
-        // TODO: Persist to WatchlistDomain
+        Task {
+            await toggleWatchlist()
+        }
     }
 
     // MARK: - Private Methods
@@ -90,6 +96,43 @@ public final class DetailViewModel {
             loadState = .idle
         } catch {
             loadState = .error(message: error.localizedDescription)
+        }
+    }
+
+    private func checkWatchlistStatus() async {
+        do {
+            isInWatchlist = try await watchlistRepository.contains(movieId)
+        } catch {
+            // Silently fail — default to not in watchlist
+            isInWatchlist = false
+        }
+    }
+
+    private func toggleWatchlist() async {
+        let wasInWatchlist = isInWatchlist
+
+        // Optimistic update
+        isInWatchlist.toggle()
+
+        do {
+            if wasInWatchlist {
+                try await watchlistRepository.remove(movieId)
+            } else {
+                guard let details = movieDetails else { return }
+                let item = WatchlistItem(
+                    id: details.id,
+                    title: details.title,
+                    overview: details.overview,
+                    posterPath: details.posterPath,
+                    releaseYear: details.releaseYear,
+                    voteAverage: details.voteAverage,
+                    dateAdded: Date()
+                )
+                try await watchlistRepository.add(item)
+            }
+        } catch {
+            // Revert on failure
+            isInWatchlist = wasInWatchlist
         }
     }
 

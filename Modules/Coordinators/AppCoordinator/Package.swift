@@ -15,7 +15,8 @@ let package = Package(
         .package(path: "../../Utilities/ModularDependencyContainer"),
         .package(path: "../../Clients/MovieDomain"),
         .package(path: "../TabCoordinator"),
-        .package(path: "../../Clients/TMDBClient")
+        .package(path: "../../Clients/TMDBClient"),
+        .package(path: "../../Clients/WatchlistDomain")
     ],
     targets: [
         .target(
@@ -24,7 +25,8 @@ let package = Package(
                 .product(name: "ModularDependencyContainer", package: "ModularDependencyContainer"),
                 .product(name: "MovieDomain", package: "MovieDomain"),
                 .product(name: "TabCoordinator", package: "TabCoordinator"),
-                .product(name: "TMDBClient", package: "TMDBClient")
+                .product(name: "TMDBClient", package: "TMDBClient"),
+                .product(name: "WatchlistDomain", package: "WatchlistDomain")
             ],
             swiftSettings: swiftSettings
         ),
