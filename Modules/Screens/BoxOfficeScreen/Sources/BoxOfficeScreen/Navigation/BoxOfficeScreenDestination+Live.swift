@@ -19,8 +19,8 @@ public extension BoxOfficeScreen {
                     switch publicDestination {
                     case .main:
                         // SHARE FEATURE: Uncomment the lines below to add sharing to Box Office
-                        // let shareComponentDependencies = dependencies.buildChild(ShareComponent.Dependencies.self)
-                        // let shareButtonBuilder = ShareComponent.Builder(dependencies: shareComponentDependencies)
+                         let shareComponentDependencies = dependencies.buildChild(ShareComponent.Dependencies.self)
+                        let shareButtonBuilder = ShareComponent.Builder(dependencies: shareComponentDependencies)
                         let viewModel = BoxOfficeViewModel(
                             movieRepository: dependencies.movieRepository,
                             // shareButtonBuilder: shareButtonBuilder,

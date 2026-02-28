@@ -10,11 +10,13 @@ class Analyzer {
     private let nodesByType: [String: DiscoveredNode]
     private let nodesByModule: [String: DiscoveredNode]
     private let orphanNodes: [DiscoveredNode]
-    
+    private let showValid: Bool
+
     init(
         buildResult: GraphBuildResult,
         scanResults: ScanResults,
-        moduleGraph: ModuleGraph
+        moduleGraph: ModuleGraph,
+        showValid: Bool = false
     ) {
         self.graphs = buildResult.graphs
         self.nodesByType = buildResult.nodesByType
@@ -22,6 +24,7 @@ class Analyzer {
         self.orphanNodes = buildResult.orphanNodes
         self.scanResults = scanResults
         self.moduleGraph = moduleGraph
+        self.showValid = showValid
     }
     
     /// Resolves module name for a file path, with same fallback logic as Scanner.
@@ -100,9 +103,13 @@ class Analyzer {
             diagnostics.append(contentsOf: analyzeGraph(graph))
         }
         
-        return diagnostics
+        return diagnostics.sorted {
+            let dep0 = $0.message.components(separatedBy: ": ").last ?? $0.message
+            let dep1 = $1.message.components(separatedBy: ": ").last ?? $1.message
+            return dep0 < dep1
+        }
     }
-    
+
     // MARK: - Orphan Analysis
     
     private func analyzeOrphanNodes() -> [Diagnostic] {
@@ -327,7 +334,10 @@ class Analyzer {
             }
         }
         
-        // Add failing paths info
+        // Add path summary and failing paths info
+        if failingPaths.count < paths.count {
+            context.append("(\(paths.count - failingPaths.count) of \(paths.count) paths satisfy this requirement)")
+        }
         let pathLabel = failingPaths.count > 1 ? "Failing paths" : "Failing path"
         context.append("\(pathLabel):")
         for path in failingPaths.prefix(5) { // Limit to first 5 paths
@@ -336,11 +346,24 @@ class Analyzer {
         if failingPaths.count > 5 {
             context.append("  ... and \(failingPaths.count - 5) more")
         }
-        
-        if failingPaths.count < paths.count {
-            context.append("(\(paths.count - failingPaths.count) of \(paths.count) paths satisfy this requirement)")
+
+        if showValid {
+            let failingSet = Set(failingPaths.map { $0.joined(separator: " -> ") })
+            let validPaths = paths.filter { !failingSet.contains($0.joined(separator: " -> ")) }
+            context.append("")
+            context.append("Valid paths:")
+            if validPaths.isEmpty {
+                context.append("  No existing paths found")
+            } else {
+                for path in validPaths.prefix(5) {
+                    context.append("  \(path.joined(separator: " -> "))")
+                }
+                if validPaths.count > 5 {
+                    context.append("  ... and \(validPaths.count - 5) more")
+                }
+            }
         }
-        
+
         return Diagnostic(
             severity: .error,
             message: "Missing dependency in \(moduleName): \(formatDependency(requirement))",
@@ -426,6 +449,9 @@ class Analyzer {
         var context: [String] = []
         context.append("No provideInput(\(inputReq.type).self, ...) found on failing path(s)")
         
+        if failingPaths.count < paths.count {
+            context.append("(\(paths.count - failingPaths.count) of \(paths.count) paths satisfy this requirement)")
+        }
         let pathLabel = failingPaths.count > 1 ? "Failing paths" : "Failing path"
         context.append("\(pathLabel):")
         for path in failingPaths.prefix(5) {
@@ -434,11 +460,24 @@ class Analyzer {
         if failingPaths.count > 5 {
             context.append("  ... and \(failingPaths.count - 5) more")
         }
-        
-        if failingPaths.count < paths.count {
-            context.append("(\(paths.count - failingPaths.count) of \(paths.count) paths satisfy this requirement)")
+
+        if showValid {
+            let failingSet = Set(failingPaths.map { $0.joined(separator: " -> ") })
+            let validPaths = paths.filter { !failingSet.contains($0.joined(separator: " -> ")) }
+            context.append("")
+            context.append("Valid paths:")
+            if validPaths.isEmpty {
+                context.append("  No existing paths found")
+            } else {
+                for path in validPaths.prefix(5) {
+                    context.append("  \(path.joined(separator: " -> "))")
+                }
+                if validPaths.count > 5 {
+                    context.append("  ... and \(validPaths.count - 5) more")
+                }
+            }
         }
-        
+
         return Diagnostic(
             severity: .error,
             message: "Missing input for \(moduleName): \(inputReq.type)",
@@ -446,6 +485,114 @@ class Analyzer {
             graph: graph.origin,
             context: context
         )
+    }
+
+    // MARK: - Find Dependency
+
+    func findDependency(_ typeName: String) -> [Diagnostic] {
+        var diagnostics: [Diagnostic] = []
+
+        for graph in graphs {
+            for nodeType in graph.nodes {
+                guard let node = nodesByType[nodeType] else { continue }
+                let moduleName = node.moduleName
+
+                guard let requirements = scanResults.requirementsByModule[moduleName] else { continue }
+                let matching = requirements.filter { $0.type == typeName }
+                guard !matching.isEmpty else { continue }
+
+                let paths = graph.pathsTo(nodeType)
+                guard !paths.isEmpty else { continue }
+
+                for requirement in matching {
+                    var failingPaths: [[String]] = []
+                    var validPaths: [[String]] = []
+
+                    if requirement.isLocal {
+                        // Local requirements: either all pass or all fail (no path-based checking)
+                        let localProvisions = scanResults.provisionsByModule[moduleName]?.filter { $0.isLocal } ?? []
+                        if localProvisions.contains(where: { $0.satisfies(requirement) }) {
+                            validPaths = paths
+                        } else {
+                            failingPaths = paths
+                        }
+                    } else {
+                        // Inherited requirements: check each path
+                        for path in paths {
+                            let pathNodeSet = Set(path)
+                            var availableProvisions: [Dependency] = []
+
+                            for pathNode in path {
+                                for nodeModule in modulesForProvisions(pathNode, graph: graph) {
+                                    let provisions = scanResults.provisionsByModule[nodeModule]?
+                                        .filter { !$0.isLocal && isProvisionAvailable($0, forGraph: graph, pathNodes: pathNodeSet) } ?? []
+                                    availableProvisions.append(contentsOf: provisions)
+                                }
+                            }
+
+                            let selfProvisions = scanResults.provisionsByModule[moduleName]?
+                                .filter { !$0.isLocal && isProvisionAvailable($0, forGraph: graph, pathNodes: pathNodeSet) } ?? []
+                            availableProvisions.append(contentsOf: selfProvisions)
+
+                            if availableProvisions.contains(where: { $0.satisfies(requirement) }) {
+                                validPaths.append(path)
+                            } else {
+                                failingPaths.append(path)
+                            }
+                        }
+                    }
+
+                    let status = failingPaths.isEmpty ? "✅" : "❌"
+                    var context: [String] = []
+
+                    if !failingPaths.isEmpty {
+                        let pathLabel = failingPaths.count > 1 ? "Failing paths" : "Failing path"
+                        context.append("\(pathLabel):")
+                        for path in failingPaths.prefix(5) {
+                            context.append("  \(path.joined(separator: " -> "))")
+                        }
+                        if failingPaths.count > 5 {
+                            context.append("  ... and \(failingPaths.count - 5) more")
+                        }
+                    }
+
+                    if !validPaths.isEmpty {
+                        if !failingPaths.isEmpty {
+                            context.append("")
+                        }
+                        let pathLabel = validPaths.count > 1 ? "Valid paths" : "Valid path"
+                        context.append("\(pathLabel):")
+                        for path in validPaths.prefix(5) {
+                            context.append("  \(path.joined(separator: " -> "))")
+                        }
+                        if validPaths.count > 5 {
+                            context.append("  ... and \(validPaths.count - 5) more")
+                        }
+                    } else if failingPaths.isEmpty {
+                        // Shouldn't happen, but handle gracefully
+                        context.append("No paths found")
+                    } else {
+                        context.append("")
+                        context.append("Valid paths:")
+                        context.append("  No existing paths found")
+                    }
+
+                    diagnostics.append(Diagnostic(
+                        severity: .info,
+                        message: "\(status) \(formatDependency(requirement)) required by \(moduleName)",
+                        location: node.location,
+                        graph: graph.origin,
+                        context: context
+                    ))
+                }
+            }
+        }
+
+        return diagnostics.sorted {
+            let dep0 = $0.message.components(separatedBy: ": ").last ?? $0.message
+            let dep1 = $1.message.components(separatedBy: ": ").last ?? $1.message
+            return dep0 < dep1
+        }
     }
 }
 

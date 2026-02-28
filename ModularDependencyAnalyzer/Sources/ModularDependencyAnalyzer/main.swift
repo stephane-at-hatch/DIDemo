@@ -151,12 +151,47 @@ func main() {
         exit(0)
     }
 
+    // If --find-dependency flag, run find and exit
+    if let depName = config.findDependency {
+        let analyzer = Analyzer(
+            buildResult: buildResult,
+            scanResults: scanResults,
+            moduleGraph: moduleGraph
+        )
+        let results = analyzer.findDependency(depName)
+
+        print("\n" + String(repeating: "=", count: 60))
+        print("FIND DEPENDENCY: \(depName)")
+        print(String(repeating: "=", count: 60))
+
+        if results.isEmpty {
+            print("\n  Dependency '\(depName)' is not registered or requested in any graph.")
+        } else {
+            for diagnostic in results {
+                print("\n  \(diagnostic.message)")
+                if let graph = diagnostic.graph {
+                    print("     Graph: \(graph.displayName)")
+                }
+                if let location = diagnostic.location {
+                    print("     Location: \(location.fileName):\(location.line)")
+                }
+                for line in diagnostic.context {
+                    print("     \(line)")
+                }
+            }
+        }
+
+        print("")
+        exit(0)
+    }
+
     // Analyze graphs
     print("Analyzing graphs...")
     let analyzer = Analyzer(
         buildResult: buildResult,
         scanResults: scanResults,
-        moduleGraph: moduleGraph
+        moduleGraph: moduleGraph,
+        showValid: config.showValid
     )
     let diagnostics = analyzer.analyze()
 

@@ -15,6 +15,8 @@ struct Configuration {
     let testAlignment: Bool
     let testRedundancy: Bool
     let testAll: Bool
+    let showValid: Bool
+    let findDependency: String?
 
     static func parse() -> Configuration {
         let arguments = CommandLine.arguments
@@ -32,6 +34,8 @@ struct Configuration {
         var testAlignment = false
         var testRedundancy = false
         var testAll = false
+        var showValid = false
+        var findDependency: String?
 
         var argIndex = 1
         while argIndex < arguments.count {
@@ -136,6 +140,20 @@ struct Configuration {
                 testAll = true
                 argIndex += 1
 
+            case "--show-valid",
+                 "-sv":
+                showValid = true
+                argIndex += 1
+
+            case "--find-dependency",
+                 "-fd":
+                if argIndex + 1 < arguments.count {
+                    findDependency = arguments[argIndex + 1]
+                    argIndex += 2
+                } else {
+                    printUsageAndExit("Missing value for \(arg)")
+                }
+
             default:
                 if projectRoot == nil {
                     projectRoot = URL(fileURLWithPath: arg)
@@ -178,7 +196,9 @@ struct Configuration {
             testAdoption: testAdoption,
             testAlignment: testAlignment,
             testRedundancy: testRedundancy,
-            testAll: testAll
+            testAll: testAll,
+            showValid: showValid,
+            findDependency: findDependency
         )
     }
 
@@ -207,6 +227,8 @@ struct Configuration {
             -tal, --test-alignment  Compare importDependencies vs buildChild alignment
             -tr, --test-redundancy  Flag mock registrations covered by importDependencies
             -tall, --test-all       Run all test reports (adoption + alignment + redundancy)
+            -sv, --show-valid       Show valid paths alongside failing paths in diagnostics
+            -fd, --find-dependency <name> Show all paths (valid and failing) for a dependency type
             -h, --help              Show this help
 
         DISCOVERY:
