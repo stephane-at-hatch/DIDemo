@@ -12,7 +12,6 @@ extension AppCoordinator {
         ]
     )
     public struct Dependencies: DependencyRequirements {
-        @MainActor
         public static func registerDependencies(in builder: DependencyBuilder<Self>) {
             do {
                 try builder.registerSingleton(TMDBClient.self) { container in

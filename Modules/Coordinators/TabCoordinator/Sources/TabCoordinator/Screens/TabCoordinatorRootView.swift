@@ -44,17 +44,3 @@ public struct TabCoordinatorRootView: View {
         )
     }
 }
-
-#Preview {
-    let rootClient = NavigationClient<RootDestination>.root()
-    let entry = TabCoordinator.mockEntry()
-
-    let viewModel = TabCoordinatorViewModel(
-        tabEntry: entry,
-        navigationClient: rootClient
-    )
-
-    TabCoordinatorRootView(
-        viewModel: viewModel
-    )
-}

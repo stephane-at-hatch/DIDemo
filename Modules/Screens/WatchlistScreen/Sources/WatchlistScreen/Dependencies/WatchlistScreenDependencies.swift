@@ -19,7 +19,6 @@ extension WatchlistScreen {
         InputRequirement(TMDBConfiguration.self)
     ])
     public struct Dependencies: DependencyRequirements {
-        @MainActor
         public static func registerDependencies(in builder: DependencyBuilder<Self>) {
             do {
                 try builder.registerSingleton(ShareClient.self) { _ in

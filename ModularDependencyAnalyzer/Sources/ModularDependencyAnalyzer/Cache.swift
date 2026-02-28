@@ -15,7 +15,7 @@ struct CacheManifest: Codable {
     let version: Int
     let files: [String: ScannedFileData]
 
-    static let currentVersion = 6
+    static let currentVersion = 7
 }
 
 // MARK: - File Cache

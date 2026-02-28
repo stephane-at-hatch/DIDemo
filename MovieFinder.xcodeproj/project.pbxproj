@@ -224,7 +224,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\n# set -e\n# DependencyChecker --app MovieFinder --project ${SRCROOT} --modules Modules --mode distributed\n";
+			shellScript = "#!/bin/bash\nunset SDKROOT\nswift run --package-path \"${SRCROOT}/ModularDependencyAnalyzer\" ModularDependencyAnalyzer\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
