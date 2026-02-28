@@ -128,21 +128,25 @@ public struct DetailView: View {
             )
             .frame(height: 250)
             
-            // Title overlay
-            VStack(alignment: .leading, spacing: 4) {
-                Text(movie.title)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
-                
-                if let tagline = movie.tagline, !tagline.isEmpty {
-                    Text(tagline)
-                        .font(.subheadline)
-                        .italic()
-                        .foregroundStyle(.white.opacity(0.8))
+            HStack(alignment: .center) {
+                Spacer()
+                // Title overlay
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(movie.title)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                    
+                    if let tagline = movie.tagline, !tagline.isEmpty {
+                        Text(tagline)
+                            .font(.subheadline)
+                            .italic()
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
                 }
+                .padding()
+                Spacer()
             }
-            .padding()
         }
     }
     

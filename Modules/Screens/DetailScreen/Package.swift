@@ -18,7 +18,8 @@ let package = Package(
         .package(path: "../../Clients/MovieDomain"),
         .package(path: "../../Clients/WatchlistDomain"),
         .package(path: "../../Clients/ImageLoader"),
-        .package(path: "../../Utilities/UIComponents")
+        .package(path: "../../Utilities/UIComponents"),
+        .package(path: "../../Clients/TMDBClient")
     ],
     targets: [
         .target(
@@ -39,6 +40,7 @@ let package = Package(
                 .product(name: "UIComponents", package: "UIComponents"),
                 .product(name: "MovieDomainInterface", package: "MovieDomain"),
                 .product(name: "WatchlistDomainInterface", package: "WatchlistDomain"),
+                .product(name: "TMDBClientInterface", package: "TMDBClient"),
                 .product(name: "ImageLoaderInterface", package: "ImageLoader")
             ],
             swiftSettings: swiftSettings

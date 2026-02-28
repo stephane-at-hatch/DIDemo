@@ -91,6 +91,7 @@ let graph: [ModuleNode] = [
             .views: [
                 .target(.interface, module: .movieDomain),
                 .target(.interface, module: .watchlistDomain),
+                .target(.interface, module: .tmdbClient),
                 .target(.interface, module: .imageLoader)
             ]
         ]
