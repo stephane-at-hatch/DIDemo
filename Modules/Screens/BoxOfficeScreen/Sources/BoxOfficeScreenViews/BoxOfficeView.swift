@@ -8,18 +8,21 @@
 import SwiftUI
 
 /// The main Box Office view displaying currently playing movies.
-public struct BoxOfficeView: View {
+public struct BoxOfficeView<ShareButton: View>: View {
     let state: BoxOfficeViewState
     let imageBaseURL: URL
+    let shareButton: (MovieCardViewState) -> ShareButton
     let onAction: (BoxOfficeAction) -> Void
 
     public init(
         state: BoxOfficeViewState,
         imageBaseURL: URL,
+        shareButton: @escaping (MovieCardViewState) -> ShareButton,
         onAction: @escaping (BoxOfficeAction) -> Void
     ) {
         self.state = state
         self.imageBaseURL = imageBaseURL
+        self.shareButton = shareButton
         self.onAction = onAction
     }
 
@@ -94,16 +97,19 @@ public struct BoxOfficeView: View {
                 }
 
                 ForEach(state.movies) { movie in
-                    MovieCardView(
-                        state: movie,
-                        posterURL: posterURL(for: movie.posterPath),
-                        onAction: { action in
-                            switch action {
-                            case .tapped:
-                                onAction(.movieTapped(movieId: movie.id))
+                    HStack(alignment: .top) {
+                        MovieCardView(
+                            state: movie,
+                            posterURL: posterURL(for: movie.posterPath),
+                            onAction: { action in
+                                switch action {
+                                case .tapped:
+                                    onAction(.movieTapped(movieId: movie.id))
+                                }
                             }
-                        }
-                    )
+                        )
+                        shareButton(movie)
+                    }
                     .padding(.horizontal)
                 }
 
@@ -156,6 +162,7 @@ public struct BoxOfficeView: View {
             lastUpdated: "Just now"
         ),
         imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+        shareButton: { _ in EmptyView() },
         onAction: { _ in }
     )
 }
@@ -168,6 +175,7 @@ public struct BoxOfficeView: View {
             lastUpdated: nil
         ),
         imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+        shareButton: { _ in EmptyView() },
         onAction: { _ in }
     )
 }
@@ -180,6 +188,7 @@ public struct BoxOfficeView: View {
             lastUpdated: nil
         ),
         imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+        shareButton: { _ in EmptyView() },
         onAction: { _ in }
     )
 }

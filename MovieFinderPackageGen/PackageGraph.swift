@@ -19,6 +19,7 @@ let graph: [ModuleNode] = [
             // Clients
             .tmdbClient,
             .imageLoader,
+            .shareClient,
 
             // Domains
             .movieDomain,
@@ -50,6 +51,20 @@ let graph: [ModuleNode] = [
         ]
     ),
 
+    // MARK: Components
+
+    ModuleNode(
+        module: .shareComponent,
+        dependencies: [
+            .main: [
+                .target(.interface, module: .shareClient)
+            ],
+            .views: [
+                .target(.interface, module: .shareClient)
+            ]
+        ]
+    ),
+
     // MARK: Screens
 
     ModuleNode(
@@ -58,7 +73,8 @@ let graph: [ModuleNode] = [
             .main: [
                 .target(.interface, module: .movieDomain),
                 .target(.interface, module: .imageLoader),
-                .module(.detailScreen)
+                .module(.detailScreen),
+                .module(.shareComponent)
             ],
             .views: [
                 .target(.interface, module: .movieDomain),
@@ -103,7 +119,10 @@ let graph: [ModuleNode] = [
                 .target(.interface, module: .watchlistDomain),
                 .target(.interface, module: .tmdbClient),
                 .target(.interface, module: .imageLoader),
-                .module(.detailScreen)
+                .module(.detailScreen),
+                .target(.interface, module: .shareClient),
+                .module(.shareClient),
+                .module(.shareComponent)
             ],
             .views: [
                 .target(.interface, module: .watchlistDomain),
@@ -134,6 +153,9 @@ let graph: [ModuleNode] = [
     ),
     ModuleNode(
         module: .imageLoader
+    ),
+    ModuleNode(
+        module: .shareClient
     ),
 
     // MARK: Macros

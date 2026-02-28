@@ -62,6 +62,15 @@ digraph ModuleDependencies {
             MovieDomain_interface [label="Interface", fillcolor="#cce7f0"];
             MovieDomain_tests [label="Tests", fillcolor="#cce7f0"];
         }
+        subgraph cluster_ShareClient {
+            label="ShareClient";
+            style=rounded;
+            color="#666666";
+        
+            ShareClient_main [label="main", fillcolor="#cce7f0"];
+            ShareClient_interface [label="Interface", fillcolor="#cce7f0"];
+            ShareClient_tests [label="Tests", fillcolor="#cce7f0"];
+        }
         subgraph cluster_TMDBClient {
             label="TMDBClient";
             style=rounded;
@@ -79,6 +88,22 @@ digraph ModuleDependencies {
             WatchlistDomain_main [label="main", fillcolor="#cce7f0"];
             WatchlistDomain_interface [label="Interface", fillcolor="#cce7f0"];
             WatchlistDomain_tests [label="Tests", fillcolor="#cce7f0"];
+        }
+    }
+
+    subgraph cluster_components {
+        label="Components";
+        style=filled;
+        color="#f0f4e8";
+
+        subgraph cluster_ShareComponent {
+            label="ShareComponent";
+            style=rounded;
+            color="#666666";
+        
+            ShareComponent_main [label="main", fillcolor="#dae7cc"];
+            ShareComponent_views [label="Views", fillcolor="#dae7cc"];
+            ShareComponent_tests [label="Tests", fillcolor="#dae7cc"];
         }
     }
 
@@ -189,6 +214,7 @@ digraph ModuleDependencies {
     Modules_main -> ModularDependencyContainer_main;
     Modules_main -> TMDBClient_main;
     Modules_main -> ImageLoader_main;
+    Modules_main -> ShareClient_main;
     Modules_main -> MovieDomain_main;
     Modules_main -> WatchlistDomain_main;
     Modules_main -> AppCoordinator_main;
@@ -202,11 +228,15 @@ digraph ModuleDependencies {
     TabCoordinator_main -> DiscoverScreen_main;
     TabCoordinator_main -> WatchlistScreen_main;
     TabCoordinator_main -> ModularNavigation_main;
+    ShareComponent_main -> ModularDependencyContainer_main;
+    ShareComponent_main -> ShareClient_interface;
+    ShareComponent_views -> ShareClient_interface;
     BoxOfficeScreen_main -> ModularDependencyContainer_main;
     BoxOfficeScreen_main -> ModularNavigation_main;
     BoxOfficeScreen_main -> MovieDomain_interface;
     BoxOfficeScreen_main -> ImageLoader_interface;
     BoxOfficeScreen_main -> DetailScreen_main;
+    BoxOfficeScreen_main -> ShareComponent_main;
     BoxOfficeScreen_views -> UIComponents_main;
     BoxOfficeScreen_views -> MovieDomain_interface;
     BoxOfficeScreen_views -> ImageLoader_interface;
@@ -234,6 +264,9 @@ digraph ModuleDependencies {
     WatchlistScreen_main -> TMDBClient_interface;
     WatchlistScreen_main -> ImageLoader_interface;
     WatchlistScreen_main -> DetailScreen_main;
+    WatchlistScreen_main -> ShareClient_interface;
+    WatchlistScreen_main -> ShareClient_main;
+    WatchlistScreen_main -> ShareComponent_main;
     WatchlistScreen_views -> UIComponents_main;
     WatchlistScreen_views -> WatchlistDomain_interface;
     WatchlistScreen_views -> ImageLoader_interface;

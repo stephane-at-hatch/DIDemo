@@ -1,5 +1,6 @@
 import ModularNavigation
 import DetailScreen
+import ShareComponent
 import SwiftUI
 
 public extension WatchlistScreen {
@@ -17,8 +18,11 @@ public extension WatchlistScreen {
                 case .public(let publicDestination):
                     switch publicDestination {
                     case .main:
+                        let shareComponentDependencies = dependencies.buildChild(ShareComponent.Dependencies.self)
+                        let shareButtonBuilder = ShareComponent.Builder(dependencies: shareComponentDependencies)
                         let viewModel = WatchlistViewModel(
                             watchlistRepository: dependencies.watchlistRepository,
+                            shareButtonBuilder: shareButtonBuilder,
                             imageBaseURL: dependencies.tmdbConfiguration.imageBaseURL,
                             navigationClient: navigationClient
                         )

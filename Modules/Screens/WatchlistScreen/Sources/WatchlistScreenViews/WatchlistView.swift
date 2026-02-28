@@ -8,18 +8,21 @@
 import SwiftUI
 
 /// The main Watchlist view displaying saved movies.
-public struct WatchlistView: View {
+public struct WatchlistView<ShareButton: View>: View {
     let state: WatchlistViewState
     let imageBaseURL: URL
+    let shareButton: (WatchlistItemViewState) -> ShareButton
     let onAction: (WatchlistAction) -> Void
 
     public init(
         state: WatchlistViewState,
         imageBaseURL: URL,
+        shareButton: @escaping (WatchlistItemViewState) -> ShareButton,
         onAction: @escaping (WatchlistAction) -> Void
     ) {
         self.state = state
         self.imageBaseURL = imageBaseURL
+        self.shareButton = shareButton
         self.onAction = onAction
     }
 
@@ -94,7 +97,8 @@ public struct WatchlistView: View {
             ForEach(state.items) { item in
                 WatchlistItemRow(
                     state: item,
-                    posterURL: posterURL(for: item.posterPath)
+                    posterURL: posterURL(for: item.posterPath),
+                    shareButton: { shareButton(item) }
                 )
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -124,15 +128,18 @@ public struct WatchlistView: View {
 
 // MARK: - Watchlist Item Row
 
-private struct WatchlistItemRow: View {
+private struct WatchlistItemRow<ShareButton: View>: View {
     let state: WatchlistItemViewState
     let posterURL: URL?
+    let shareButton: () -> ShareButton
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             posterImage
             movieInfo
             Spacer(minLength: 0)
+            shareButton()
+                .padding(8)
         }
         .padding(.vertical, 4)
     }
@@ -244,6 +251,7 @@ private struct WatchlistItemRow: View {
                 ]
             ),
             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+            shareButton: { _ in EmptyView() },
             onAction: { _ in }
         )
     }
@@ -257,6 +265,7 @@ private struct WatchlistItemRow: View {
                 items: []
             ),
             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+            shareButton: { _ in EmptyView() },
             onAction: { _ in }
         )
     }
@@ -270,6 +279,7 @@ private struct WatchlistItemRow: View {
                 items: []
             ),
             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
+            shareButton: { _ in EmptyView() },
             onAction: { _ in }
         )
     }

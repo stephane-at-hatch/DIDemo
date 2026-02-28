@@ -18,6 +18,7 @@ let package = Package(
         .package(path: "../../Clients/MovieDomain"),
         .package(path: "../../Clients/ImageLoader"),
         .package(path: "../DetailScreen"),
+        .package(path: "../../Components/ShareComponent"),
         .package(path: "../../Utilities/UIComponents")
     ],
     targets: [
@@ -29,7 +30,8 @@ let package = Package(
                 "BoxOfficeScreenViews",
                 .product(name: "MovieDomainInterface", package: "MovieDomain"),
                 .product(name: "ImageLoaderInterface", package: "ImageLoader"),
-                .product(name: "DetailScreen", package: "DetailScreen")
+                .product(name: "DetailScreen", package: "DetailScreen"),
+                .product(name: "ShareComponent", package: "ShareComponent")
             ],
             swiftSettings: swiftSettings
         ),

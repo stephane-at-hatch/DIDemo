@@ -22,6 +22,7 @@ let configuration = PackageConfiguration(
     moduleDirectoryConfiguration: ModuleDirectoryConfiguration(
         directoryForType: [
             .screen: "Modules/Screens",
+            .component: "Modules/Components",
             .utility: "Modules/Utilities",
             .coordinator: "Modules/Coordinators",
             .client: "Modules/Clients",
@@ -30,6 +31,9 @@ let configuration = PackageConfiguration(
     ),
     globalDependencies: [
         .type(.coordinator, target: .main): [
+            .module(.modularDependencyContainer)
+        ],
+        .type(.component, target: .main): [
             .module(.modularDependencyContainer)
         ],
         .type(.screen, target: .main): [

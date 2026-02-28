@@ -19,6 +19,8 @@ let package = Package(
         .package(path: "../../Clients/TMDBClient"),
         .package(path: "../../Clients/ImageLoader"),
         .package(path: "../DetailScreen"),
+        .package(path: "../../Clients/ShareClient"),
+        .package(path: "../../Components/ShareComponent"),
         .package(path: "../../Utilities/UIComponents")
     ],
     targets: [
@@ -31,7 +33,10 @@ let package = Package(
                 .product(name: "WatchlistDomainInterface", package: "WatchlistDomain"),
                 .product(name: "TMDBClientInterface", package: "TMDBClient"),
                 .product(name: "ImageLoaderInterface", package: "ImageLoader"),
-                .product(name: "DetailScreen", package: "DetailScreen")
+                .product(name: "DetailScreen", package: "DetailScreen"),
+                .product(name: "ShareClientInterface", package: "ShareClient"),
+                .product(name: "ShareClient", package: "ShareClient"),
+                .product(name: "ShareComponent", package: "ShareComponent")
             ],
             swiftSettings: swiftSettings
         ),

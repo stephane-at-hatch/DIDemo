@@ -23,6 +23,13 @@ extension Module {
         )
     }
 
+    static var shareClient: Module {
+        Module(
+            name: "ShareClient",
+            type: .client
+        )
+    }
+
     static var tmdbClient: Module {
         Module(
             name: "TMDBClient",
@@ -79,6 +86,15 @@ extension Module {
             name: "DependencyRequirementsMacro",
             type: .macro,
             hasTests: false
+        )
+    }
+
+    // MARK: Components
+
+    static var shareComponent: Module {
+        Module(
+            name: "ShareComponent",
+            type: .component
         )
     }
 

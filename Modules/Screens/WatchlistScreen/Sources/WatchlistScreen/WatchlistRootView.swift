@@ -5,6 +5,7 @@
 //  Created by Stephane Magne
 //
 
+import ShareComponent
 import SwiftUI
 import WatchlistScreenViews
 
@@ -22,6 +23,9 @@ public struct WatchlistRootView: View {
         WatchlistView(
             state: viewModel.viewState,
             imageBaseURL: viewModel.imageBaseURLForView,
+            shareButton: { item in
+                viewModel.makeShareButton(for: item)
+            },
             onAction: { action in
                 switch action {
                 case .onAppear:
@@ -48,6 +52,7 @@ public struct WatchlistRootView: View {
         WatchlistRootView(
             viewModel: WatchlistViewModel(
                 watchlistRepository: .fixtureData,
+                shareButtonBuilder: .mock(),
                 imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
                 navigationClient: .mock()
             )

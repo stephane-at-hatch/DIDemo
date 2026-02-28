@@ -7,6 +7,7 @@
 
 import Foundation
 import ModularNavigation
+import ShareComponent
 import WatchlistDomainInterface
 import WatchlistScreenViews
 
@@ -22,6 +23,7 @@ public final class WatchlistViewModel {
     // MARK: - Dependencies
 
     private let watchlistRepository: WatchlistRepository
+    private let shareButtonBuilder: ShareComponent.Builder
     private let imageBaseURL: URL
     private let navigationClient: NavigationClient<WatchlistScreen.Destination>
 
@@ -42,10 +44,12 @@ public final class WatchlistViewModel {
 
     public init(
         watchlistRepository: WatchlistRepository,
+        shareButtonBuilder: ShareComponent.Builder,
         imageBaseURL: URL,
         navigationClient: NavigationClient<WatchlistScreen.Destination>
     ) {
         self.watchlistRepository = watchlistRepository
+        self.shareButtonBuilder = shareButtonBuilder
         self.imageBaseURL = imageBaseURL
         self.navigationClient = navigationClient
     }
@@ -80,6 +84,14 @@ public final class WatchlistViewModel {
         Task {
             await removeItem(movieId)
         }
+    }
+
+    public func makeShareButton(for item: WatchlistItemViewState) -> ShareButtonRootView {
+        shareButtonBuilder.makeShareButton(
+            title: item.title,
+            overview: item.overview,
+            movieId: item.id
+        )
     }
 
     // MARK: - Private Methods

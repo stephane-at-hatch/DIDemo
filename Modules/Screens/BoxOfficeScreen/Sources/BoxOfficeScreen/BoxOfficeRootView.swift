@@ -22,6 +22,9 @@ struct BoxOfficeRootView: View {
         BoxOfficeView(
             state: viewModel.viewState,
             imageBaseURL: viewModel.imageBaseURLForView,
+            // SHARE FEATURE: Uncomment to add share buttons to movie cards
+            // shareButton: { movie in viewModel.makeShareButton(for: movie) },
+            shareButton: { _ in EmptyView() },
             onAction: { action in
                 switch action {
                 case .onAppear:
@@ -52,6 +55,7 @@ struct BoxOfficeRootView: View {
     BoxOfficeRootView(
         viewModel: BoxOfficeViewModel(
             movieRepository: .fixtureData,
+            // shareButtonBuilder: .mock(),
             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
             navigationClient: .mock()
         )

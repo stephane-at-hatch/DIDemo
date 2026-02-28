@@ -8,6 +8,7 @@
 import Foundation
 import MovieDomainInterface
 import ModularNavigation
+// import ShareComponent
 import BoxOfficeScreenViews
 
 @MainActor @Observable
@@ -25,6 +26,8 @@ final class BoxOfficeViewModel {
     // MARK: - Dependencies
 
     private let movieRepository: MovieRepository
+    // SHARE FEATURE: Uncomment to add share button builder
+    // private let shareButtonBuilder: ShareComponent.Builder
     private let imageBaseURL: URL
     private let navigationClient: NavigationClient<BoxOfficeScreen.Destination>
 
@@ -51,14 +54,25 @@ final class BoxOfficeViewModel {
         imageBaseURL
     }
 
+    // SHARE FEATURE: Uncomment to expose share button building
+    // func makeShareButton(for movie: MovieCardViewState) -> ShareButtonRootView {
+    //     shareButtonBuilder.makeShareButton(
+    //         title: movie.title,
+    //         overview: movie.overview,
+    //         movieId: movie.id
+    //     )
+    // }
+
     // MARK: - Init
 
     init(
         movieRepository: MovieRepository,
+        // shareButtonBuilder: ShareComponent.Builder,
         imageBaseURL: URL,
         navigationClient: NavigationClient<BoxOfficeScreen.Destination>
     ) {
         self.movieRepository = movieRepository
+        // self.shareButtonBuilder = shareButtonBuilder
         self.imageBaseURL = imageBaseURL
         self.navigationClient = navigationClient
     }

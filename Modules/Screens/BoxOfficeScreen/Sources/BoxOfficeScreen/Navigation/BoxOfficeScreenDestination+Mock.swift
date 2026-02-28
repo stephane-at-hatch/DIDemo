@@ -1,6 +1,7 @@
 import ModularNavigation
 import MovieDomainInterface
 import DetailScreen
+// import ShareComponent
 import SwiftUI
 
 public extension BoxOfficeScreen {
@@ -19,6 +20,7 @@ public extension BoxOfficeScreen {
                     case .main:
                         let viewModel = BoxOfficeViewModel(
                             movieRepository: .fixtureData,
+                            // shareButtonBuilder: .mock(),
                             imageBaseURL: URL(string: "https://image.tmdb.org/t/p")!,
                             navigationClient: navigationClient
                         )

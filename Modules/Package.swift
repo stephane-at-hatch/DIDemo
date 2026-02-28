@@ -12,6 +12,7 @@ let package = Package(
         // Clients
         .package(path: "Clients/ImageLoader"),
         .package(path: "Clients/MovieDomain"),
+        .package(path: "Clients/ShareClient"),
         .package(path: "Clients/TMDBClient"),
         .package(path: "Clients/WatchlistDomain"),
 
@@ -35,6 +36,7 @@ let package = Package(
                 // Clients
                 .product(name: "ImageLoader", package: "ImageLoader"),
                 .product(name: "MovieDomain", package: "MovieDomain"),
+                .product(name: "ShareClient", package: "ShareClient"),
                 .product(name: "TMDBClient", package: "TMDBClient"),
                 .product(name: "WatchlistDomain", package: "WatchlistDomain"),
 

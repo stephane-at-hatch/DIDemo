@@ -1,5 +1,6 @@
 import DetailScreen
 import ModularNavigation
+import ShareComponent
 import SwiftUI
 import WatchlistDomainInterface
 
@@ -19,6 +20,7 @@ public extension WatchlistScreen {
                     case .main:
                         let viewModel = WatchlistViewModel(
                             watchlistRepository: .mock(),
+                            shareButtonBuilder: .mock(),
                             imageBaseURL: URL(filePath: "/test"),
                             navigationClient: navigationClient
                         )
