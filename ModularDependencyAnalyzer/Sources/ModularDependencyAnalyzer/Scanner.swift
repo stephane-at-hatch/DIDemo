@@ -264,6 +264,25 @@ private class ScannerVisitor: SyntaxVisitor {
         return FileLocation(filePath: filePath, line: loc.line)
     }
 
+    // MARK: - Freestanding Macro Filtering
+
+    /// Skip #Preview and other freestanding macros that shouldn't participate in dependency analysis.
+    /// #Preview blocks often contain `RootDependencyBuilder.buildChild()` calls for setting up
+    /// previews, but these are not real app dependency graphs.
+    override func visit(_ node: MacroExpansionDeclSyntax) -> SyntaxVisitorContinueKind {
+        if node.macroName.text == "Preview" {
+            return .skipChildren
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: MacroExpansionExprSyntax) -> SyntaxVisitorContinueKind {
+        if node.macroName.text == "Preview" {
+            return .skipChildren
+        }
+        return .visitChildren
+    }
+
     // MARK: - Enclosing Type Context Tracking
 
     /// Resolves the fully-qualified type name by prepending enclosing type names.
