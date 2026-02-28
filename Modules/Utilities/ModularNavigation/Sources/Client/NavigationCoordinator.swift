@@ -78,6 +78,9 @@ final class NavigationCoordinator<Destination: Hashable>: Hashable {
     /// How this coordinator's context is presented (root, push, sheet, cover)
     let presentationMode: NavigationMode
 
+    /// Closure to let the parent know that the route can be cleared
+    let didConsumeRoute: () -> Void
+
     /// Closure to dismiss the parent presentation context
     let dismissParent: () -> Bool
 
@@ -94,6 +97,7 @@ final class NavigationCoordinator<Destination: Hashable>: Hashable {
         type: CoordinatorType,
         presentationMode: NavigationMode,
         route: AnyRoute = [],
+        didConsumeRoute: @escaping () -> Void,
         dismissParent: @escaping () -> Bool
     ) {
         switch type {
@@ -110,6 +114,7 @@ final class NavigationCoordinator<Destination: Hashable>: Hashable {
             self.chainedPath = chainedPath
         }
         self.presentationMode = presentationMode
+        self.didConsumeRoute = didConsumeRoute
         self.dismissParent = dismissParent
     }
 
@@ -290,24 +295,13 @@ final class NavigationCoordinator<Destination: Hashable>: Hashable {
     /// require slightly longer delays to account for their presentation animations.
     func processInitialRoute() {
         let initialSteps = deepLinkRoute.initialSteps
-        deepLinkRoute.initialSteps = []
+        if initialSteps.isEmpty { return }
         
-        Task { @MainActor in
-            // Introduce a slight delay to account for presentation animations
-            // This ensures the navigation stack is ready before processing steps
-            switch presentationMode.baseMode {
-            case .root,
-                 .push,
-                 .withoutNavStack:
-                break
-            case .sheet,
-                 .cover:
-                try? await Task.sleep(for: .milliseconds(400))
-            }
-            
-            for step in initialSteps {
-                append(step)
-            }
+        deepLinkRoute.initialSteps = []
+        didConsumeRoute()
+        
+        for step in initialSteps {
+            append(step)
         }
     }
     

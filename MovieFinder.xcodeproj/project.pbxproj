@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		261A23E52EFA353A001380F5 /* ModularDependencyContainer in Frameworks */ = {isa = PBXBuildFile; productRef = 261A23E42EFA353A001380F5 /* ModularDependencyContainer */; };
-		261A65D42F4B9E2F00595933 /* Secrets.xcconfig.template in Resources */ = {isa = PBXBuildFile; fileRef = 261A65D22F4B9E2F00595933 /* Secrets.xcconfig.template */; };
-		261A65D52F4B9E2F00595933 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 261A65D12F4B9E2F00595933 /* Secrets.xcconfig */; };
 		2677CE952F2EBE7B008B2C04 /* TMDBClientInterface in Frameworks */ = {isa = PBXBuildFile; productRef = 2677CE942F2EBE7B008B2C04 /* TMDBClientInterface */; };
 		2677CEA22F2ECB87008B2C04 /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 2677CEA12F2ECB87008B2C04 /* AppCoordinator */; };
 		267E20F42EFDDE9E00CB88EA /* AppCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = 267E20F32EFDDE9E00CB88EA /* AppCoordinator */; };
@@ -29,8 +27,6 @@
 /* Begin PBXFileReference section */
 		261324572EF647CD005114C0 /* MovieFinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovieFinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		261324642EF647CE005114C0 /* MovieFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MovieFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		261A65D12F4B9E2F00595933 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
-		261A65D22F4B9E2F00595933 /* Secrets.xcconfig.template */ = {isa = PBXFileReference; lastKnownFileType = text; path = Secrets.xcconfig.template; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -72,7 +68,6 @@
 		2613244E2EF647CD005114C0 = {
 			isa = PBXGroup;
 			children = (
-				261A65D32F4B9E2F00595933 /* Config */,
 				261324592EF647CD005114C0 /* MovieFinder */,
 				261324672EF647CE005114C0 /* MovieFinderTests */,
 				2677CE912F2EBE61008B2C04 /* Frameworks */,
@@ -87,15 +82,6 @@
 				261324642EF647CE005114C0 /* MovieFinderTests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		261A65D32F4B9E2F00595933 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				261A65D12F4B9E2F00595933 /* Secrets.xcconfig */,
-				261A65D22F4B9E2F00595933 /* Secrets.xcconfig.template */,
-			);
-			path = Config;
 			sourceTree = "<group>";
 		};
 		2677CE912F2EBE61008B2C04 /* Frameworks */ = {
@@ -208,8 +194,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				261A65D42F4B9E2F00595933 /* Secrets.xcconfig.template in Resources */,
-				261A65D52F4B9E2F00595933 /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

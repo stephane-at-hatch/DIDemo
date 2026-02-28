@@ -144,7 +144,9 @@ public struct NavigationTabView<Tab: Hashable, Destination: Hashable, Content: V
         self.tabModels = tabModels
         
         // Create a coordinator from the root client
-        let coordinator: NavigationCoordinator<Destination> = rootClient.coordinator.newCoordinator(mode: .root)
+        let coordinator: NavigationCoordinator<Destination> = rootClient.coordinator.newCoordinator(
+            monitor: DestinationMonitor(mode: .root)
+        )
         
         // Create a coordinator for each tab, with deep link route only for the matching tab
         self.tabCoordinators = (0..<tabModels.count).map { index in
@@ -211,7 +213,7 @@ public struct NavigationTabView<Tab: Hashable, Destination: Hashable, Content: V
 ///
 /// Each tab maintains its own navigation state independently. This view prevents SwiftUI from
 /// recreating tab content when switching between tabs, preserving navigation history.
-nonisolated struct TabContentView<Destination: Hashable, Content: View>: View, Equatable {
+struct TabContentView<Destination: Hashable, Content: View>: View, Equatable {
     /// The root destination for this tab
     let destination: Destination
     /// The coordinator managing this tab's navigation
@@ -237,7 +239,7 @@ nonisolated struct TabContentView<Destination: Hashable, Content: View>: View, E
     var body: some View {
         NavigationDestinationView(
             previousCoordinator: coordinator,
-            mode: .root,
+            monitor: DestinationMonitor(mode: .root),
             destination: destination,
             builder: builder
         )
@@ -301,6 +303,7 @@ extension NavigationCoordinator {
             type: .nested(path: chainedPath),
             presentationMode: presentationMode,
             route: [],
+            didConsumeRoute: didConsumeRoute,
             dismissParent: dismissParent
         )
     }

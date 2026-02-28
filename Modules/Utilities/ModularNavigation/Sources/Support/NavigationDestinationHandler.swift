@@ -21,12 +21,25 @@ extension View {
     ///   - builder: Closure to build views for destinations
     /// - Returns: A view with navigation handling attached
     /// swiftformat:disable:next opaqueGenericParameters
-    func destinationHandler<Destination, ViewContent>(
+    func pushDestinationHandler<Destination, ViewContent>(
         coordinator: NavigationCoordinator<Destination>,
         builder: @escaping DestinationBuilder<Destination, ViewContent>
     ) -> some View where Destination: Hashable, ViewContent: View {
         modifier(
-            NavigationDestinationHandler(
+            PushNavigationDestinationHandler(
+                coordinator: coordinator,
+                builder: builder
+            )
+        )
+    }
+    
+    /// swiftformat:disable:next opaqueGenericParameters
+    func sheetAndCoverDestinationHandler<Destination, ViewContent>(
+        coordinator: NavigationCoordinator<Destination>,
+        builder: @escaping DestinationBuilder<Destination, ViewContent>
+    ) -> some View where Destination: Hashable, ViewContent: View {
+        modifier(
+            SheetAndCoverDestinationHandler(
                 coordinator: coordinator,
                 builder: builder
             )
@@ -34,14 +47,14 @@ extension View {
     }
 }
 
-/// ViewModifier that wires up navigation destinations, sheets, and covers for a coordinator.
+/// ViewModifier that wires up navigation push destinations for a coordinator.
 ///
 /// This modifier:
 /// - Registers `navigationDestination` handlers for push navigation
 /// - Observes coordinator state to present sheets and covers
 /// - Injects the coordinator into child views via environment
 /// - Processes initial deep link routes when the view appears
-struct NavigationDestinationHandler<Destination, ViewContent>: ViewModifier where Destination: Hashable, ViewContent: View {
+struct PushNavigationDestinationHandler<Destination, ViewContent>: ViewModifier where Destination: Hashable, ViewContent: View {
     /// The coordinator managing navigation state
     let coordinator: NavigationCoordinator<Destination>
 
@@ -66,23 +79,58 @@ struct NavigationDestinationHandler<Destination, ViewContent>: ViewModifier wher
                 for: Destination.self,
                 hasNavStack: coordinator.presentationMode.allowsNavStack
             ) { destination in
-                builder(destination, .push, coordinator.client)
+                builder(destination, DestinationMonitor(mode: .push), coordinator.client)
                     .environment(\.navigationCoordinator, AnyNavigationCoordinator(coordinator: coordinator))
             }
+    }
+}
+
+/// ViewModifier that wires up sheets and covers for a coordinator.
+///
+/// This modifier:
+/// - Registers `navigationDestination` handlers for push navigation
+/// - Observes coordinator state to present sheets and covers
+/// - Injects the coordinator into child views via environment
+/// - Processes initial deep link routes when the view appears
+struct SheetAndCoverDestinationHandler<Destination, ViewContent>: ViewModifier where Destination: Hashable, ViewContent: View {
+    /// The coordinator managing navigation state
+    let coordinator: NavigationCoordinator<Destination>
+
+    /// Builder function to create views for destinations
+    let builder: DestinationBuilder<Destination, ViewContent>
+    
+    /// Initialize the navigation destination handler
+    /// - Parameters:
+    ///   - coordinator: The coordinator managing navigation state
+    ///   - builder: Closure to build views for destinations
+    init(
+        coordinator: NavigationCoordinator<Destination>,
+        builder: @escaping DestinationBuilder<Destination, ViewContent>
+    ) {
+        self.coordinator = coordinator
+        self.builder = builder
+    }
+    
+    func body(content: Content) -> some View {
+        content
             .optionalSheet(
                 item: coordinator.presentationBindings?.sheet,
                 onDismiss: {
                     // Optional: Add completion handler support in the future
                 }, content: { sheetItem in
-                    NavigationDestinationView(
+                    let mode: NavigationMode = sheetItem.value.allowsNavStack
+                        ? .sheet(detents: sheetItem.value.detents)
+                        : .withoutNavStack(.sheet(detents: sheetItem.value.detents))
+
+                    let monitor = DestinationMonitor(mode: mode)
+                    
+                    return NavigationDestinationView(
                         previousCoordinator: coordinator,
-                        mode: sheetItem.value.allowsNavStack
-                            ? .sheet(detents: sheetItem.value.detents)
-                            : .withoutNavStack(.sheet(detents: sheetItem.value.detents)),
+                        monitor: monitor,
                         destination: sheetItem.value.destination,
                         builder: builder
                     )
-                    .optionalPresentationDetents(sheetItem.value.detents)
+                    .optionalPresentationDetents(monitor.preferredDetents ?? sheetItem.value.detents)
                 }
             )
             .optionalFullScreenCover(
@@ -90,9 +138,11 @@ struct NavigationDestinationHandler<Destination, ViewContent>: ViewModifier wher
                 onDismiss: {
                     // Optional: Add completion handler support in the future
                 }, content: { coverItem in
-                    NavigationDestinationView(
+                    let mode: NavigationMode = coverItem.value.allowsNavStack ? .cover : .withoutNavStack(.cover)
+                    
+                    return NavigationDestinationView(
                         previousCoordinator: coordinator,
-                        mode: coverItem.value.allowsNavStack ? .cover : .withoutNavStack(.cover),
+                        monitor: DestinationMonitor(mode: mode),
                         destination: coverItem.value.destination,
                         builder: builder
                     )

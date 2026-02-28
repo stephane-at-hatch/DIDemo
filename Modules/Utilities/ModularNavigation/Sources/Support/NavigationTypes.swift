@@ -77,8 +77,8 @@ extension NavigationStep {
     /// .destination(.profile, as: .sheet)
     /// .destination(.settings, as: .cover, animated: false) // deeplink
     /// ```
-    public static func destination(_ destination: Destination, as mode: NavigationMode, animated: Bool = true) -> Self {
-        NavigationStep(destination: destination, mode: mode, animated: animated)
+    public static func deepLinkDestination(_ destination: Destination, as mode: NavigationMode) -> Self {
+        NavigationStep(destination: destination, mode: mode, animated: false)
     }
 }
 

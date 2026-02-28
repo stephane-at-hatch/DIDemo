@@ -4,11 +4,11 @@ import SwiftUI
 public extension DetailScreen {
     @MainActor
     static func liveEntry(
-        publicDestination: Destination.Public,
+        configuration: EntryConfiguration<Destination>,
         dependencies: Dependencies
     ) -> Entry {
         Entry(
-            entryDestination: .public(publicDestination),
+            configuration: configuration,
             builder: { destination, mode, navigationClient in
                 let state: DestinationState
 
@@ -28,7 +28,6 @@ public extension DetailScreen {
 
                 return DestinationView(
                     state: state,
-                    mode: mode,
                     client: navigationClient
                 )
             }

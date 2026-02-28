@@ -26,29 +26,28 @@ extension NavigationCoordinator {
     /// - Remaining route segments are handed off to the child for further processing
     ///
     /// - Parameters:
-    ///   - mode: The presentation mode for the new context (typically .push, .sheet, or .cover)
+    ///   - monitor: Monitors presentation context and if navigation is crossing module boundaries
     /// - Returns: A new navigation coordinator configured for the child context
     func newCoordinator<NextDestination: Hashable>(
-        mode: NavigationMode
+        monitor: DestinationMonitor
     ) -> NavigationCoordinator<NextDestination> {
+        // Update monitor state to determine if we've yet navigated to the next module
+        monitor.entryMonitor.isCurrentlyInSameModule = NextDestination.self == Destination.self
+
         // Root coordinators don't inherit paths; nested contexts may inherit based on mode
-        let chainedPath = isRoot ? nil : path(for: mode)
+        let chainedPath = isRoot ? nil : path(for: monitor.mode)
             
-        let coordinator = NavigationCoordinator<NextDestination>(
+        return NavigationCoordinator<NextDestination>(
             type: .nested(path: chainedPath),
-            presentationMode: mode,
+            presentationMode: monitor.mode,
             route: deepLinkRoute.handoffRoute,
+            didConsumeRoute: {
+                self.deepLinkRoute.handoffRoute = []
+                self.didConsumeRoute()
+            },
             dismissParent: {
                 self.closeSheetOrCover()
             }
         )
-
-        // If the handoff route can be consumed by the new destination type, clear it
-        let isConsumableHandoff = deepLinkRoute.handoffRoute.isConsumable(by: NextDestination.self) == true
-        if isConsumableHandoff {
-            deepLinkRoute.handoffRoute = []
-        }
-
-        return coordinator
     }
 }

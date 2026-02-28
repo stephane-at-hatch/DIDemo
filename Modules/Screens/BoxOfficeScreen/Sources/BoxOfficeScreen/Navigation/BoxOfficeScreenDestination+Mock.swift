@@ -9,7 +9,7 @@ public extension BoxOfficeScreen {
         publicDestination: Destination.Public = .main
     ) -> Entry {
         Entry(
-            entryDestination: .public(publicDestination),
+            configuration: DestinationMonitor(mode: .cover).entryConfig(for: .public(publicDestination)),
             builder: { destination, mode, navigationClient in
                 let state: DestinationState
 
@@ -35,7 +35,6 @@ public extension BoxOfficeScreen {
 
                 return DestinationView(
                     state: state,
-                    mode: mode,
                     client: navigationClient
                 )
             }
@@ -51,7 +50,6 @@ public extension BoxOfficeScreen {
 
     NavigationDestinationView(
         previousClient: rootClient,
-        mode: .root,
         entry: entry
     )
 }

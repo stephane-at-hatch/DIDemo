@@ -33,6 +33,7 @@ extension NavigationClient {
             type: .root,
             presentationMode: .root,
             route: initialRoute,
+            didConsumeRoute: {},
             dismissParent: dismissParent
         )
         .client

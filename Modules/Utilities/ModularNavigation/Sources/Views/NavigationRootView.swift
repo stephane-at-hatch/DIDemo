@@ -29,12 +29,15 @@ struct NavigationRootView<Destination: Hashable, Content: View>: View {
 
     /// The coordinator managing navigation state
     private let coordinator: NavigationCoordinator<Destination>
-    
+
+    /// Monitors how this context is being presented (sheet, cover, or root), and if it's crossing modules
+    private let monitor: DestinationMonitor
+
     /// Builder function to create views for destinations
     private let builder: DestinationBuilder<Destination, Content>
 
-    /// Closure that builds the root content to display
-    private let content: () -> Content
+    /// The root content to display
+    private let content: Content
     
     /// Initialize a navigation root view for a new context.
     /// - Parameters:
@@ -43,36 +46,40 @@ struct NavigationRootView<Destination: Hashable, Content: View>: View {
     ///   - content: Closure to build the root content view
     init(
         coordinator: NavigationCoordinator<Destination>,
+        monitor: DestinationMonitor,
         builder: @escaping DestinationBuilder<Destination, Content>,
-        content: @escaping () -> Content
+        content: Content
     ) {
         self.coordinator = coordinator
+        self.monitor = monitor
         self.builder = builder
         self.content = content
     }
     
     var body: some View {
-        if coordinator.presentationMode.allowsNavStack, coordinator.chainedPath == nil {
+        if monitor.entryMonitor.shouldSuppressPushNavigation == false,
+           coordinator.presentationMode.allowsNavStack,
+           coordinator.chainedPath == nil || coordinator.presentationMode == .root {
             // Create a new NavigationStack with our own path
             NavigationStack(path: $navigationPath) {
-                DestinationHookupView(
-                    navigationPath: $navigationPath,
-                    presentationBindings: $presentationBindings,
-                    coordinator: coordinator,
-                    builder: builder,
-                    content: content
-                )
+                hookupView
             }
         } else {
             // Use an inherited path from a parent context (push navigation)
-            DestinationHookupView(
-                navigationPath: $navigationPath,
-                presentationBindings: $presentationBindings,
-                coordinator: coordinator,
-                builder: builder,
-                content: content
-            )
+            hookupView
         }
+    }
+    
+    @ViewBuilder
+    private var hookupView: some View {
+        DestinationHookupView(
+            navigationPath: $navigationPath,
+            presentationBindings: $presentationBindings,
+            coordinator: coordinator,
+            monitor: monitor,
+            builder: builder,
+            content: content
+        )
     }
 }
 
@@ -85,11 +92,14 @@ private struct DestinationHookupView<Destination: Hashable, Content: View>: View
     /// The coordinator managing navigation state
     private let coordinator: NavigationCoordinator<Destination>
     
+    /// Monitors how this context is being presented (sheet, cover, or root), and if it's crossing modules
+    private let monitor: DestinationMonitor
+
     /// Builder function to create views for destinations
     private let builder: DestinationBuilder<Destination, Content>
     
-    /// Closure that builds the root content
-    private let content: () -> Content
+    /// The root content
+    private let content: Content
     
     /// Initialize the destination hookup view.
     ///
@@ -107,24 +117,39 @@ private struct DestinationHookupView<Destination: Hashable, Content: View>: View
         navigationPath: Binding<NavigationPath>,
         presentationBindings: Binding<PresentationBindings<Destination>>,
         coordinator: NavigationCoordinator<Destination>,
+        monitor: DestinationMonitor,
         builder: @escaping DestinationBuilder<Destination, Content>,
-        content: @escaping () -> Content
+        content: Content
     ) {
         self.coordinator = coordinator
+        self.monitor = monitor
         self.builder = builder
         self.content = content
         // Bind the coordinator to SwiftUI state
         coordinator.presentationBindings = presentationBindings
-        if coordinator.chainedPath == nil {
+        if monitor.entryMonitor.shouldSuppressPushNavigation == false,
+           coordinator.chainedPath == nil {
             coordinator.rootPath = navigationPath
         }
     }
     
     var body: some View {
-        content()
-            .destinationHandler(
-                coordinator: coordinator,
-                builder: builder
-            )
+        if monitor.entryMonitor.shouldSuppressPushNavigation {
+            content
+                .sheetAndCoverDestinationHandler(
+                    coordinator: coordinator,
+                    builder: builder
+                )
+        } else {
+            content
+                .pushDestinationHandler(
+                    coordinator: coordinator,
+                    builder: builder
+                )
+                .sheetAndCoverDestinationHandler(
+                    coordinator: coordinator,
+                    builder: builder
+                )
+        }
     }
 }

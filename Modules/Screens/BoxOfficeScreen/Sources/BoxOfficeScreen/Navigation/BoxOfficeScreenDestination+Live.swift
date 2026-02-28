@@ -5,12 +5,12 @@ import SwiftUI
 public extension BoxOfficeScreen {
     @MainActor
     static func liveEntry(
-        publicDestination: Destination.Public,
+        configuration: EntryConfiguration<Destination>,
         dependencies: Dependencies
     ) -> Entry {
         Entry(
-            entryDestination: .public(publicDestination),
-            builder: { destination, mode, navigationClient in
+            configuration: configuration,
+            builder: { destination, monitor, navigationClient in
                 let state: DestinationState
 
                 switch destination.type {
@@ -30,7 +30,7 @@ public extension BoxOfficeScreen {
                     case .detail(let detailDestination):
                         let detailDependencies = dependencies.buildChild(DetailScreen.Dependencies.self)
                         let entry = DetailScreen.liveEntry(
-                            publicDestination: detailDestination,
+                            configuration: monitor.entryConfig(for: .public(detailDestination)),
                             dependencies: detailDependencies
                         )
                         state = .detail(entry)
@@ -39,7 +39,6 @@ public extension BoxOfficeScreen {
 
                 return DestinationView(
                     state: state,
-                    mode: mode,
                     client: navigationClient
                 )
             }

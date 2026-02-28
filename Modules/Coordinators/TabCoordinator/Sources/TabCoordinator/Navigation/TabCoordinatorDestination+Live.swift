@@ -11,8 +11,8 @@ extension TabCoordinator {
         dependencies: Dependencies
     ) -> Entry {
         Entry(
-            entryDestination: .tab(tabDestination),
-            builder: { destination, mode, navigationClient in
+            configuration: DestinationMonitor(mode: .root).entryConfig(for: .tab(tabDestination)),
+            builder: { destination, monitor, navigationClient in
                 let state: DestinationState
 
                 switch destination.type {
@@ -21,21 +21,21 @@ extension TabCoordinator {
                     case .boxOffice:
                         let boxOfficeDependencies = dependencies.buildChild(BoxOfficeScreen.Dependencies.self)
                         let entry = BoxOfficeScreen.liveEntry(
-                            publicDestination: .main,
+                            configuration: monitor.entryConfig(for: .public(.main)),
                             dependencies: boxOfficeDependencies
                         )
                         state = .boxOffice(entry)
                     case .discover:
                         let discoverDependencies = dependencies.buildChild(DiscoverScreen.Dependencies.self)
                         let entry = DiscoverScreen.liveEntry(
-                            publicDestination: .main,
+                            configuration: monitor.entryConfig(for: .public(.main)),
                             dependencies: discoverDependencies
                         )
                         state = .discover(entry)
                     case .watchlist:
                         let watchlistDependencies = dependencies.buildChild(WatchlistScreen.Dependencies.self)
                         let entry = WatchlistScreen.liveEntry(
-                            publicDestination: .main,
+                            configuration: monitor.entryConfig(for: .public(.main)),
                             dependencies: watchlistDependencies
                         )
                         state = .watchlist(entry)
@@ -44,7 +44,6 @@ extension TabCoordinator {
 
                 return DestinationView(
                     state: state,
-                    mode: mode,
                     client: navigationClient
                 )
             }

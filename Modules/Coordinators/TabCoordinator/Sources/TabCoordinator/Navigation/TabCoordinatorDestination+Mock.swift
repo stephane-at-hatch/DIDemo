@@ -7,7 +7,7 @@ extension TabCoordinator {
         tabDestination: Destination.Tab = .boxOffice
     ) -> Entry {
         Entry(
-            entryDestination: .tab(tabDestination),
+            configuration: DestinationMonitor(mode: .root).entryConfig(for: .tab(tabDestination)),
             builder: { destination, mode, navigationClient in
                 let state: DestinationState
 
@@ -25,7 +25,6 @@ extension TabCoordinator {
 
                 return DestinationView(
                     state: state,
-                    mode: mode,
                     client: navigationClient
                 )
             }
@@ -41,7 +40,6 @@ extension TabCoordinator {
     
     NavigationDestinationView(
         previousClient: rootClient,
-        mode: .root,
         entry: entry
     )
 }

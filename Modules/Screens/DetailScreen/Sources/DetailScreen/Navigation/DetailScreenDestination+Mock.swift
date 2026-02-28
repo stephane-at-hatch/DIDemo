@@ -9,7 +9,7 @@ public extension DetailScreen {
         publicDestination: Destination.Public = .detail(movieId: 550)
     ) -> Entry {
         Entry(
-            entryDestination: .public(publicDestination),
+            configuration: DestinationMonitor(mode: .cover).entryConfig(for: .public(publicDestination)),
             builder: { destination, mode, navigationClient in
                 let state: DestinationState
 
@@ -29,7 +29,6 @@ public extension DetailScreen {
 
                 return DestinationView(
                     state: state,
-                    mode: mode,
                     client: navigationClient
                 )
             }
@@ -45,7 +44,6 @@ public extension DetailScreen {
 
     NavigationDestinationView(
         previousClient: rootClient,
-        mode: .root,
         entry: entry
     )
 }

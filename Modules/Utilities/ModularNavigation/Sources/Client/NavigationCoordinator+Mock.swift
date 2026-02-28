@@ -23,6 +23,7 @@ extension NavigationCoordinator {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
     }
