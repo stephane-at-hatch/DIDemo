@@ -97,18 +97,19 @@ public struct BoxOfficeView<ShareButton: View>: View {
                 }
 
                 ForEach(state.movies) { movie in
-                    HStack(alignment: .top) {
-                        MovieCardView(
-                            state: movie,
-                            posterURL: posterURL(for: movie.posterPath),
-                            onAction: { action in
-                                switch action {
-                                case .tapped:
-                                    onAction(.movieTapped(movieId: movie.id))
-                                }
+                    MovieCardView(
+                        state: movie,
+                        posterURL: posterURL(for: movie.posterPath),
+                        onAction: { action in
+                            switch action {
+                            case .tapped:
+                                onAction(.movieTapped(movieId: movie.id))
                             }
-                        )
+                        }
+                    )
+                    .overlay(alignment: .topTrailing) {
                         shareButton(movie)
+                            .padding(8)
                     }
                     .padding(.horizontal)
                 }

@@ -31,6 +31,8 @@ public struct ShareButtonView: View {
                 Image(systemName: "square.and.arrow.up")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .padding(12)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         } else {
@@ -40,6 +42,8 @@ public struct ShareButtonView: View {
                 Image(systemName: "square.and.arrow.up")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .padding(12)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
