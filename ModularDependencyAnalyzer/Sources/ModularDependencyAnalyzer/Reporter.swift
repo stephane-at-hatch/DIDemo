@@ -338,12 +338,17 @@ class Reporter {
 
                 // Compute what child imports cover (recursively)
                 var coveredByImports = Set<DependencyKey>()
+                var inputsCoveredByImports = Set<String>()
                 if let node = scanResults.nodes.first(where: { $0.moduleName == moduleName }) {
                     let productionChildren = findAllChildren(typeName: node.typeName, moduleName: moduleName)
                     for childType in productionChildren {
                         var visited = Set<String>()
                         coveredByImports.formUnion(
                             collectAllProvided(fromType: childType, typeToModule: typeToModule, visited: &visited)
+                        )
+                        var inputVisited = Set<String>()
+                        inputsCoveredByImports.formUnion(
+                            collectAllProvidedInputs(fromType: childType, typeToModule: typeToModule, visited: &inputVisited)
                         )
                     }
                 }
@@ -361,8 +366,9 @@ class Reporter {
                 }
                 let mockProvidedInputs = Set(scanResults.mockProvidedInputTypesByModule[moduleName] ?? [])
                 let missingInputs = inputRequirements.filter { inputReq in
-                    !mockRegs.contains(where: { $0.type == inputReq.type })
-                    && !mockProvidedInputs.contains(inputReq.type)
+                    guard !inputsCoveredByImports.contains(inputReq.type) else { return false }
+                    return !mockRegs.contains(where: { $0.type == inputReq.type })
+                        && !mockProvidedInputs.contains(inputReq.type)
                 }
 
                 if missingDeps.isEmpty, missingInputs.isEmpty {
@@ -544,6 +550,36 @@ class Reporter {
             let children = findAllChildren(typeName: childNode.typeName, moduleName: module)
             for child in children {
                 provided.formUnion(collectAllProvided(fromType: child, typeToModule: typeToModule, visited: &visited))
+            }
+        }
+
+        return provided
+    }
+
+    /// Recursively collects all input types provided by a type and its descendants
+    private func collectAllProvidedInputs(
+        fromType type: String,
+        typeToModule: [String: String],
+        visited: inout Set<String>
+    ) -> Set<String> {
+        guard !visited.contains(type) else { return [] }
+        visited.insert(type)
+
+        var provided = Set<String>()
+
+        guard let module = typeToModule[type] else { return provided }
+
+        // Add this module's own input provisions
+        let inputs = scanResults.providedInputsByModule[module] ?? []
+        for input in inputs {
+            provided.insert(input.type)
+        }
+
+        // Recurse into this module's production children
+        if let childNode = scanResults.nodes.first(where: { $0.moduleName == module }) {
+            let children = findAllChildren(typeName: childNode.typeName, moduleName: module)
+            for child in children {
+                provided.formUnion(collectAllProvidedInputs(fromType: child, typeToModule: typeToModule, visited: &visited))
             }
         }
 
@@ -739,7 +775,11 @@ class Reporter {
                 .filter { !$0.isLocal }
                 .map { DependencyKey(type: $0.type, key: $0.key) }
         )
+        let currentModuleInputNeeds = Set(
+            (scanResults.inputRequirementsByModule[moduleName] ?? []).map { $0.type }
+        )
         var coveredByImports = Set<DependencyKey>()
+        var inputsCoveredByImports = Set<String>()
 
         if productionChildren.isEmpty {
             print("\n  Child imports needed (via importDependencies):")
@@ -752,12 +792,19 @@ class Reporter {
                 let relevantProvides = childProvides.intersection(currentModuleNeeds)
                 coveredByImports.formUnion(relevantProvides)
 
+                var childInputVisited = Set<String>()
+                let childInputProvides = collectAllProvidedInputs(fromType: childType, typeToModule: typeToModule, visited: &childInputVisited)
+                let relevantInputProvides = childInputProvides.intersection(currentModuleInputNeeds)
+                inputsCoveredByImports.formUnion(relevantInputProvides)
+
+                let allRelevant = relevantProvides.map { $0.key != nil ? "\($0.type) (key: \($0.key!))" : $0.type }
+                    + relevantInputProvides.sorted().map { "\($0) (input)" }
+
                 print("    \(childType)")
-                if relevantProvides.isEmpty {
+                if allRelevant.isEmpty {
                     print("      └ provides: (no dependencies needed by \(moduleName))")
                 } else {
-                    let provides = relevantProvides.map { $0.key != nil ? "\($0.type) (key: \($0.key!))" : $0.type }.sorted()
-                    print("      └ provides: \(provides.joined(separator: ", "))")
+                    print("      └ provides: \(allRelevant.sorted().joined(separator: ", "))")
                 }
             }
         }
@@ -778,14 +825,19 @@ class Reporter {
             }
         }
 
-        // 4. Input provisions needed
+        // 4. Input provisions needed (not covered by imports)
         let inputRequirements = scanResults.inputRequirementsByModule[moduleName] ?? []
+        let explicitInputsNeeded = inputRequirements.filter { !inputsCoveredByImports.contains($0.type) }
 
         print("\n  Input provisions needed:")
-        if inputRequirements.isEmpty {
-            print("    (none)")
+        if explicitInputsNeeded.isEmpty {
+            if inputRequirements.isEmpty {
+                print("    (none)")
+            } else {
+                print("    (none — all covered by imports)")
+            }
         } else {
-            for inputReq in inputRequirements.sorted(by: { $0.type < $1.type }) {
+            for inputReq in explicitInputsNeeded.sorted(by: { $0.type < $1.type }) {
                 print("    provideInput \(inputReq.type)")
             }
         }
@@ -816,9 +868,9 @@ class Reporter {
             }
         }
 
-        if !inputRequirements.isEmpty {
+        if !explicitInputsNeeded.isEmpty {
             print("\n  Mock input provisions:")
-            for inputReq in inputRequirements.sorted(by: { $0.type < $1.type }) {
+            for inputReq in explicitInputsNeeded.sorted(by: { $0.type < $1.type }) {
                 let isCovered = mockRegs.contains(where: { $0.type == inputReq.type })
                     || mockProvidedInputs.contains(inputReq.type)
                 let icon = isCovered ? "✅" : "❌"

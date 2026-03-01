@@ -5,7 +5,6 @@
 //  Created by Stephane Magne
 //
 
-import TMDBClientInterface
 import ModularDependencyContainer
 
 @DependencyRequirements()
