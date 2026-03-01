@@ -6,7 +6,7 @@
 //  Copyright hatch.co, 2025.
 //
 
-@testable import HatchModularNavigation
+@testable import ModularNavigation
 import SwiftUI
 import Testing
 
@@ -35,6 +35,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -56,6 +57,7 @@ struct NavigationCoordinatorTests {
             type: .nested(path: pathBinding),
             presentationMode: .push,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -77,6 +79,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -99,6 +102,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         coordinator.rootPath = pathBinding
@@ -122,6 +126,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         coordinator.rootPath = pathBinding
@@ -148,6 +153,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         coordinator.rootPath = pathBinding
@@ -177,6 +183,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -200,6 +207,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -224,6 +232,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -252,6 +261,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -281,6 +291,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -309,6 +320,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -332,6 +344,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -360,6 +373,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -389,6 +403,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -423,6 +438,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -461,6 +477,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -493,6 +510,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         coordinator.rootPath = pathBinding
@@ -520,6 +538,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: {
                 dismissParentCalled = true
                 return false
@@ -549,6 +568,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: {
                 dismissParentCalled = true
                 return false
@@ -577,6 +597,7 @@ struct NavigationCoordinatorTests {
             type: .nested(path: nil),
             presentationMode: .root,
             route: route,
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -597,6 +618,7 @@ struct NavigationCoordinatorTests {
             type: .nested(path: nil),
             presentationMode: .push,
             route: route,
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -616,6 +638,7 @@ struct NavigationCoordinatorTests {
             type: .nested(path: nil),
             presentationMode: .push,
             route: route,
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -638,6 +661,7 @@ struct NavigationCoordinatorTests {
             type: .nested(path: nil),
             presentationMode: .root,
             route: route,
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -646,7 +670,7 @@ struct NavigationCoordinatorTests {
         #expect(parentCoordinator.deepLinkRoute.handoffRoute.count == 1)
         
         // Create child coordinator
-        let childCoordinator: NavigationCoordinator<ChildDestination> = parentCoordinator.newCoordinator(mode: .push)
+        let childCoordinator: NavigationCoordinator<ChildDestination> = parentCoordinator.newCoordinator(monitor: DestinationMonitor(mode: .push))
         
         // Child should receive handoff
         #expect(childCoordinator.deepLinkRoute.initialSteps.count == 1)
@@ -661,6 +685,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -675,6 +700,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -682,6 +708,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -694,6 +721,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -722,6 +750,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         coordinator.rootPath = pathBinding
@@ -747,6 +776,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -773,6 +803,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
@@ -795,6 +826,7 @@ struct NavigationCoordinatorTests {
             type: .root,
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: {
                 dismissParentCalled = true
                 return false
@@ -820,12 +852,13 @@ struct NavigationCoordinatorTests {
             type: .nested(path: nil),
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
         coordinator.rootPath = pathBinding
     
-        let childCoordinator: NavigationCoordinator<ChildDestination> = coordinator.newCoordinator(mode: .push)
+        let childCoordinator: NavigationCoordinator<ChildDestination> = coordinator.newCoordinator(monitor: DestinationMonitor(mode: .push))
         
         #expect(path.isEmpty)
         
@@ -850,10 +883,11 @@ struct NavigationCoordinatorTests {
             type: .nested(path: pathBinding),
             presentationMode: .root,
             route: [],
+            didConsumeRoute: {},
             dismissParent: { false }
         )
         
-        let childCoordinator: NavigationCoordinator<ChildDestination> = coordinator.newCoordinator(mode: .push)
+        let childCoordinator: NavigationCoordinator<ChildDestination> = coordinator.newCoordinator(monitor: DestinationMonitor(mode: .push))
         
         #expect(path.isEmpty)
 
@@ -864,5 +898,278 @@ struct NavigationCoordinatorTests {
         childCoordinator.present(.childDetail, mode: .push)
 
         #expect(path.count == 2)
+    }
+
+    // MARK: - Process Initial Route Tests
+
+    @Test("processInitialRoute calls didConsumeRoute and appends steps")
+    func testProcessInitialRouteCallsDidConsumeRoute() {
+        var path = NavigationPath()
+        let pathBinding = Binding<NavigationPath>(
+            get: { path },
+            set: { path = $0 }
+        )
+
+        var didConsumeRouteCalled = false
+
+        let steps = [
+            NavigationStep(destination: TestDestination.home, mode: .push),
+            NavigationStep(destination: TestDestination.detail(id: "123"), mode: .push)
+        ]
+        let route: AnyRoute = [steps.anySteps()]
+
+        let coordinator = NavigationCoordinator<TestDestination>(
+            type: .nested(path: nil),
+            presentationMode: .push,
+            route: route,
+            didConsumeRoute: { didConsumeRouteCalled = true },
+            dismissParent: { false }
+        )
+        coordinator.rootPath = pathBinding
+
+        #expect(coordinator.deepLinkRoute.initialSteps.count == 2)
+
+        coordinator.processInitialRoute()
+
+        #expect(didConsumeRouteCalled == true)
+        #expect(coordinator.deepLinkRoute.initialSteps.isEmpty == true)
+        #expect(path.count == 2)
+    }
+
+    @Test("processInitialRoute does nothing when no initial steps")
+    func testProcessInitialRouteNoOpWhenEmpty() {
+        var didConsumeRouteCalled = false
+
+        let coordinator = NavigationCoordinator<TestDestination>(
+            type: .nested(path: nil),
+            presentationMode: .push,
+            route: [],
+            didConsumeRoute: { didConsumeRouteCalled = true },
+            dismissParent: { false }
+        )
+
+        coordinator.processInitialRoute()
+
+        #expect(didConsumeRouteCalled == false)
+    }
+
+    @Test("newCoordinator chains didConsumeRoute to clear parent handoff")
+    func testNewCoordinatorChainsDidConsumeRoute() {
+        var parentConsumeRouteCalled = false
+
+        let firstSteps = [
+            NavigationStep(destination: TestDestination.home, mode: .push)
+        ]
+        let secondSteps = [
+            NavigationStep(destination: ChildDestination.childHome, mode: .push)
+        ]
+        let route: AnyRoute = [firstSteps.anySteps(), secondSteps.anySteps()]
+
+        var path = NavigationPath()
+        let pathBinding = Binding<NavigationPath>(
+            get: { path },
+            set: { path = $0 }
+        )
+
+        let parentCoordinator = NavigationCoordinator<TestDestination>(
+            type: .nested(path: nil),
+            presentationMode: .root,
+            route: route,
+            didConsumeRoute: { parentConsumeRouteCalled = true },
+            dismissParent: { false }
+        )
+        parentCoordinator.rootPath = pathBinding
+
+        // Parent has handoff route before child consumes it
+        #expect(parentCoordinator.deepLinkRoute.handoffRoute.count == 1)
+
+        let childCoordinator: NavigationCoordinator<ChildDestination> = parentCoordinator.newCoordinator(monitor: DestinationMonitor(mode: .push))
+        childCoordinator.rootPath = pathBinding
+
+        // Child consumed the route, but parent handoff not yet cleared
+        #expect(childCoordinator.deepLinkRoute.initialSteps.count == 1)
+
+        // Processing the child route triggers the chain
+        childCoordinator.processInitialRoute()
+
+        // Parent's handoff route should be cleared
+        #expect(parentCoordinator.deepLinkRoute.handoffRoute.isEmpty == true)
+        #expect(parentConsumeRouteCalled == true)
+    }
+
+    // MARK: - Deep Link Destination Factory Tests
+
+    @Test("deepLinkDestination creates step with animated false")
+    func testDeepLinkDestinationFactory() {
+        let step = NavigationStep<TestDestination>.deepLinkDestination(.settings, as: .push)
+
+        #expect(step.destination == .settings)
+        #expect(step.mode == .push)
+        #expect(step.animated == false)
+    }
+
+    // MARK: - Entry Monitor Tests
+
+    @Test("EntryMonitor initializes with all flags false")
+    func testEntryMonitorInitialization() {
+        let monitor = EntryMonitor()
+
+        #expect(monitor.isCurrentlyInSameModule == false)
+        #expect(monitor.isNavigatingToExternal == false)
+        #expect(monitor.manuallyDisableNavStack == false)
+        #expect(monitor.shouldSuppressPushNavigation == false)
+    }
+
+    @Test("EntryMonitor suppresses navigation when both module flags are true")
+    func testEntryMonitorshouldSuppressPushNavigation() {
+        let monitor = EntryMonitor()
+
+        monitor.isCurrentlyInSameModule = true
+        monitor.isNavigatingToExternal = false
+        #expect(monitor.shouldSuppressPushNavigation == false)
+
+        monitor.isCurrentlyInSameModule = false
+        monitor.isNavigatingToExternal = true
+        #expect(monitor.shouldSuppressPushNavigation == false)
+
+        monitor.isCurrentlyInSameModule = true
+        monitor.isNavigatingToExternal = true
+        #expect(monitor.shouldSuppressPushNavigation == true)
+    }
+
+    @Test("EntryMonitor suppresses navigation when manuallyDisableNavStack is true")
+    func testEntryMonitorManuallyDisableNavStack() {
+        let monitor = EntryMonitor()
+
+        monitor.manuallyDisableNavStack = true
+        #expect(monitor.shouldSuppressPushNavigation == true)
+    }
+
+    @Test("EntryMonitor suppresses navigation when manuallyDisableNavStack is true regardless of module flags")
+    func testEntryMonitorManuallyDisableNavStackIndependentOfModuleFlags() {
+        let monitor = EntryMonitor()
+
+        // manuallyDisableNavStack alone is sufficient
+        monitor.isCurrentlyInSameModule = false
+        monitor.isNavigatingToExternal = false
+        monitor.manuallyDisableNavStack = true
+        #expect(monitor.shouldSuppressPushNavigation == true)
+
+        // Also true when combined with module flags
+        monitor.isCurrentlyInSameModule = true
+        monitor.isNavigatingToExternal = true
+        #expect(monitor.shouldSuppressPushNavigation == true)
+    }
+
+    // MARK: - Destination Monitor Tests
+
+    @Test("DestinationMonitor stores mode and creates entry configs")
+    func testDestinationMonitorEntryConfig() {
+        let monitor = DestinationMonitor(mode: .sheet)
+
+        #expect(monitor.mode == .sheet)
+
+        let config = monitor.entryConfig(for: TestDestination.home)
+
+        #expect(config.destination == .home)
+        #expect(config.monitor.entryMonitor === monitor.entryMonitor)
+    }
+
+    @Test("DestinationMonitor disableNavigationStack sets manuallyDisableNavStack")
+    func testDestinationMonitorDisableNavigationStack() {
+        let monitor = DestinationMonitor(mode: .sheet)
+
+        #expect(monitor.entryMonitor.manuallyDisableNavStack == false)
+
+        monitor.disableNavigationStack()
+
+        #expect(monitor.entryMonitor.manuallyDisableNavStack == true)
+        #expect(monitor.entryMonitor.shouldSuppressPushNavigation == true)
+    }
+
+    @Test("DestinationMonitor setPreferredDetents stores detents")
+    func testDestinationMonitorSetPreferredDetents() {
+        let monitor = DestinationMonitor(mode: .sheet)
+
+        #expect(monitor.preferredDetents == nil)
+
+        monitor.setPreferredDetents([.medium, .large])
+
+        #expect(monitor.preferredDetents == [.medium, .large])
+    }
+
+    @Test("DestinationMonitor setPreferredDetents overwrites previous detents")
+    func testDestinationMonitorSetPreferredDetentsOverwrites() {
+        let monitor = DestinationMonitor(mode: .sheet)
+
+        monitor.setPreferredDetents([.medium])
+        #expect(monitor.preferredDetents == [.medium])
+
+        monitor.setPreferredDetents([.large])
+        #expect(monitor.preferredDetents == [.large])
+    }
+
+    @Test("DestinationMonitor disableNavigationStack does not affect preferredDetents")
+    func testDisableNavigationStackDoesNotAffectDetents() {
+        let monitor = DestinationMonitor(mode: .sheet)
+
+        monitor.setPreferredDetents([.medium])
+        monitor.disableNavigationStack()
+
+        #expect(monitor.preferredDetents == [.medium])
+        #expect(monitor.entryMonitor.manuallyDisableNavStack == true)
+    }
+
+    // MARK: - Module Entry Tests
+
+    @Test("ModuleEntry sets isNavigatingToExternal on creation")
+    func testModuleEntryMarksNavigatingToExternal() {
+        let monitor = DestinationMonitor(mode: .push)
+        let config = monitor.entryConfig(for: TestDestination.settings)
+
+        #expect(monitor.entryMonitor.isNavigatingToExternal == false)
+
+        _ = ModuleEntry(
+            configuration: config,
+            builder: { _, _, _ in
+                EmptyView()
+            }
+        )
+
+        #expect(monitor.entryMonitor.isNavigatingToExternal == true)
+    }
+
+    // MARK: - New Coordinator Monitor Tests
+
+    @Test("newCoordinator sets isCurrentlyInSameModule true for same destination type")
+    func testNewCoordinatorSameModuleFlag() {
+        let coordinator = NavigationCoordinator<TestDestination>(
+            type: .nested(path: nil),
+            presentationMode: .root,
+            route: [],
+            didConsumeRoute: {},
+            dismissParent: { false }
+        )
+
+        let monitor = DestinationMonitor(mode: .push)
+        let _: NavigationCoordinator<TestDestination> = coordinator.newCoordinator(monitor: monitor)
+
+        #expect(monitor.entryMonitor.isCurrentlyInSameModule == true)
+    }
+
+    @Test("newCoordinator sets isCurrentlyInSameModule false for different destination type")
+    func testNewCoordinatorDifferentModuleFlag() {
+        let coordinator = NavigationCoordinator<TestDestination>(
+            type: .nested(path: nil),
+            presentationMode: .root,
+            route: [],
+            didConsumeRoute: {},
+            dismissParent: { false }
+        )
+
+        let monitor = DestinationMonitor(mode: .push)
+        let _: NavigationCoordinator<ChildDestination> = coordinator.newCoordinator(monitor: monitor)
+
+        #expect(monitor.entryMonitor.isCurrentlyInSameModule == false)
     }
 }

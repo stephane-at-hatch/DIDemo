@@ -312,6 +312,7 @@ class Reporter {
         var notAdoptedModules: [(module: String, types: [String])] = []
         var conformedNoMock: [(module: String, types: [String])] = []
         var fullyAdopted: [(module: String, types: [String])] = []
+        var incompleteMock: [(module: String, types: [String], missingDeps: [String], missingInputs: [String])] = []
 
         for moduleName in diModules {
             // Find DI node types in this module
@@ -328,7 +329,31 @@ class Reporter {
             if hasConformance, hasImplementation {
                 adoptedCount += 1
                 mockRegCount += 1
-                fullyAdopted.append((module: moduleName, types: nodeTypes))
+
+                // Check mock completeness against requirements
+                let requirements = scanResults.requirementsByModule[moduleName] ?? []
+                let inputRequirements = scanResults.inputRequirementsByModule[moduleName] ?? []
+                let mockRegs = scanResults.mockRegistrationsByModule[moduleName] ?? []
+
+                let missingDeps = requirements.filter { req in
+                    !mockRegs.contains(where: { $0.satisfies(req) })
+                }
+                let mockProvidedInputs = Set(scanResults.mockProvidedInputTypesByModule[moduleName] ?? [])
+                let missingInputs = inputRequirements.filter { inputReq in
+                    !mockRegs.contains(where: { $0.type == inputReq.type })
+                    && !mockProvidedInputs.contains(inputReq.type)
+                }
+
+                if missingDeps.isEmpty, missingInputs.isEmpty {
+                    fullyAdopted.append((module: moduleName, types: nodeTypes))
+                } else {
+                    incompleteMock.append((
+                        module: moduleName,
+                        types: nodeTypes,
+                        missingDeps: missingDeps.map { formatDependency($0) },
+                        missingInputs: missingInputs.map { $0.type }
+                    ))
+                }
             } else if hasConformance {
                 adoptedCount += 1
                 conformedNoMock.append((module: moduleName, types: nodeTypes))
@@ -345,9 +370,23 @@ class Reporter {
 
         // Fully adopted
         if !fullyAdopted.isEmpty {
-            print("\n  ✅ Fully adopted (conformance + mockRegistration):")
+            print("\n  ✅ Fully adopted (conformance + complete mockRegistration):")
             for entry in fullyAdopted {
                 print("    \(entry.module): \(entry.types.joined(separator: ", "))")
+            }
+        }
+
+        // Incomplete mock
+        if !incompleteMock.isEmpty {
+            print("\n  ⚠️  Incomplete mock (missing registrations):")
+            for entry in incompleteMock {
+                print("    \(entry.module): \(entry.types.joined(separator: ", "))")
+                for dep in entry.missingDeps {
+                    print("      └ missing: \(dep)")
+                }
+                for input in entry.missingInputs {
+                    print("      └ missing input: \(input)")
+                }
             }
         }
 

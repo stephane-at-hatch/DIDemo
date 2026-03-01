@@ -161,6 +161,9 @@ struct ScannedFileData: Codable {
 
     // Mock registrations (register* calls inside mockRegistration bodies)
     let mockRegistrations: [Dependency]
+
+    // Mock provided inputs (provideInput calls inside mockRegistration bodies)
+    let mockProvidedInputTypes: [String]
 }
 
 /// Test adoption information discovered from a single file

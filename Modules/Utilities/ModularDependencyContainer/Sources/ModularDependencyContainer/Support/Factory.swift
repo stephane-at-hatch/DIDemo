@@ -51,7 +51,8 @@ struct Factory: Sendable {
 /// - `scope` is a Sendable enum
 /// - `factory` closure is stored and only accessed on MainActor
 /// - `singletonCache` uses @unchecked Sendable with MainActor-gated access
-struct MainActorFactory: Sendable {
+@MainActor
+struct MainActorFactory {
     let scope: RegistrationScope
     private let _factory: @MainActor (AnyFrozenContainer) throws -> Any
     private let singletonCache: MainActorAnySingletonCache?

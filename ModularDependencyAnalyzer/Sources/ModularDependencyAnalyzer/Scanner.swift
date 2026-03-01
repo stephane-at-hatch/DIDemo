@@ -101,7 +101,8 @@ class Scanner {
                 mockRegistrationImplementations: visitor.mockRegistrationImplementations
             ),
             importDependenciesCalls: visitor.importDependenciesCalls,
-            mockRegistrations: visitor.mockRegistrations
+            mockRegistrations: visitor.mockRegistrations,
+            mockProvidedInputTypes: visitor.mockProvidedInputTypes
         )
 
         cache.update(file: file, data: data)
@@ -121,6 +122,7 @@ class Scanner {
         var mockRegImplementationsByModule: [String: [String]] = [:]
         var importDepsByModule: [String: [ImportDependenciesCall]] = [:]
         var mockRegsByModule: [String: [Dependency]] = [:]
+        var mockProvidedInputTypesByModule: [String: [String]] = [:]
 
         for file in files {
             guard let data = scan(file: file) else { continue }
@@ -170,6 +172,12 @@ class Scanner {
                 mockRegsByModule[data.moduleName, default: []]
                     .append(contentsOf: data.mockRegistrations)
             }
+
+            // Aggregate mock provided input types
+            if !data.mockProvidedInputTypes.isEmpty {
+                mockProvidedInputTypesByModule[data.moduleName, default: []]
+                    .append(contentsOf: data.mockProvidedInputTypes)
+            }
         }
 
         return ScanResults(
@@ -183,7 +191,8 @@ class Scanner {
             testDependencyProviderConformancesByModule: tdpConformancesByModule,
             mockRegistrationImplementationsByModule: mockRegImplementationsByModule,
             importDependenciesByModule: importDepsByModule,
-            mockRegistrationsByModule: mockRegsByModule
+            mockRegistrationsByModule: mockRegsByModule,
+            mockProvidedInputTypesByModule: mockProvidedInputTypesByModule
         )
     }
 }
@@ -208,6 +217,9 @@ struct ScanResults {
 
     /// Mock registrations: register* calls inside mockRegistration bodies, grouped by module
     let mockRegistrationsByModule: [String: [Dependency]]
+
+    /// Mock provided input types: provideInput calls inside mockRegistration bodies, grouped by module
+    let mockProvidedInputTypesByModule: [String: [String]]
 }
 
 // MARK: - Scanner Visitor
@@ -234,8 +246,9 @@ private class ScannerVisitor: SyntaxVisitor {
     // Test alignment tracking
     var importDependenciesCalls: [ImportDependenciesCall] = []
 
-    // Mock registration tracking (register* calls inside mockRegistration)
+    // Mock registration tracking (register* and provideInput calls inside mockRegistration)
     var mockRegistrations: [Dependency] = []
+    var mockProvidedInputTypes: [String] = []
 
     // State tracking
     private var isInsideDependencyRequirementsType = false
@@ -246,7 +259,7 @@ private class ScannerVisitor: SyntaxVisitor {
     private var enclosingTypeNames: [String] = []
 
     // For local variable tracking within a function
-    private var variableTypes: [String: String] = [:] // variableName -> typeName
+    private var variableTypes: [String: String] = [:]  // variableName -> typeName
     private var pendingRootEdges: [DiscoveredEdge] = []
     private var currentRootOrigin: GraphOrigin?
     private var currentRootType: String?
@@ -464,6 +477,7 @@ private class ScannerVisitor: SyntaxVisitor {
                 let mockRegVisitor = RegistrationVisitor(scope: mockScope, filePath: filePath, sourceLocationConverter: sourceLocationConverter)
                 mockRegVisitor.walk(node)
                 mockRegistrations.append(contentsOf: mockRegVisitor.registrations)
+                mockProvidedInputTypes.append(contentsOf: mockRegVisitor.providedInputTypes)
             }
         }
 
@@ -714,8 +728,13 @@ private class ScannerVisitor: SyntaxVisitor {
                     discoveredEdges.append(edge)
                 }
 
-                // Handle buildChild closure for provideInput tracking
+                // Handle buildChild closure for provideInput tracking.
+                // The ProvideInputClosureVisitor handles provideInput calls inside the closure
+                // with the correct targetModule (the child type). We increment buildChildClosureDepth
+                // so the general provideInput handler skips these calls (they'd be incorrectly
+                // attributed to the current module otherwise).
                 handleBuildChildClosure(node: node, targetModule: childType)
+                return .skipChildren
             }
         }
 
@@ -996,6 +1015,7 @@ private class ScannerVisitor: SyntaxVisitor {
 /// Visits function bodies to find register* calls
 private class RegistrationVisitor: SyntaxVisitor {
     var registrations: [Dependency] = []
+    var providedInputTypes: [String] = []
     private let scope: ProvisionScope
     private let filePath: String
     private let sourceLocationConverter: SourceLocationConverter
@@ -1013,6 +1033,17 @@ private class RegistrationVisitor: SyntaxVisitor {
         }
 
         let functionName = calledExpression.declName.baseName.text
+
+        // Track provideInput calls
+        if functionName == "provideInput" {
+            if let typeArg = node.arguments.first?.expression.as(MemberAccessExprSyntax.self),
+               typeArg.declName.baseName.text == "self",
+               let type = typeArg.base?.trimmedDescription {
+                providedInputTypes.append(type)
+            }
+            return .skipChildren
+        }
+
         guard functionName.starts(with: "register") else {
             return .visitChildren
         }

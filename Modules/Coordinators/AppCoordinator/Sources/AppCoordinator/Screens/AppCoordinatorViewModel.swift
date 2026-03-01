@@ -23,10 +23,7 @@ public final class AppCoordinatorViewModel {
     public init(
         dependencies: AppCoordinator.Dependencies
     ) {
-        let tabCoordinatorDependencies = dependencies.buildChild(TabCoordinator.Dependencies.self, configure: { builder in
-            let tmdbConfiguration = TMDBConfiguration(apiReadAccessToken: "YOUR_API_KEY_HERE")
-            builder.provideInput(TMDBConfiguration.self, tmdbConfiguration)
-        })
+        let tabCoordinatorDependencies = dependencies.buildChild(TabCoordinator.Dependencies.self)
         self.tabCoordinatorViewModel = TabCoordinatorViewModel.live(dependencies: tabCoordinatorDependencies)
     }
 }

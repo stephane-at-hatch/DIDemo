@@ -9,11 +9,57 @@ import Foundation
 
 @MainActor
 public enum RootDependencyBuilder {
-    public static func buildChild<T: DependencyRequirements>(_ type: T.Type) -> T {
-        let dependencyBuilder = DependencyBuilder<GraphRoot>()
+    public static func buildChild<T: DependencyRequirements>(_ type: T.Type, mode: ContainerMode = .production) -> T {
+        let dependencyBuilder = DependencyBuilder<GraphRoot>(mode: mode)
         let dependencyContainer = dependencyBuilder.freeze()
         return dependencyContainer.buildChild(T.self)
     }
+
+    /// Builds a root-level child in testing mode with test-site-specific overrides.
+    ///
+    /// Convenience for unit tests that don't have a parent container.
+    /// Only available in testing mode. Asserts if called with `.production`.
+    ///
+    /// ```swift
+    /// let module = RootDependencyBuilder.buildChildWithOverrides(
+    ///     MyModule.self,
+    ///     mode: .testing
+    /// ) { overrides in
+    ///     overrides.provideInput(String.self, "test-value")
+    ///     try overrides.registerSingleton(NetworkClient.self) { _ in
+    ///         FailingNetworkClient(error: .timeout)
+    ///     }
+    /// }
+    /// ```
+    public static func buildChildWithOverrides<T: DependencyRequirements>(
+        _ type: T.Type,
+        mode: ContainerMode,
+        testingOverride: @MainActor (MockDependencyBuilder<T>) throws -> Void
+    ) rethrows -> T {
+        let dependencyBuilder = DependencyBuilder<GraphRoot>(mode: mode)
+        let dependencyContainer = dependencyBuilder.freeze()
+        return try dependencyContainer.buildChildWithOverrides(T.self, testingOverride: testingOverride)
+    }
+}
+
+// MARK: - Exported Registrations (for importDependencies)
+
+/// Snapshot of non-local registrations for transfer between builders.
+/// Local-scoped registrations are excluded by design — they are module-private
+/// and may reference module-internal types invisible to the importing module.
+///
+/// This is a top-level type (not nested in `DependencyBuilder<Marker>`) so that
+/// exports from `DependencyBuilder<T>` can be imported into `DependencyBuilder<U>`
+/// without generic type mismatches.
+@MainActor
+struct ExportedRegistrations {
+    let factories: [RegistrationKey: Factory]
+    let scopedFactories: [RegistrationKey: Factory]
+    let mainActorFactories: [RegistrationKey: MainActorFactory]
+    let mainActorScopedFactories: [RegistrationKey: MainActorFactory]
+    let metadata: [RegistrationKey: RegistrationMetadata]
+    let inputs: [InputKey: any Sendable]
+    let inputMetadata: [InputKey: InputMetadata]
 }
 
 // MARK: - Dependency Builder (Mutable, Non-Sendable)
@@ -42,6 +88,22 @@ public final class DependencyBuilder<Marker> {
     private var inputs: [InputKey: any Sendable]
     private var inputMetadata: [InputKey: InputMetadata] = [:]
     private let parent: AnyFrozenContainer?
+    private let mode: ContainerMode
+
+    // MARK: - Import Tracking (for importDependencies validation)
+
+    /// Keys that were brought in via `importDependencies` (not explicitly registered).
+    var importedRegistrationKeys: Set<RegistrationKey> = []
+    var importedInputKeys: Set<InputKey> = []
+
+    /// Keys that were explicitly registered via `MockDependencyBuilder` registration methods
+    /// (not via import). Used to detect redundant explicit registrations.
+    var explicitRegistrationKeys: Set<RegistrationKey> = []
+
+    /// When true, the post-registration validation in `mockRegistration` skips the
+    /// missing-requirement assertion. Modules in mid-adoption use this as an explicit
+    /// opt-in escape hatch.
+    var isMissingRequirementAssertionsSuppressed = false
 
     // MARK: - Namespace Accessors
 
@@ -56,15 +118,26 @@ public final class DependencyBuilder<Marker> {
     // MARK: - Initialization
 
     /// Creates a root builder (no parent).
-    public init() where Marker == GraphRoot {
+    public init(mode: ContainerMode = .production) where Marker == GraphRoot {
         self.parent = nil
         self.inputs = [:]
+        self.mode = mode
     }
 
     /// Creates a child builder with a frozen parent.
-    init(parent: AnyFrozenContainer, inputs: [InputKey: any Sendable] = [:]) {
+    init(parent: AnyFrozenContainer, inputs: [InputKey: any Sendable] = [:], mode: ContainerMode = .production) {
         self.parent = parent
         self.inputs = inputs
+        self.mode = mode
+    }
+
+    /// Creates a scratch builder for import operations (no parent, testing mode).
+    /// Used internally by `importDependencies` to run a child module's `mockRegistration`
+    /// in an isolated builder, then export the non-local registrations.
+    init(scratchForImport mode: ContainerMode) {
+        self.parent = nil
+        self.inputs = [:]
+        self.mode = mode
     }
 
     // MARK: - Input Management
@@ -591,6 +664,380 @@ public final class DependencyBuilder<Marker> {
         )
     }
 
+    // MARK: - Container-Agnostic Registration (for MockDependencyBuilder)
+
+    /// Registers a factory that receives `AnyFrozenContainer` instead of a typed container.
+    /// This avoids baking the `Marker` type into the factory closure, making the resulting
+    /// `Factory` safe to transfer between builders with different `Marker` types via import.
+    func registerAgnosticInstance<T: Sendable>(
+        _ type: T.Type,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
+    ) throws {
+        let key = RegistrationKey(type: type)
+        try register(
+            key: key,
+            type: type,
+            scope: .transient,
+            keyDescription: nil,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticSingleton<T: Sendable>(
+        _ type: T.Type,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
+    ) throws {
+        let key = RegistrationKey(type: type)
+        try register(
+            key: key,
+            type: type,
+            scope: .singleton,
+            keyDescription: nil,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticScoped<T: Sendable>(
+        _ type: T.Type,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
+    ) throws {
+        let key = RegistrationKey(type: type)
+        try registerScoped(
+            key: key,
+            type: type,
+            keyDescription: nil,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticInstance<T: Sendable, Key: Hashable & Sendable>(
+        _ type: T.Type,
+        key: Key,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
+    ) throws {
+        let registrationKey = RegistrationKey(type: type, key: key)
+        let keyDescription = "\(String(describing: Key.self)).\(key)"
+        try register(
+            key: registrationKey,
+            type: type,
+            scope: .transient,
+            keyDescription: keyDescription,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticSingleton<T: Sendable, Key: Hashable & Sendable>(
+        _ type: T.Type,
+        key: Key,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
+    ) throws {
+        let registrationKey = RegistrationKey(type: type, key: key)
+        let keyDescription = "\(String(describing: Key.self)).\(key)"
+        try register(
+            key: registrationKey,
+            type: type,
+            scope: .singleton,
+            keyDescription: keyDescription,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticScoped<T: Sendable, Key: Hashable & Sendable>(
+        _ type: T.Type,
+        key: Key,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @Sendable (AnyFrozenContainer) throws -> T
+    ) throws {
+        let registrationKey = RegistrationKey(type: type, key: key)
+        let keyDescription = "\(String(describing: Key.self)).\(key)"
+        try registerScoped(
+            key: registrationKey,
+            type: type,
+            keyDescription: keyDescription,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    // MainActor container-agnostic variants
+
+    func registerAgnosticMainActorInstance<T>(
+        _ type: T.Type,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
+    ) throws {
+        let key = RegistrationKey(type: type, isolation: .mainActor)
+        try registerMainActor(
+            key: key,
+            type: type,
+            scope: .transient,
+            keyDescription: nil,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticMainActorSingleton<T>(
+        _ type: T.Type,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
+    ) throws {
+        let key = RegistrationKey(type: type, isolation: .mainActor)
+        try registerMainActor(
+            key: key,
+            type: type,
+            scope: .singleton,
+            keyDescription: nil,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticMainActorScoped<T>(
+        _ type: T.Type,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
+    ) throws {
+        let key = RegistrationKey(type: type, isolation: .mainActor)
+        try registerMainActorScoped(
+            key: key,
+            type: type,
+            keyDescription: nil,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticMainActorInstance<T, Key: Hashable & Sendable>(
+        _ type: T.Type,
+        key: Key,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
+    ) throws {
+        let registrationKey = RegistrationKey(type: type, key: key, isolation: .mainActor)
+        let keyDescription = "\(String(describing: Key.self)).\(key)"
+        try registerMainActor(
+            key: registrationKey,
+            type: type,
+            scope: .transient,
+            keyDescription: keyDescription,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticMainActorSingleton<T, Key: Hashable & Sendable>(
+        _ type: T.Type,
+        key: Key,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
+    ) throws {
+        let registrationKey = RegistrationKey(type: type, key: key, isolation: .mainActor)
+        let keyDescription = "\(String(describing: Key.self)).\(key)"
+        try registerMainActor(
+            key: registrationKey,
+            type: type,
+            scope: .singleton,
+            keyDescription: keyDescription,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    func registerAgnosticMainActorScoped<T, Key: Hashable & Sendable>(
+        _ type: T.Type,
+        key: Key,
+        override: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        factory: @escaping @MainActor (AnyFrozenContainer) throws -> T
+    ) throws {
+        let registrationKey = RegistrationKey(type: type, key: key, isolation: .mainActor)
+        let keyDescription = "\(String(describing: Key.self)).\(key)"
+        try registerMainActorScoped(
+            key: registrationKey,
+            type: type,
+            keyDescription: keyDescription,
+            override: override,
+            file: file,
+            line: line,
+            factory: factory
+        )
+    }
+
+    // MARK: - Import / Export (for importDependencies)
+
+    /// Exports the non-local registration dictionaries for transfer into another builder.
+    func exportNonLocalRegistrations() -> ExportedRegistrations {
+        ExportedRegistrations(
+            factories: factories,
+            scopedFactories: scopedFactories,
+            mainActorFactories: mainActorFactories,
+            mainActorScopedFactories: mainActorScopedFactories,
+            metadata: metadata.filter { !$0.value.isLocal },
+            inputs: inputs,
+            inputMetadata: inputMetadata
+        )
+    }
+
+    /// Merges imported registrations into this builder using first-in-wins semantics.
+    /// Keys that already exist (from earlier imports or explicit registrations) are skipped silently.
+    /// All imported keys are tracked in `importedRegistrationKeys` / `importedInputKeys`.
+    func importRegistrations(_ exported: ExportedRegistrations) {
+        for (key, factory) in exported.factories {
+            if factories[key] == nil, scopedFactories[key] == nil {
+                factories[key] = factory
+                importedRegistrationKeys.insert(key)
+            }
+        }
+
+        for (key, factory) in exported.scopedFactories {
+            if scopedFactories[key] == nil, factories[key] == nil {
+                scopedFactories[key] = factory
+                importedRegistrationKeys.insert(key)
+            }
+        }
+
+        for (key, factory) in exported.mainActorFactories {
+            if mainActorFactories[key] == nil, mainActorScopedFactories[key] == nil {
+                mainActorFactories[key] = factory
+                importedRegistrationKeys.insert(key)
+            }
+        }
+
+        for (key, factory) in exported.mainActorScopedFactories {
+            if mainActorScopedFactories[key] == nil, mainActorFactories[key] == nil {
+                mainActorScopedFactories[key] = factory
+                importedRegistrationKeys.insert(key)
+            }
+        }
+
+        // Merge metadata (first-in-wins, matching factory behavior)
+        for (key, meta) in exported.metadata {
+            if metadata[key] == nil {
+                metadata[key] = meta
+            }
+        }
+
+        // Merge inputs (first-in-wins)
+        for (key, value) in exported.inputs {
+            if inputs[key] == nil {
+                inputs[key] = value
+                importedInputKeys.insert(key)
+            }
+        }
+
+        for (key, meta) in exported.inputMetadata {
+            if inputMetadata[key] == nil {
+                inputMetadata[key] = meta
+            }
+        }
+    }
+
+    /// Checks whether a registration key already exists in the inherited (non-local) dictionaries.
+    func hasRegistration(for key: RegistrationKey) -> Bool {
+        factories[key] != nil
+            || scopedFactories[key] != nil
+            || mainActorFactories[key] != nil
+            || mainActorScopedFactories[key] != nil
+    }
+
+    /// Checks whether an input key already exists.
+    func hasInput(for key: InputKey) -> Bool {
+        inputs[key] != nil
+    }
+
+    /// Returns all requirement keys for the current Marker type's DependencyRequirements.
+    /// Used by validation to check coverage after mockRegistration completes.
+    func allRequirementKeys(for type: (some DependencyRequirements).Type) -> Set<RegistrationKey> {
+        var keys = Set<RegistrationKey>()
+
+        for req in type.requirements {
+            keys.insert(req.key)
+        }
+        for req in type.mainActorRequirements {
+            keys.insert(req.key.withIsolation(.mainActor))
+        }
+        for req in type.localRequirements {
+            keys.insert(req.key)
+        }
+        for req in type.localMainActorRequirements {
+            keys.insert(req.key.withIsolation(.mainActor))
+        }
+
+        return keys
+    }
+
+    /// Returns all input requirement keys for the current Marker type.
+    func allInputRequirementKeys(for type: (some DependencyRequirements).Type) -> Set<InputKey> {
+        Set(type.inputRequirements.map { $0.key })
+    }
+
+    /// Checks whether a registration key can be resolved — either in this builder's
+    /// storage (inherited + local) or from the parent container.
+    func canResolveForValidation(key: RegistrationKey, isMainActor: Bool, isLocal: Bool) -> Bool {
+        canResolve(key: key, isMainActor: isMainActor, isLocal: isLocal)
+    }
+
+    /// Returns metadata for a registration key, if available.
+    func registrationMetadata(for key: RegistrationKey) -> RegistrationMetadata? {
+        metadata[key]
+    }
+
     // MARK: - Freezing
 
     public func freeze(
@@ -598,7 +1045,8 @@ public final class DependencyBuilder<Marker> {
         mainActorRequirements: [Requirement] = [],
         localRequirements: [Requirement] = [],
         localMainActorRequirements: [Requirement] = [],
-        inputRequirements: [InputRequirement] = []
+        inputRequirements: [InputRequirement] = [],
+        mode: ContainerMode? = nil
     ) -> DependencyContainer<Marker> {
         validateInputRequirements(inputRequirements)
         validateRequirements(requirements, isMainActor: false, isLocal: false)
@@ -618,7 +1066,8 @@ public final class DependencyBuilder<Marker> {
             metadata: metadata,
             inputs: inputs,
             inputMetadata: inputMetadata,
-            parent: parent
+            parent: parent,
+            mode: mode ?? self.mode
         )
     }
 

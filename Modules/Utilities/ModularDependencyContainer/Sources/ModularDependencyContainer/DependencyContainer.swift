@@ -30,6 +30,7 @@ public struct DependencyContainer<Marker>: Sendable {
     let inputs: [InputKey: any Sendable]
     let inputMetadata: [InputKey: InputMetadata]
     let parent: AnyFrozenContainer?
+    let mode: ContainerMode
 
     // MARK: - Caches
 
@@ -51,7 +52,8 @@ public struct DependencyContainer<Marker>: Sendable {
         metadata: [RegistrationKey: RegistrationMetadata],
         inputs: [InputKey: any Sendable],
         inputMetadata: [InputKey: InputMetadata],
-        parent: AnyFrozenContainer?
+        parent: AnyFrozenContainer?,
+        mode: ContainerMode
     ) {
         self.factories = factories
         self.scopedFactories = scopedFactories
@@ -65,6 +67,7 @@ public struct DependencyContainer<Marker>: Sendable {
         self.inputs = inputs
         self.inputMetadata = inputMetadata
         self.parent = parent
+        self.mode = mode
         self.scopedCache = ScopedCache()
         self.mainActorScopedCache = MainActorAnyScopedCache()
         self.localScopedCache = ScopedCache()
@@ -233,9 +236,9 @@ public struct DependencyContainer<Marker>: Sendable {
     @MainActor
     public func buildChild<T: DependencyRequirements>(_ type: T.Type) -> T {
         // Note: Child only inherits non-local factories through AnyFrozenContainer
-        let builder = DependencyBuilder<T>(parent: AnyFrozenContainer(self), inputs: inputs)
+        let builder = DependencyBuilder<T>(parent: AnyFrozenContainer(self), inputs: inputs, mode: mode)
 
-        T.registerDependencies(in: builder)
+        registerForMode(type, in: builder)
 
         let childContainer = builder.freeze(
             requirements: T.requirements,
@@ -254,10 +257,10 @@ public struct DependencyContainer<Marker>: Sendable {
         _ type: T.Type,
         configure: @MainActor (DependencyBuilder<T>) -> Void
     ) -> T {
-        let builder = DependencyBuilder<T>(parent: AnyFrozenContainer(self), inputs: inputs)
+        let builder = DependencyBuilder<T>(parent: AnyFrozenContainer(self), inputs: inputs, mode: mode)
 
         configure(builder)
-        T.registerDependencies(in: builder)
+        registerForMode(type, in: builder)
 
         let childContainer = builder.freeze(
             requirements: T.requirements,
@@ -268,6 +271,83 @@ public struct DependencyContainer<Marker>: Sendable {
         )
 
         return T(childContainer)
+    }
+
+    /// Builds a child in testing mode, then applies test-site-specific overrides.
+    ///
+    /// The overrides closure runs AFTER `mockRegistration`, giving it the highest
+    /// priority in the two-tier override system:
+    /// 1. `testingOverride` closure (highest — test-site-specific, always takes effect)
+    /// 2. Base mock registrations from `mockRegistration` (parent-wins behavior)
+    ///
+    /// Only available in testing mode. Asserts in production.
+    ///
+    /// ```swift
+    /// let child = parentContainer.buildChildWithOverrides(MyModule.self) { overrides in
+    ///     overrides.provideInput(String.self, "test-value")
+    ///     try overrides.registerSingleton(NetworkClient.self) { _ in
+    ///         FailingNetworkClient(error: .timeout)
+    ///     }
+    /// }
+    /// ```
+    @MainActor
+    public func buildChildWithOverrides<T: DependencyRequirements>(
+        _ type: T.Type,
+        testingOverride: @MainActor (MockDependencyBuilder<T>) throws -> Void
+    ) rethrows -> T {
+        guard case .testing = mode else {
+            assertionFailure("buildChildWithOverrides is only available in testing mode. Current mode: \(mode)")
+            // Fall back to standard buildChild in release builds
+            return buildChild(type)
+        }
+
+        let parentContainer = AnyFrozenContainer(self)
+        let builder = DependencyBuilder<T>(parent: parentContainer, inputs: inputs, mode: mode)
+
+        // 1. Run standard mock/production registrations (skip validation — overrides haven't run yet)
+        registerForMode(type, in: builder, skipValidation: true)
+
+        // 2. Apply test-site overrides (isOverride: true — overrides always take effect)
+        let mockBuilder = MockDependencyBuilder(builder: builder, parent: parentContainer, isOverride: true)
+        try testingOverride(mockBuilder)
+
+        // 3. Validate after both mockRegistration AND overrides have completed
+        if let testableType = T.self as? any TestDependencyProvider.Type {
+            testableType._validateMockRegistrationsExternally(builder: builder, parent: parentContainer)
+        }
+
+        let childContainer = builder.freeze(
+            requirements: T.requirements,
+            mainActorRequirements: T.mainActorRequirements,
+            localRequirements: T.localRequirements,
+            localMainActorRequirements: T.localMainActorRequirements,
+            inputRequirements: T.inputRequirements
+        )
+
+        return T(childContainer)
+    }
+
+    // MARK: - Mode-Aware Registration
+
+    /// Calls the appropriate registration function based on the container's mode.
+    /// In `.testing` mode, uses `mockRegistration` if the type conforms to `TestDependencyProvider`.
+    /// Falls back to `registerDependencies` with a warning if the module hasn't adopted test support.
+    @MainActor
+    private func registerForMode<T: DependencyRequirements>(_ type: T.Type, in builder: DependencyBuilder<T>, skipValidation: Bool = false) {
+        switch mode {
+        case .production:
+            T.registerDependencies(in: builder)
+
+        case .testing:
+            if let testableType = T.self as? any TestDependencyProvider.Type {
+                testableType._callMockRegistration(in: builder, parent: AnyFrozenContainer(self), skipValidation: skipValidation)
+            } else {
+#if DEBUG
+                print("⚠️ [DependencyContainer] Testing mode active but \(T.self) does not conform to TestDependencyProvider. Falling back to registerDependencies.")
+#endif
+                T.registerDependencies(in: builder)
+            }
+        }
     }
 
     /// Creates a new scope - preserves ALL factories (including local) but resets scoped caches.
@@ -285,7 +365,8 @@ public struct DependencyContainer<Marker>: Sendable {
             metadata: metadata,
             inputs: inputs,
             inputMetadata: inputMetadata,
-            parent: parent
+            parent: parent,
+            mode: mode
         )
     }
 

@@ -35,7 +35,8 @@ func main() {
                 testDependencyProviderConformancesByModule: [:],
                 mockRegistrationImplementationsByModule: [:],
                 importDependenciesByModule: [:],
-                mockRegistrationsByModule: [:]
+                mockRegistrationsByModule: [:],
+                mockProvidedInputTypesByModule: [:]
             ),
             moduleGraph: moduleGraph,
             diagnostics: [],
