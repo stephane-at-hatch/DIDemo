@@ -229,8 +229,8 @@ digraph ModuleDependencies {
     TabCoordinator_main -> WatchlistScreen_main;
     TabCoordinator_main -> ModularNavigation_main;
     ShareComponent_main -> ModularDependencyContainer_main;
-    ShareComponent_main -> ShareClient_interface;
-    ShareComponent_views -> ShareClient_interface;
+    ShareComponent_main -> ShareClient_main;
+    ShareComponent_views -> ShareClient_main;
     BoxOfficeScreen_main -> ModularDependencyContainer_main;
     BoxOfficeScreen_main -> ModularNavigation_main;
     BoxOfficeScreen_main -> MovieDomain_interface;

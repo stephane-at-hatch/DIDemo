@@ -57,10 +57,10 @@ let graph: [ModuleNode] = [
         module: .shareComponent,
         dependencies: [
             .main: [
-                .target(.interface, module: .shareClient)
+                .target(.main, module: .shareClient)
             ],
             .views: [
-                .target(.interface, module: .shareClient)
+                .target(.main, module: .shareClient)
             ]
         ]
     ),

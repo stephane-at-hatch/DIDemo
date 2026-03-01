@@ -22,14 +22,14 @@ let package = Package(
             dependencies: [
                 .product(name: "ModularDependencyContainer", package: "ModularDependencyContainer"),
                 "ShareComponentViews",
-                .product(name: "ShareClientInterface", package: "ShareClient")
+                .product(name: "ShareClient", package: "ShareClient")
             ],
             swiftSettings: swiftSettings
         ),
         .target(
             name: "ShareComponentViews",
             dependencies: [
-                .product(name: "ShareClientInterface", package: "ShareClient")
+                .product(name: "ShareClient", package: "ShareClient")
             ],
             swiftSettings: swiftSettings
         ),
