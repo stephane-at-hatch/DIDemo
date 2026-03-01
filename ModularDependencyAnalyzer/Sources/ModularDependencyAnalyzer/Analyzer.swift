@@ -211,11 +211,17 @@ class Analyzer {
         if !sameType.isEmpty {
             if let mismatch = sameType.first(where: { $0.key != requirement.key }) {
                 context.append("Found \(requirement.type) registered with different key: \(mismatch.key ?? "(no key)")")
+                if let loc = mismatch.location {
+                    context.append("  registered at \(loc.fileName):\(loc.line)")
+                }
             }
             if let mismatch = sameType.first(where: { $0.isMainActor != requirement.isMainActor }) {
                 let registered = mismatch.isMainActor ? "@MainActor" : "non-isolated"
                 let required = requirement.isMainActor ? "@MainActor" : "non-isolated"
                 context.append("Found \(requirement.type) registered as \(registered), required as \(required)")
+                if let loc = mismatch.location {
+                    context.append("  registered at \(loc.fileName):\(loc.line)")
+                }
             }
         }
         
@@ -319,18 +325,29 @@ class Analyzer {
             if !differentKey.isEmpty {
                 let keys = Set(differentKey.map { $0.key ?? "(no key)" }).sorted()
                 context.append("Found \(requirement.type) registered with different key(s): \(keys.joined(separator: ", "))")
+                for provision in differentKey {
+                    if let loc = provision.location {
+                        context.append("  registered at \(loc.fileName):\(loc.line)")
+                    }
+                }
             }
-            
+
             // Isolation mismatch
             if let mismatch = sameType.first(where: { $0.isMainActor != requirement.isMainActor && $0.key == requirement.key }) {
                 let registered = mismatch.isMainActor ? "@MainActor" : "non-isolated"
                 let required = requirement.isMainActor ? "@MainActor" : "non-isolated"
                 context.append("Found \(requirement.type) registered as \(registered), required as \(required)")
+                if let loc = mismatch.location {
+                    context.append("  registered at \(loc.fileName):\(loc.line)")
+                }
             }
-            
+
             // Locality mismatch
             if let mismatch = sameType.first(where: { $0.isLocal && $0.key == requirement.key }) {
                 context.append("Found \(requirement.type) registered as local, but inherited is required")
+                if let loc = mismatch.location {
+                    context.append("  registered at \(loc.fileName):\(loc.line)")
+                }
             }
         }
         

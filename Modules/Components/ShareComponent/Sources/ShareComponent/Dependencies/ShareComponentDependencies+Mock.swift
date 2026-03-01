@@ -10,6 +10,6 @@ import ShareClientInterface
 
 extension ShareComponent.Dependencies: TestDependencyProvider {
     public static func mockRegistration(in mockBuilder: MockDependencyBuilder<Self>) {
-        try? mockBuilder.registerSingleton(ShareClient.self) { _ in .mock() }
+        try? mockBuilder.mainActor.registerSingleton(ShareClient.self) { _ in .mock() }
     }
 }

@@ -10,7 +10,8 @@ import Foundation
 /// Client for generating shareable content for movies.
 ///
 /// Uses closure-based dependency injection for testability.
-public struct ShareClient: Sendable {
+@MainActor
+public struct ShareClient {
 
     /// Generates share content for a movie.
     /// - Parameters:

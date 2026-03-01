@@ -9,8 +9,10 @@ import ShareClientInterface
 import ModularDependencyContainer
 
 extension ShareComponent {
-    @DependencyRequirements([
-        Requirement(ShareClient.self)
-    ])
+    @DependencyRequirements(
+        mainActor: [
+            Requirement(ShareClient.self)
+        ]
+    )
     public struct Dependencies: DependencyRequirements {}
 }

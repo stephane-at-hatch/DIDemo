@@ -15,10 +15,7 @@ extension AppCoordinator {
     public struct Dependencies: DependencyRequirements {
         public static func registerDependencies(in builder: DependencyBuilder<Self>) {
             do {
-                try builder.registerSingleton(TMDBClient.self) { container in
-                    let dependencies = Self(container)
-                    return TMDBClient.live(configuration: dependencies.tmdbConfiguration)
-                }
+                // TODO - Add missing dependency here
                 try builder.registerSingleton(MovieRepository.self) { container in
                     let dependencies = Self(container)
                     return MovieRepository.live(client: dependencies.tmdbClient)
