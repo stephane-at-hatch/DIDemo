@@ -21,7 +21,7 @@ extension WatchlistScreen {
     public struct Dependencies: DependencyRequirements {
         public static func registerDependencies(in builder: DependencyBuilder<Self>) {
             do {
-                try builder.registerSingleton(ShareClient.self) { _ in
+                try builder.registerInstance(ShareClient.self) { _ in
                     ShareClient.live()
                 }
             } catch {
