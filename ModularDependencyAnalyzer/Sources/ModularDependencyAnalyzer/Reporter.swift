@@ -314,6 +314,12 @@ class Reporter {
         var fullyAdopted: [(module: String, types: [String])] = []
         var incompleteMock: [(module: String, types: [String], missingDeps: [String], missingInputs: [String])] = []
 
+        // Build type-to-module map for recursive import coverage
+        let typeToModule: [String: String] = Dictionary(
+            scanResults.nodes.map { ($0.typeName, $0.moduleName) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
         for moduleName in diModules {
             // Find DI node types in this module
             let nodeTypes = scanResults.nodes
@@ -330,13 +336,28 @@ class Reporter {
                 adoptedCount += 1
                 mockRegCount += 1
 
-                // Check mock completeness against requirements
-                let requirements = scanResults.requirementsByModule[moduleName] ?? []
+                // Compute what child imports cover (recursively)
+                var coveredByImports = Set<DependencyKey>()
+                if let node = scanResults.nodes.first(where: { $0.moduleName == moduleName }) {
+                    let productionChildren = findAllChildren(typeName: node.typeName, moduleName: moduleName)
+                    for childType in productionChildren {
+                        var visited = Set<String>()
+                        coveredByImports.formUnion(
+                            collectAllProvided(fromType: childType, typeToModule: typeToModule, visited: &visited)
+                        )
+                    }
+                }
+
+                // Check mock completeness against requirements NOT covered by imports
+                let requirements = (scanResults.requirementsByModule[moduleName] ?? [])
+                    .filter { !$0.isLocal }
                 let inputRequirements = scanResults.inputRequirementsByModule[moduleName] ?? []
                 let mockRegs = scanResults.mockRegistrationsByModule[moduleName] ?? []
 
                 let missingDeps = requirements.filter { req in
-                    !mockRegs.contains(where: { $0.satisfies(req) })
+                    let key = DependencyKey(type: req.type, key: req.key)
+                    guard !coveredByImports.contains(key) else { return false }
+                    return !mockRegs.contains(where: { $0.satisfies(req) })
                 }
                 let mockProvidedInputs = Set(scanResults.mockProvidedInputTypesByModule[moduleName] ?? [])
                 let missingInputs = inputRequirements.filter { inputReq in
@@ -412,8 +433,8 @@ class Reporter {
     // MARK: - Test Alignment Report
 
     /// Prints a report comparing importDependencies calls against buildChild calls in +Live files.
-    func printTestAlignmentReport() {
-        printHeader("TEST ALIGNMENT REPORT")
+    func printTestImportsReport() {
+        printHeader("TEST IMPORTS REPORT")
 
         // Only consider modules that have DI nodes
         let diNodes = scanResults.nodes
@@ -432,7 +453,7 @@ class Reporter {
             let typeName = node.typeName
             let moduleName = node.moduleName
 
-            let productionChildren = findProductionChildren(typeName: typeName, moduleName: moduleName)
+            let productionChildren = findAllChildren(typeName: typeName, moduleName: moduleName)
             let testImports = Set((scanResults.importDependenciesByModule[moduleName] ?? []).map { $0.importedType })
 
             let missing = productionChildren.subtracting(testImports)
@@ -472,14 +493,14 @@ class Reporter {
         print("")
     }
 
-    /// Finds production buildChild targets from +Live.swift files for a given DI node
-    private func findProductionChildren(typeName: String, moduleName: String) -> Set<String> {
+    /// Finds all buildChild targets from non-test files for a given DI node
+    private func findAllChildren(typeName: String, moduleName: String) -> Set<String> {
         var children = Set<String>()
 
         // Check standalone edges (from discoveredEdges)
         for edge in scanResults.edges {
             guard edge.fromType == typeName || edge.fromType == moduleName else { continue }
-            guard edge.location.filePath.contains("+Live") else { continue }
+            guard !isTestFile(edge.location.filePath) else { continue }
             children.insert(edge.toType)
         }
 
@@ -487,12 +508,46 @@ class Reporter {
         for root in scanResults.roots {
             for edge in root.initialEdges {
                 guard edge.fromType == typeName || edge.fromType == moduleName else { continue }
-                guard edge.location.filePath.contains("+Live") else { continue }
+                guard !isTestFile(edge.location.filePath) else { continue }
                 children.insert(edge.toType)
             }
         }
 
         return children
+    }
+
+    private func isTestFile(_ path: String) -> Bool {
+        path.contains("/Tests/") || path.contains("/TestHelpers/")
+    }
+
+    /// Recursively collects all dependencies provided by a type and its descendants
+    private func collectAllProvided(
+        fromType type: String,
+        typeToModule: [String: String],
+        visited: inout Set<String>
+    ) -> Set<DependencyKey> {
+        guard !visited.contains(type) else { return [] }
+        visited.insert(type)
+
+        var provided = Set<DependencyKey>()
+
+        guard let module = typeToModule[type] else { return provided }
+
+        // Add this module's own non-local requirements (what its mock would register)
+        let reqs = scanResults.requirementsByModule[module] ?? []
+        for req in reqs where !req.isLocal {
+            provided.insert(DependencyKey(type: req.type, key: req.key))
+        }
+
+        // Recurse into this module's production children
+        if let childNode = scanResults.nodes.first(where: { $0.moduleName == module }) {
+            let children = findAllChildren(typeName: childNode.typeName, moduleName: module)
+            for child in children {
+                provided.formUnion(collectAllProvided(fromType: child, typeToModule: typeToModule, visited: &visited))
+            }
+        }
+
+        return provided
     }
 
     // MARK: - Test Redundancy Report
@@ -645,6 +700,157 @@ class Reporter {
         }
 
         return "unknown"
+    }
+
+    // MARK: - Test Module Report
+
+    func printTestModuleReport(_ moduleName: String) {
+        printHeader("TEST MODULE REPORT: \(moduleName)")
+
+        // Find the DI node for this module
+        guard let node = scanResults.nodes.first(where: { $0.moduleName == moduleName }) else {
+            print("\n  Module '\(moduleName)' not found or has no DependencyRequirements.")
+            print("")
+            return
+        }
+
+        let typeName = node.typeName
+
+        print("  Container: \(typeName)")
+
+        // Build type-to-module map
+        let typeToModule: [String: String] = Dictionary(
+            scanResults.nodes.map { ($0.typeName, $0.moduleName) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        // ── REQUIRED SETUP ──
+
+        print("\n  REQUIRED SETUP")
+        print("  " + String(repeating: "─", count: 40))
+
+        // 1. Child imports needed
+        let productionChildren = findAllChildren(typeName: typeName, moduleName: moduleName).sorted()
+
+        // 2. Compute what each child import would cover (recursively through descendants)
+        //    Filter to only dependencies the current module actually needs
+        let currentModuleNeeds = Set(
+            (scanResults.requirementsByModule[moduleName] ?? [])
+                .filter { !$0.isLocal }
+                .map { DependencyKey(type: $0.type, key: $0.key) }
+        )
+        var coveredByImports = Set<DependencyKey>()
+
+        if productionChildren.isEmpty {
+            print("\n  Child imports needed (via importDependencies):")
+            print("    (none — leaf module)")
+        } else {
+            print("\n  Child imports needed (via importDependencies):")
+            for childType in productionChildren {
+                var childVisited = Set<String>()
+                let childProvides = collectAllProvided(fromType: childType, typeToModule: typeToModule, visited: &childVisited)
+                let relevantProvides = childProvides.intersection(currentModuleNeeds)
+                coveredByImports.formUnion(relevantProvides)
+
+                print("    \(childType)")
+                if relevantProvides.isEmpty {
+                    print("      └ provides: (no dependencies needed by \(moduleName))")
+                } else {
+                    let provides = relevantProvides.map { $0.key != nil ? "\($0.type) (key: \($0.key!))" : $0.type }.sorted()
+                    print("      └ provides: \(provides.joined(separator: ", "))")
+                }
+            }
+        }
+
+        // 3. Explicit registrations needed (requirements not covered by imports, not local)
+        let requirements = (scanResults.requirementsByModule[moduleName] ?? [])
+            .filter { !$0.isLocal }
+        let explicitRegsNeeded = requirements.filter { req in
+            !coveredByImports.contains(DependencyKey(type: req.type, key: req.key))
+        }
+
+        print("\n  Explicit registrations needed:")
+        if explicitRegsNeeded.isEmpty {
+            print("    (none — all covered by imports)")
+        } else {
+            for req in explicitRegsNeeded.sorted(by: { $0.type < $1.type }) {
+                print("    register \(formatDependency(req))")
+            }
+        }
+
+        // 4. Input provisions needed
+        let inputRequirements = scanResults.inputRequirementsByModule[moduleName] ?? []
+
+        print("\n  Input provisions needed:")
+        if inputRequirements.isEmpty {
+            print("    (none)")
+        } else {
+            for inputReq in inputRequirements.sorted(by: { $0.type < $1.type }) {
+                print("    provideInput \(inputReq.type)")
+            }
+        }
+
+        // ── CURRENT STATUS ──
+
+        print("\n  CURRENT STATUS")
+        print("  " + String(repeating: "─", count: 40))
+
+        // Conformance and implementation checks
+        let hasConformance = !(scanResults.testDependencyProviderConformancesByModule[moduleName] ?? []).isEmpty
+        let hasImplementation = !(scanResults.mockRegistrationImplementationsByModule[moduleName] ?? []).isEmpty
+
+        print("\n  TestDependencyProvider conformance: \(hasConformance ? "✅" : "❌")")
+        print("  mockRegistration implemented: \(hasImplementation ? "✅" : "❌")")
+
+        // Mock registration status
+        let mockRegs = scanResults.mockRegistrationsByModule[moduleName] ?? []
+        let mockProvidedInputs = Set(scanResults.mockProvidedInputTypesByModule[moduleName] ?? [])
+
+        if !explicitRegsNeeded.isEmpty {
+            print("\n  Mock registrations:")
+            for req in explicitRegsNeeded.sorted(by: { $0.type < $1.type }) {
+                let isCovered = mockRegs.contains(where: { $0.satisfies(req) })
+                let icon = isCovered ? "✅" : "❌"
+                let suffix = isCovered ? "" : " — missing"
+                print("    \(icon) \(formatDependency(req))\(suffix)")
+            }
+        }
+
+        if !inputRequirements.isEmpty {
+            print("\n  Mock input provisions:")
+            for inputReq in inputRequirements.sorted(by: { $0.type < $1.type }) {
+                let isCovered = mockRegs.contains(where: { $0.type == inputReq.type })
+                    || mockProvidedInputs.contains(inputReq.type)
+                let icon = isCovered ? "✅" : "❌"
+                let suffix = isCovered ? "" : " — missing"
+                print("    \(icon) \(inputReq.type)\(suffix)")
+            }
+        }
+
+        // Import alignment
+        let testImports = Set((scanResults.importDependenciesByModule[moduleName] ?? []).map { $0.importedType })
+        let productionChildrenSet = Set(productionChildren)
+        let missingImports = productionChildrenSet.subtracting(testImports)
+        let extraImports = testImports.subtracting(productionChildrenSet)
+
+        print("\n  Import alignment:")
+        if missingImports.isEmpty, extraImports.isEmpty {
+            if productionChildren.isEmpty {
+                print("    ✅ aligned (leaf module, no children)")
+            } else {
+                print("    ✅ aligned (\(productionChildren.count) production, \(testImports.count) test)")
+            }
+        } else {
+            print("    ⚠️  misaligned (production builds \(productionChildren.count), testing imports \(testImports.count))")
+            for type in missingImports.sorted() {
+                print("      └ testing should import \(type)")
+            }
+            for type in extraImports.sorted() {
+                print("      └ testing imports \(type) but production doesn't build it")
+            }
+        }
+
+        print("")
     }
 
     // MARK: - Helpers

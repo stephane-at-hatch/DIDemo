@@ -12,11 +12,12 @@ struct Configuration {
     let appSourceDirectory: URL?
     let cacheMode: CacheMode
     let testAdoption: Bool
-    let testAlignment: Bool
+    let testImports: Bool
     let testRedundancy: Bool
     let testAll: Bool
     let showValid: Bool
     let findDependency: String?
+    let testModule: String?
 
     static func parse() -> Configuration {
         let arguments = CommandLine.arguments
@@ -31,11 +32,12 @@ struct Configuration {
         var appSourcePath: String?
         var cacheMode: CacheMode = .normal
         var testAdoption = false
-        var testAlignment = false
+        var testImports = false
         var testRedundancy = false
         var testAll = false
         var showValid = false
         var findDependency: String?
+        var testModule: String?
 
         var argIndex = 1
         while argIndex < arguments.count {
@@ -125,9 +127,9 @@ struct Configuration {
                 testAdoption = true
                 argIndex += 1
 
-            case "--test-alignment",
-                 "-tal":
-                testAlignment = true
+            case "--test-imports",
+                 "-ti":
+                testImports = true
                 argIndex += 1
 
             case "--test-redundancy",
@@ -149,6 +151,15 @@ struct Configuration {
                  "-fd":
                 if argIndex + 1 < arguments.count {
                     findDependency = arguments[argIndex + 1]
+                    argIndex += 2
+                } else {
+                    printUsageAndExit("Missing value for \(arg)")
+                }
+
+            case "--test-module",
+                 "-tm":
+                if argIndex + 1 < arguments.count {
+                    testModule = arguments[argIndex + 1]
                     argIndex += 2
                 } else {
                     printUsageAndExit("Missing value for \(arg)")
@@ -194,11 +205,12 @@ struct Configuration {
             appSourceDirectory: resolvedAppSourceDir,
             cacheMode: cacheMode,
             testAdoption: testAdoption,
-            testAlignment: testAlignment,
+            testImports: testImports,
             testRedundancy: testRedundancy,
             testAll: testAll,
             showValid: showValid,
-            findDependency: findDependency
+            findDependency: findDependency,
+            testModule: testModule
         )
     }
 
@@ -224,11 +236,12 @@ struct Configuration {
             --cache-only            Only use cached data (fail if stale)
             --no-cache              Ignore cache entirely
             -ta, --test-adoption    Report TestDependencyProvider adoption status
-            -tal, --test-alignment  Compare importDependencies vs buildChild alignment
+            -ti, --test-imports     Compare importDependencies vs buildChild alignment
             -tr, --test-redundancy  Flag mock registrations covered by importDependencies
             -tall, --test-all       Run all test reports (adoption + alignment + redundancy)
             -sv, --show-valid       Show valid paths alongside failing paths in diagnostics
             -fd, --find-dependency <name> Show all paths (valid and failing) for a dependency type
+            -tm, --test-module <name> Full test setup report for a specific module
             -h, --help              Show this help
 
         DISCOVERY:

@@ -85,7 +85,7 @@ func main() {
             orphanNodes: []
         )
         reporter.printTestAdoptionReport()
-        reporter.printTestAlignmentReport()
+        reporter.printTestImportsReport()
         reporter.printTestRedundancyReport()
         exit(0)
     }
@@ -103,8 +103,8 @@ func main() {
         exit(0)
     }
 
-    // If --test-alignment flag, print alignment report and exit
-    if config.testAlignment {
+    // If --test-imports flag, print imports report and exit
+    if config.testImports {
         let reporter = Reporter(
             graphs: [],
             scanResults: scanResults,
@@ -112,7 +112,20 @@ func main() {
             diagnostics: [],
             orphanNodes: []
         )
-        reporter.printTestAlignmentReport()
+        reporter.printTestImportsReport()
+        exit(0)
+    }
+
+    // If --test-module flag, print single module report and exit
+    if let testModule = config.testModule {
+        let reporter = Reporter(
+            graphs: [],
+            scanResults: scanResults,
+            moduleGraph: moduleGraph,
+            diagnostics: [],
+            orphanNodes: []
+        )
+        reporter.printTestModuleReport(testModule)
         exit(0)
     }
 

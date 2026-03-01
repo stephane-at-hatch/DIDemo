@@ -5,7 +5,8 @@ import TMDBClient
 
 extension AppCoordinator {
     @DependencyRequirements([
-            Requirement(TMDBClient.self)
+            Requirement(TMDBClient.self),
+            Requirement(MovieRepository.self)
         ],
         inputs: [
             InputRequirement(TMDBConfiguration.self)

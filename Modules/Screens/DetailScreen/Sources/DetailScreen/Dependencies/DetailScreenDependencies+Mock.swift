@@ -18,16 +18,7 @@ extension DetailScreen.Dependencies: TestDependencyProvider {
             factory: { _ in .fixtureData }
         )
         
-        mockBuilder.provideInput(
-            TMDBConfiguration.self,
-            TMDBConfiguration(
-                apiReadAccessToken: "test-token",
-                apiBaseURL: URL(string: "https://api.themoviedb.org")!,
-                imageBaseURL: URL(string: "https://images.themoviedb.org")!,
-                region: "US",
-                language: "en"
-            )
-        )
+        mockBuilder.provideInput(TMDBConfiguration.self, .mock)
     }
 }
 
