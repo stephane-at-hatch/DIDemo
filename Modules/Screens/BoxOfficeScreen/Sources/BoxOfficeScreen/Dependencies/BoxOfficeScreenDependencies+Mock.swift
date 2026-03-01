@@ -14,8 +14,6 @@ extension BoxOfficeScreen.Dependencies: TestDependencyProvider {
     public static func mockRegistration(in mockBuilder: MockDependencyBuilder<Self>) {
         mockBuilder.importDependencies(DetailScreen.Dependencies.self)
         
-        // add registrations here
-        
         mockBuilder.provideInput(TMDBConfiguration.self, .mock)
     }
 }
