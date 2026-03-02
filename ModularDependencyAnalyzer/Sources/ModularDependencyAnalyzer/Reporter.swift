@@ -9,19 +9,22 @@ class Reporter {
     private let moduleGraph: ModuleGraph
     private let diagnostics: [Diagnostic]
     private let orphanNodes: [DiscoveredNode]
+    private let shadowingResults: [ShadowingResult]
 
     init(
         graphs: [DependencyGraph],
         scanResults: ScanResults,
         moduleGraph: ModuleGraph,
         diagnostics: [Diagnostic],
-        orphanNodes: [DiscoveredNode]
+        orphanNodes: [DiscoveredNode],
+        shadowingResults: [ShadowingResult] = []
     ) {
         self.graphs = graphs
         self.scanResults = scanResults
         self.moduleGraph = moduleGraph
         self.diagnostics = diagnostics
         self.orphanNodes = orphanNodes
+        self.shadowingResults = shadowingResults
     }
 
     // MARK: - Main Output Methods
@@ -34,6 +37,7 @@ class Reporter {
         printInputRequirements()
         printProvisions()
         printProvidedInputs()
+        printShadowingResults()
         printAnalysisResults()
         printSummary()
     }
@@ -262,17 +266,56 @@ class Reporter {
         }
     }
 
+    private func printShadowingResults() {
+        printHeader("DEPENDENCY SHADOWING")
+
+        let validShadows = shadowingResults.filter { $0.isOverride }
+        let invalidShadows = shadowingResults.filter { !$0.isOverride }
+
+        if shadowingResults.isEmpty {
+            print("\n  No shadowed dependencies found.")
+        } else {
+            if !validShadows.isEmpty {
+                print("\n  Valid shadowed dependencies:")
+                for result in validShadows {
+                    let desc = formatDependency(result.shadowingProvision)
+                    let shadowedDesc = formatDependency(result.shadowedProvision)
+                    print("    - \(desc) registered in \(result.shadowingNode)")
+                    print("      └ overrides \(shadowedDesc) registered in \(result.shadowedNode)")
+                }
+            }
+
+            if !invalidShadows.isEmpty {
+                print("\n  ❌ Invalid shadowed dependencies:")
+                for result in invalidShadows {
+                    let desc = formatDependency(result.shadowingProvision)
+                    let shadowedDesc = formatDependency(result.shadowedProvision)
+                    print("    - \(desc) registered in \(result.shadowingNode)")
+                    print("      └ is attempting to override \(shadowedDesc) registered in \(result.shadowedNode)")
+                    print("    ⚠️  If this is an intentional override, set override: true in the registration. Otherwise remove this registration.")
+                }
+            }
+        }
+
+        print("")
+    }
+
     private func printSummary() {
         printHeader("SUMMARY")
 
         let errors = diagnostics.filter { $0.severity == .error }
         let warnings = diagnostics.filter { $0.severity == .warning }
+        let invalidShadows = shadowingResults.filter { !$0.isOverride }
+        let validShadows = shadowingResults.filter { $0.isOverride }
 
         print("\n  Graphs discovered: \(graphs.count)")
         print("  Nodes discovered: \(scanResults.nodes.count)")
         print("  Orphan nodes: \(orphanNodes.count)")
+        if !shadowingResults.isEmpty {
+            print("  Shadowed dependencies: \(shadowingResults.count)")
+        }
 
-        let totalIssues = errors.count + warnings.count
+        let totalIssues = errors.count + warnings.count + invalidShadows.count
         if totalIssues == 0 {
             print("\n  ✅ All checks passed!")
         } else {
@@ -280,6 +323,10 @@ class Reporter {
             if !errors.isEmpty {
                 let label = errors.count == 1 ? "error" : "errors"
                 print("    - \(errors.count) \(label)")
+            }
+            if !invalidShadows.isEmpty {
+                let label = invalidShadows.count == 1 ? "shadowing error" : "shadowing errors"
+                print("    - \(invalidShadows.count) \(label)")
             }
             if !warnings.isEmpty {
                 let label = warnings.count == 1 ? "warning" : "warnings"
@@ -913,8 +960,10 @@ class Reporter {
         print(String(repeating: "=", count: 60))
     }
 
-    /// Returns exit code based on diagnostics
+    /// Returns exit code based on diagnostics and shadowing errors
     var exitCode: Int32 {
-        diagnostics.contains { $0.severity == .error } ? 1 : 0
+        let hasErrors = diagnostics.contains { $0.severity == .error }
+        let hasInvalidShadowing = shadowingResults.contains { !$0.isOverride }
+        return (hasErrors || hasInvalidShadowing) ? 1 : 0
     }
 }

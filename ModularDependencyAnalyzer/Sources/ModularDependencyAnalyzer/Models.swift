@@ -71,14 +71,16 @@ struct Dependency: Codable, Hashable {
     let key: String?
     let isMainActor: Bool
     let isLocal: Bool
+    let isOverride: Bool
     let scope: ProvisionScope
     let location: FileLocation?
 
-    init(type: String, key: String? = nil, isMainActor: Bool = false, isLocal: Bool = false, scope: ProvisionScope = .module, location: FileLocation? = nil) {
+    init(type: String, key: String? = nil, isMainActor: Bool = false, isLocal: Bool = false, isOverride: Bool = false, scope: ProvisionScope = .module, location: FileLocation? = nil) {
         self.type = type
         self.key = key
         self.isMainActor = isMainActor
         self.isLocal = isLocal
+        self.isOverride = isOverride
         self.scope = scope
         self.location = location
     }
@@ -262,4 +264,16 @@ struct Diagnostic {
         self.graph = graph
         self.context = context
     }
+}
+
+// MARK: - Shadowing Analysis
+
+/// A detected case of dependency shadowing in a graph
+struct ShadowingResult {
+    let shadowingProvision: Dependency      // The child provision that shadows
+    let shadowingNode: String               // Node type where child registers
+    let shadowedProvision: Dependency       // The parent provision being shadowed
+    let shadowedNode: String                // Node type where parent registers
+    let isOverride: Bool                    // Whether override: true was set
+    let graph: GraphOrigin                  // Which graph this occurs in
 }

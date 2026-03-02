@@ -611,6 +611,82 @@ class Analyzer {
             return dep0 < dep1
         }
     }
+
+    // MARK: - Shadowing Analysis
+
+    /// Analyzes all graphs for dependency shadowing
+    func analyzeShadowing() -> [ShadowingResult] {
+        var results: [ShadowingResult] = []
+        for graph in graphs {
+            results.append(contentsOf: analyzeShadowing(in: graph))
+        }
+        return results
+    }
+
+    /// Detects dependency shadowing within a single graph.
+    /// A shadow occurs when a node registers a non-local provision that an ancestor already provides.
+    private func analyzeShadowing(in graph: DependencyGraph) -> [ShadowingResult] {
+        var results: [ShadowingResult] = []
+        var seen: Set<String> = [] // Deduplicate by "childNode:type:key"
+
+        for nodeType in graph.nodes {
+            guard let node = nodesByType[nodeType] else { continue }
+            let moduleName = node.moduleName
+
+            // Get non-local provisions registered by this node
+            let nodeProvisions = scanResults.provisionsByModule[moduleName]?
+                .filter { !$0.isLocal && isProvisionAvailable($0, forGraph: graph, pathNodes: Set([nodeType])) } ?? []
+            guard !nodeProvisions.isEmpty else { continue }
+
+            let paths = graph.pathsTo(nodeType)
+            guard !paths.isEmpty else { continue }
+
+            for provision in nodeProvisions {
+                // Only check provisions scoped to this node
+                switch provision.scope {
+                case .node(let typeName) where typeName == nodeType:
+                    break
+                default:
+                    continue
+                }
+
+                let dedupeKey = "\(nodeType):\(provision.type):\(provision.key ?? "")"
+                guard !seen.contains(dedupeKey) else { continue }
+
+                // Check if any ancestor on any path already provides this
+                for path in paths {
+                    let pathNodeSet = Set(path)
+                    // Walk ancestors (all nodes before this one in the path)
+                    guard let nodeIndex = path.firstIndex(of: nodeType), nodeIndex > 0 else { continue }
+                    let ancestors = path[0..<nodeIndex]
+
+                    for ancestor in ancestors {
+                        for ancestorModule in modulesForProvisions(ancestor, graph: graph) {
+                            let ancestorProvisions = scanResults.provisionsByModule[ancestorModule]?
+                                .filter { !$0.isLocal && isProvisionAvailable($0, forGraph: graph, pathNodes: pathNodeSet) } ?? []
+                            if let shadowedProvision = ancestorProvisions.first(where: { $0.satisfies(provision) }) {
+                                let ancestorNodeName = nodesByType[ancestor]?.typeName ?? ancestor
+                                results.append(ShadowingResult(
+                                    shadowingProvision: provision,
+                                    shadowingNode: nodeType,
+                                    shadowedProvision: shadowedProvision,
+                                    shadowedNode: ancestorNodeName,
+                                    isOverride: provision.isOverride,
+                                    graph: graph.origin
+                                ))
+                                seen.insert(dedupeKey)
+                                break
+                            }
+                        }
+                        if seen.contains(dedupeKey) { break }
+                    }
+                    if seen.contains(dedupeKey) { break }
+                }
+            }
+        }
+
+        return results
+    }
 }
 
 // MARK: - Formatting Helpers

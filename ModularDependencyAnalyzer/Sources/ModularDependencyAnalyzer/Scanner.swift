@@ -596,6 +596,8 @@ private class ScannerVisitor: SyntaxVisitor {
                        let type = typeArg.base?.trimmedDescription {
                         let keyArg = node.arguments.first(where: { $0.label?.text == "key" })
                         let key = keyArg?.expression.trimmedDescription
+                        let overrideArg = node.arguments.first(where: { $0.label?.text == "override" })
+                        let isOverride = overrideArg?.expression.trimmedDescription == "true"
                         let fullExpr = memberAccess.trimmedDescription
                         let isLocal = fullExpr.contains(".local.")
                         let isMainActor = fullExpr.contains(".mainActor.")
@@ -605,7 +607,7 @@ private class ScannerVisitor: SyntaxVisitor {
                         } else {
                             .module
                         }
-                        provisions.append(Dependency(type: type, key: key, isMainActor: isMainActor, isLocal: isLocal, scope: scope, location: location(for: node)))
+                        provisions.append(Dependency(type: type, key: key, isMainActor: isMainActor, isLocal: isLocal, isOverride: isOverride, scope: scope, location: location(for: node)))
                     }
                 }
             }
@@ -1056,6 +1058,8 @@ private class RegistrationVisitor: SyntaxVisitor {
 
         let keyArg = node.arguments.first { $0.label?.text == "key" }
         let key = keyArg?.expression.trimmedDescription
+        let overrideArg = node.arguments.first { $0.label?.text == "override" }
+        let isOverride = overrideArg?.expression.trimmedDescription == "true"
 
         // Analyze call chain for isolation and locality
         let fullExpr = calledExpression.trimmedDescription
@@ -1064,7 +1068,7 @@ private class RegistrationVisitor: SyntaxVisitor {
 
         let loc = sourceLocationConverter.location(for: node.positionAfterSkippingLeadingTrivia)
         let fileLocation = FileLocation(filePath: filePath, line: loc.line)
-        registrations.append(Dependency(type: type, key: key, isMainActor: isMainActor, isLocal: isLocal, scope: scope, location: fileLocation))
+        registrations.append(Dependency(type: type, key: key, isMainActor: isMainActor, isLocal: isLocal, isOverride: isOverride, scope: scope, location: fileLocation))
         return .skipChildren
     }
 }

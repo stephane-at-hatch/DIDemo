@@ -208,6 +208,7 @@ func main() {
         showValid: config.showValid
     )
     let diagnostics = analyzer.analyze()
+    let shadowingResults = analyzer.analyzeShadowing()
 
     // Report results
     let reporter = Reporter(
@@ -215,7 +216,8 @@ func main() {
         scanResults: scanResults,
         moduleGraph: moduleGraph,
         diagnostics: diagnostics,
-        orphanNodes: buildResult.orphanNodes
+        orphanNodes: buildResult.orphanNodes,
+        shadowingResults: shadowingResults
     )
     reporter.printFullReport()
 
