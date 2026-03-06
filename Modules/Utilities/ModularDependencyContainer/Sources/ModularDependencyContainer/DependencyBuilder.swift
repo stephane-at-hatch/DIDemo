@@ -9,21 +9,20 @@ import Foundation
 
 @MainActor
 public enum RootDependencyBuilder {
-    public static func buildChild<T: DependencyRequirements>(_ type: T.Type, mode: ContainerMode = .production) -> T {
-        let dependencyBuilder = DependencyBuilder<GraphRoot>(mode: mode)
+    public static func buildChild<T: DependencyRequirements>(_ type: T.Type) -> T {
+        let dependencyBuilder = DependencyBuilder<GraphRoot>(mode: .production)
         let dependencyContainer = dependencyBuilder.freeze()
         return dependencyContainer.buildChild(T.self)
     }
-
+    
     /// Builds a root-level child in testing mode with test-site-specific overrides.
     ///
     /// Convenience for unit tests that don't have a parent container.
     /// Only available in testing mode. Asserts if called with `.production`.
     ///
     /// ```swift
-    /// let module = RootDependencyBuilder.buildChildWithOverrides(
-    ///     MyModule.self,
-    ///     mode: .testing
+    /// let module = RootDependencyBuilder.buildChildForTesting(
+    ///     MyModule.self
     /// ) { overrides in
     ///     overrides.provideInput(String.self, "test-value")
     ///     try overrides.registerSingleton(NetworkClient.self) { _ in
@@ -31,14 +30,17 @@ public enum RootDependencyBuilder {
     ///     }
     /// }
     /// ```
-    public static func buildChildWithOverrides<T: DependencyRequirements>(
+    public static func buildChildForTesting<T: DependencyRequirements>(
         _ type: T.Type,
-        mode: ContainerMode,
-        testingOverride: @MainActor (MockDependencyBuilder<T>) throws -> Void
+        overrides: @MainActor (MockDependencyBuilder<T>) throws -> Void
     ) rethrows -> T {
-        let dependencyBuilder = DependencyBuilder<GraphRoot>(mode: mode)
+        let dependencyBuilder = DependencyBuilder<GraphRoot>(mode: .testing)
         let dependencyContainer = dependencyBuilder.freeze()
-        return try dependencyContainer.buildChildWithOverrides(T.self, testingOverride: testingOverride)
+        return try dependencyContainer.buildChildForTesting(T.self, overrides: overrides)
+    }
+    
+    public static func buildChildForTesting<T: DependencyRequirements>(_ type: T.Type) -> T {
+        return buildChildForTesting(type, overrides: { _ in })
     }
 }
 

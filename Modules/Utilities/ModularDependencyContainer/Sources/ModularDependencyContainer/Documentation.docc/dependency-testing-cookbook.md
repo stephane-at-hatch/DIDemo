@@ -154,7 +154,7 @@ extension [FeatureName]Dependencies: TestDependencyProvider {
 **Convert when:**
 - Tests have large boilerplate constructing many dependencies manually
 - The ViewModel has a `convenience init(dependencies:)` that maps cleanly
-- Test overrides map naturally to `buildChildWithOverrides`
+- Test overrides map naturally to `buildChildForTesting`
 
 **Don't convert when:**
 - Tests inject types that differ from what the container provides (e.g., injecting a bare `MockRoutineCoordinator` where the container provides `AdultRoutineCoordinator`)

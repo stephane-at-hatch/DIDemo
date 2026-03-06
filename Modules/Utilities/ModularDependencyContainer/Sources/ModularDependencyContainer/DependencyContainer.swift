@@ -283,7 +283,7 @@ public struct DependencyContainer<Marker>: Sendable {
     /// Only available in testing mode. Asserts in production.
     ///
     /// ```swift
-    /// let child = parentContainer.buildChildWithOverrides(MyModule.self) { overrides in
+    /// let child = parentContainer.buildChildForTesting(MyModule.self) { overrides in
     ///     overrides.provideInput(String.self, "test-value")
     ///     try overrides.registerSingleton(NetworkClient.self) { _ in
     ///         FailingNetworkClient(error: .timeout)
@@ -291,12 +291,12 @@ public struct DependencyContainer<Marker>: Sendable {
     /// }
     /// ```
     @MainActor
-    public func buildChildWithOverrides<T: DependencyRequirements>(
+    public func buildChildForTesting<T: DependencyRequirements>(
         _ type: T.Type,
-        testingOverride: @MainActor (MockDependencyBuilder<T>) throws -> Void
+        overrides: @MainActor (MockDependencyBuilder<T>) throws -> Void = { _ in }
     ) rethrows -> T {
         guard case .testing = mode else {
-            assertionFailure("buildChildWithOverrides is only available in testing mode. Current mode: \(mode)")
+            assertionFailure("buildChildForTesting is only available in testing mode. Current mode: \(mode)")
             // Fall back to standard buildChild in release builds
             return buildChild(type)
         }
@@ -309,7 +309,7 @@ public struct DependencyContainer<Marker>: Sendable {
 
         // 2. Apply test-site overrides (isOverride: true — overrides always take effect)
         let mockBuilder = MockDependencyBuilder(builder: builder, parent: parentContainer, isOverride: true)
-        try testingOverride(mockBuilder)
+        try overrides(mockBuilder)
 
         // 3. Validate after both mockRegistration AND overrides have completed
         if let testableType = T.self as? any TestDependencyProvider.Type {

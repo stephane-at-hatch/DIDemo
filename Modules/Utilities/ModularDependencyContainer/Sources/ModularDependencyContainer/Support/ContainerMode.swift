@@ -13,7 +13,7 @@
 ///
 /// In testing mode, parent-provided dependencies always take precedence over
 /// child mock registrations. Child mocks only fill gaps the parent doesn't cover.
-/// Test-site overrides via `buildChildWithOverrides` always take effect regardless.
+/// Test-site overrides via `buildChildForTesting` always take effect regardless.
 ///
 /// ```swift
 /// // Production (default)
@@ -33,7 +33,7 @@ public enum ContainerMode: Sendable, Equatable {
     /// Parent-provided dependencies take precedence over child mock
     /// registrations. Child mocks only apply for dependencies the parent
     /// doesn't already provide. Test-site overrides via
-    /// `buildChildWithOverrides` always take effect.
+    /// `buildChildForTesting` always take effect.
     case testing
 }
 

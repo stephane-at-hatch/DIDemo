@@ -20,7 +20,7 @@ import Foundation
 /// dependencies that the parent container already provides, allowing top-level
 /// injections to propagate through the graph.
 ///
-/// When used as an override builder (via `buildChildWithOverrides`), the parent
+/// When used as an override builder (via `buildChildForTesting`), the parent
 /// check is bypassed — overrides always take effect.
 ///
 /// **Factory closures receive `AnyFrozenContainer`** (not `DependencyContainer<Marker>`).

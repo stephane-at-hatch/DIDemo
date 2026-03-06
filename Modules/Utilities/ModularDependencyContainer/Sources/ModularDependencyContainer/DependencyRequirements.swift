@@ -112,7 +112,7 @@ extension TestDependencyProvider {
 
 #if DEBUG
         // Post-registration validation (DEBUG only)
-        // Skipped when `buildChildWithOverrides` will run additional registrations
+        // Skipped when `buildChildForTesting` will run additional registrations
         // after this call — validation runs after everything is complete.
         if !skipValidation {
             _validateMockRegistrations(builder: typedBuilder, parent: parent)
@@ -120,7 +120,7 @@ extension TestDependencyProvider {
 #endif
     }
 
-    /// Runs validation separately. Called by `buildChildWithOverrides` after both
+    /// Runs validation separately. Called by `buildChildForTesting` after both
     /// `mockRegistration` and the override closure have completed.
     @MainActor
     static func _validateMockRegistrationsExternally(builder: Any, parent: AnyFrozenContainer?) {
@@ -190,8 +190,6 @@ extension TestDependencyProvider {
                 missingDescriptions.append("[input] \(req.description)")
             }
         }
-
-        let totalRequirements = allRequiredKeys.count + Self.inputRequirements.count
 
         if !missingDescriptions.isEmpty {
             let missingList = missingDescriptions.joined(separator: ", ")

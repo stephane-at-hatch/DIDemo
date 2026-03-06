@@ -1255,7 +1255,7 @@ struct ContainerModeTests {
     @Test("Production mode uses registerDependencies")
     @MainActor
     func productionModeUsesRegisterDependencies() throws {
-        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .production)
+        let root = RootDependencyBuilder.buildChild(TestableModule.self)
         let service = try root.container.resolve(TestService.self)
 
         #expect(service.id == "production")
@@ -1264,7 +1264,7 @@ struct ContainerModeTests {
     @Test("Testing mode uses mockRegistration")
     @MainActor
     func testingModeUsesMockRegistration() throws {
-        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(TestableModule.self)
         let service = try root.container.resolve(TestService.self)
 
         #expect(service.id == "mock")
@@ -1273,7 +1273,7 @@ struct ContainerModeTests {
     @Test("Testing mode uses mockRegistration for local dependencies")
     @MainActor
     func testingModeUsesLocalMocks() throws {
-        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(TestableModule.self)
         let service = try root.container.resolve(AnotherService.self)
 
         #expect(service.value == -1)
@@ -1282,7 +1282,7 @@ struct ContainerModeTests {
     @Test("Testing mode uses mockRegistration for MainActor dependencies")
     @MainActor
     func testingModeUsesMainActorMocks() throws {
-        let root = RootDependencyBuilder.buildChild(TestableMainActorModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(TestableMainActorModule.self)
         let service = try root.container.resolveMainActor(MainActorService.self)
 
         #expect(service.id == "mock-main-actor")
@@ -1291,7 +1291,7 @@ struct ContainerModeTests {
     @Test("Testing mode falls back to registerDependencies for non-testable modules")
     @MainActor
     func testingModeFallsBackForNonTestable() throws {
-        let root = RootDependencyBuilder.buildChild(NonTestableModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(NonTestableModule.self)
         let service = try root.container.resolve(TestService.self)
 
         #expect(service.id == "production-only")
@@ -1337,7 +1337,7 @@ struct ContainerModeTests {
     @Test("Mode propagates through newScope")
     @MainActor
     func modePropagatesThroughNewScope() throws {
-        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(TestableModule.self)
         let newScope = root.container.newScope()
         let service = try newScope.resolve(TestService.self)
 
@@ -1583,7 +1583,7 @@ struct MockPriorityTests {
     func rootLevelModuleAllMocksApply() throws {
         // When there's no parent, all mock registrations should take effect
         // (parent-wins has nothing to win over)
-        let root = RootDependencyBuilder.buildChild(TestableModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(TestableModule.self)
         let service = try root.container.resolve(TestService.self)
         let anotherService = try root.container.resolve(AnotherService.self)
 
@@ -1592,16 +1592,13 @@ struct MockPriorityTests {
     }
 }
 
-// MARK: - buildChildWithOverrides Tests
+// MARK: - buildChildForTesting Tests
 
-struct BuildChildWithOverridesTests {
+struct buildChildForTestingTests {
     @Test("Override replaces mock registration (highest priority)")
     @MainActor
     func overrideReplacesMockRegistration() throws {
-        let root = RootDependencyBuilder.buildChildWithOverrides(
-            TestableModule.self,
-            mode: .testing
-        ) { overrides in
+        let root = RootDependencyBuilder.buildChildForTesting(TestableModule.self) { overrides in
             do {
                 try overrides.registerSingleton(TestService.self) { _ in
                     TestService(id: "test-site-override")
@@ -1643,10 +1640,7 @@ struct BuildChildWithOverridesTests {
             }
         }
 
-        let root = RootDependencyBuilder.buildChildWithOverrides(
-            TestableWithInput.self,
-            mode: .testing
-        ) { overrides in
+        let root = RootDependencyBuilder.buildChildForTesting(TestableWithInput.self) { overrides in
             overrides.provideInput(String.self, "injected")
         }
 
@@ -1664,7 +1658,7 @@ struct BuildChildWithOverridesTests {
         let rootContainer = builder.freeze()
 
         let parent = rootContainer.buildChild(ParentProviderModule.self)
-        let child = parent.container.buildChildWithOverrides(TestableChildModule.self) { overrides in
+        let child = parent.container.buildChildForTesting(TestableChildModule.self) { overrides in
             do {
                 try overrides.registerSingleton(TestService.self) { _ in
                     TestService(id: "override-wins")
@@ -1683,10 +1677,7 @@ struct BuildChildWithOverridesTests {
     func nonOverriddenMocksStillApply() throws {
         // Override only TestService, but TestableModule also mocks AnotherService (local)
         // AnotherService mock should still be present
-        let root = RootDependencyBuilder.buildChildWithOverrides(
-            TestableModule.self,
-            mode: .testing
-        ) { overrides in
+        let root = RootDependencyBuilder.buildChildForTesting(TestableModule.self) { overrides in
             do {
                 try overrides.registerSingleton(TestService.self) { _ in
                     TestService(id: "overridden")
@@ -1703,13 +1694,10 @@ struct BuildChildWithOverridesTests {
         #expect(anotherService.value == -1, "Non-overridden mock should still be present")
     }
 
-    @Test("RootDependencyBuilder.buildChildWithOverrides works")
+    @Test("RootDependencyBuilder.buildChildForTesting works")
     @MainActor
     func rootBuilderWithOverrides() throws {
-        let root = RootDependencyBuilder.buildChildWithOverrides(
-            TestableModule.self,
-            mode: .testing
-        ) { overrides in
+        let root = RootDependencyBuilder.buildChildForTesting(TestableModule.self) { overrides in
             do {
                 try overrides.registerSingleton(TestService.self) { _ in
                     TestService(id: "root-override")
@@ -1726,10 +1714,7 @@ struct BuildChildWithOverridesTests {
     @Test("Override with MainActor dependency")
     @MainActor
     func overrideWithMainActorDependency() throws {
-        let root = RootDependencyBuilder.buildChildWithOverrides(
-            TestableMainActorModule.self,
-            mode: .testing
-        ) { overrides in
+        let root = RootDependencyBuilder.buildChildForTesting(TestableMainActorModule.self) { overrides in
             do {
                 try overrides.mainActor.registerSingleton(MainActorService.self) { _ in
                     MainActorService(id: "main-actor-override")
@@ -1949,7 +1934,7 @@ struct ImportDependenciesTests {
     @Test("Basic import brings in child registrations")
     @MainActor
     func basicImport() throws {
-        let root = RootDependencyBuilder.buildChild(ParentImportModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(ParentImportModule.self)
 
         let service = try root.container.resolve(TestService.self)
         let another = try root.container.resolve(AnotherService.self)
@@ -1965,7 +1950,7 @@ struct ImportDependenciesTests {
     func importImportCollisionFirstInWins() throws {
         // ParentImportModule imports LeafModuleA then LeafModuleB.
         // Both provide TestService. LeafModuleA's should win (first-in).
-        let root = RootDependencyBuilder.buildChild(ParentImportModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(ParentImportModule.self)
         let service = try root.container.resolve(TestService.self)
 
         #expect(service.id == "leaf-a-service", "First import should win for colliding registrations")
@@ -1974,7 +1959,7 @@ struct ImportDependenciesTests {
     @Test("Explicit registration after import overrides imported value")
     @MainActor
     func explicitOverridesImport() throws {
-        let root = RootDependencyBuilder.buildChild(ExplicitOverImportModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(ExplicitOverImportModule.self)
 
         let service = try root.container.resolve(TestService.self)
         let another = try root.container.resolve(AnotherService.self)
@@ -2006,7 +1991,7 @@ struct ImportDependenciesTests {
             }
         }
 
-        let root = RootDependencyBuilder.buildChild(ParentOfLocal.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(ParentOfLocal.self)
 
         // TestService should be imported (inherited)
         let service = try root.container.resolve(TestService.self)
@@ -2045,7 +2030,7 @@ struct ImportDependenciesTests {
             }
         }
 
-        let root = RootDependencyBuilder.buildChild(TopModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(TopModule.self)
 
         let service = try root.container.resolve(TestService.self)
         let another = try root.container.resolve(AnotherService.self)
@@ -2081,7 +2066,7 @@ struct ImportDependenciesTests {
             }
         }
 
-        let root = RootDependencyBuilder.buildChild(ParentOfInputModule.self, mode: .testing)
+        let root = RootDependencyBuilder.buildChildForTesting(ParentOfInputModule.self)
 
         let service = try root.container.resolve(TestService.self)
         let input = try root.container.resolveInput(String.self)
@@ -2090,13 +2075,10 @@ struct ImportDependenciesTests {
         #expect(input == "imported-input")
     }
 
-    @Test("buildChildWithOverrides works with imported dependencies")
+    @Test("buildChildForTesting works with imported dependencies")
     @MainActor
     func overridesWorkWithImports() throws {
-        let root = RootDependencyBuilder.buildChildWithOverrides(
-            ParentImportModule.self,
-            mode: .testing
-        ) { overrides in
+        let root = RootDependencyBuilder.buildChildForTesting(ParentImportModule.self) { overrides in
             do {
                 try overrides.registerSingleton(TestService.self) { _ in
                     TestService(id: "override-after-import")
