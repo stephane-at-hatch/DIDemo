@@ -474,7 +474,7 @@ public struct DependencyContainer<Marker>: Sendable {
             output += parent.diagnose(level: level)
         }
 
-        let markerName = Self.fullyQualifiedTypeName(Marker.self)
+        let markerName = fullyQualifiedTypeName(Marker.self)
         output += "\n\(indent)▶︎ \(markerName) Container\n"
 
         let allMetadata = metadata.sorted { $0.value.line < $1.value.line }
@@ -494,26 +494,6 @@ public struct DependencyContainer<Marker>: Sendable {
         }
 
         return output
-    }
-
-    // MARK: - Helpers (for diagnostics)
-
-    /// Returns the fully qualified type name, stripping the module prefix.
-    /// For example: `MyModule.Dependencies` instead of just `Dependencies`.
-    private static func fullyQualifiedTypeName(_ type: Any.Type) -> String {
-        // _typeName gives us something like "ModuleName.ParentType.NestedType"
-        let fullName = _typeName(type, qualified: true)
-
-        // Strip the module name (first component) if present
-        if let dotIndex = fullName.firstIndex(of: ".") {
-            let afterModule = fullName[fullName.index(after: dotIndex)...]
-            // Only return the shortened version if there's still meaningful content
-            if !afterModule.isEmpty {
-                return String(afterModule)
-            }
-        }
-
-        return fullName
     }
 
     // Two overloads of buildResolutionErrorMessage

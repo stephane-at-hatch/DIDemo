@@ -134,7 +134,7 @@ extension TestDependencyProvider {
     /// Only runs in DEBUG builds, called from `_callMockRegistration`.
     @MainActor
     private static func _validateMockRegistrations(builder: DependencyBuilder<Self>, parent: AnyFrozenContainer?) {
-        let moduleName = String(describing: Self.self)
+        let moduleName = fullyQualifiedTypeName(Self.self)
 
         // Collect all requirement keys
         var allRequiredKeys = Set<RegistrationKey>()
@@ -202,21 +202,6 @@ extension TestDependencyProvider {
                 assertionFailure(message)
             }
             return
-        }
-
-        // Check for redundant explicit registrations (explicit that duplicates an import)
-        // An explicit registration is redundant if the same key was also brought in by import.
-        // This means the import already covers this type, and the explicit may no longer be needed.
-        let redundantKeys = builder.explicitRegistrationKeys.intersection(builder.importedRegistrationKeys)
-        if !redundantKeys.isEmpty {
-            let descriptions = redundantKeys.compactMap { key -> String? in
-                builder.registrationMetadata(for: key)?.typeDescription
-            }
-            .sorted()
-            let descList = descriptions.joined(separator: ", ")
-            print("⚠️ \(moduleName): all \(totalRequirements) requirements met, with redundant explicit registrations for [\(descList)]")
-        } else {
-            print("✅ \(moduleName): all \(totalRequirements) requirements met")
         }
     }
 }

@@ -14,9 +14,11 @@ import Foundation
 /// to contain a `Sendable` value, enforced at the generic `init` boundary.
 struct AnyHashableSendable: Hashable, @unchecked Sendable {
     private let wrapped: AnyHashable
-
+    let typeDescription: String
+    
     init(_ value: some Hashable & Sendable) {
         self.wrapped = AnyHashable(value)
+        self.typeDescription = fullyQualifiedTypeName(type(of: value))
     }
 
     static func == (lhs: AnyHashableSendable, rhs: AnyHashableSendable) -> Bool {
@@ -39,11 +41,12 @@ enum ActorIsolation: Hashable, Sendable {
 // MARK: - Registration Key
 
 /// Composite key for dependency registration supporting both type-only and keyed registration
-struct RegistrationKey: Hashable, Sendable {
+struct RegistrationKey: Hashable, Sendable, CustomStringConvertible {
     let typeId: ObjectIdentifier
     let keyValue: AnyHashableSendable?
     let isolation: ActorIsolation
-
+    let typeDescription: String
+    
     /// Whether this is a keyed registration
     var isKeyed: Bool {
         keyValue != nil
@@ -54,6 +57,7 @@ struct RegistrationKey: Hashable, Sendable {
         self.typeId = ObjectIdentifier(type)
         self.keyValue = nil
         self.isolation = isolation
+        self.typeDescription = fullyQualifiedTypeName(type)
     }
 
     /// Type + key
@@ -62,13 +66,7 @@ struct RegistrationKey: Hashable, Sendable {
         self.typeId = ObjectIdentifier(type)
         self.keyValue = AnyHashableSendable(key)
         self.isolation = isolation
-    }
-
-    /// ObjectIdentifier-based key (for internal lookup)
-    init(typeId: ObjectIdentifier, isolation: ActorIsolation = .none) {
-        self.typeId = typeId
-        self.keyValue = nil
-        self.isolation = isolation
+        self.typeDescription = fullyQualifiedTypeName(type)
     }
 
     /// Creates a copy with different isolation (preserves key value)
@@ -76,7 +74,8 @@ struct RegistrationKey: Hashable, Sendable {
         RegistrationKey(
             typeId: typeId,
             keyValue: keyValue,
-            isolation: isolation
+            isolation: isolation,
+            typeDescription: typeDescription
         )
     }
 
@@ -84,11 +83,31 @@ struct RegistrationKey: Hashable, Sendable {
     private init(
         typeId: ObjectIdentifier,
         keyValue: AnyHashableSendable?,
-        isolation: ActorIsolation
+        isolation: ActorIsolation,
+        typeDescription: String
     ) {
         self.typeId = typeId
         self.keyValue = keyValue
         self.isolation = isolation
+        self.typeDescription = typeDescription
+    }
+    
+    static func == (lhs: RegistrationKey, rhs: RegistrationKey) -> Bool {
+        lhs.typeId == rhs.typeId && lhs.keyValue == rhs.keyValue && lhs.isolation == rhs.isolation
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(typeId)
+        hasher.combine(keyValue ?? AnyHashableSendable(0))
+        hasher.combine(isolation)
+    }
+    
+    var description: String {
+        if let keyValue {
+            "RegistrationKey: \(typeDescription)\(keyValue.typeDescription)"
+        } else {
+            "RegistrationKey: \(typeDescription) (no key)"
+        }
     }
 }
 
@@ -263,4 +282,24 @@ final class MainActorAnyScopedCache: @unchecked Sendable {
         instances[key] = new
         return new
     }
+}
+
+// MARK: - Helpers (for diagnostics)
+
+/// Returns the fully qualified type name, stripping the module prefix.
+/// For example: `MyModule.Dependencies` instead of just `Dependencies`.
+func fullyQualifiedTypeName(_ type: Any.Type) -> String {
+    // _typeName gives us something like "ModuleName.ParentType.NestedType"
+    let fullName = _typeName(type, qualified: true)
+
+    // Strip the module name (first component) if present
+    if let dotIndex = fullName.firstIndex(of: ".") {
+        let afterModule = fullName[fullName.index(after: dotIndex)...]
+        // Only return the shortened version if there's still meaningful content
+        if !afterModule.isEmpty {
+            return String(afterModule)
+        }
+    }
+
+    return fullName
 }
